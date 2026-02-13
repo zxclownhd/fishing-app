@@ -1,24 +1,277 @@
 const router = require("express").Router();
-const prisma = require("../prisma/client");
+const prisma = require("../db/client");
+const { authenticateToken, requireRole } = require("../middleware/auth");
 
-// GET /locations  -> guest бачить тільки APPROVED
+// GET /locations (guest search)
 router.get("/", async (req, res) => {
   try {
-    const locations = await prisma.location.findMany({
-      where: { status: "APPROVED" },
+    const {
+      region,
+      waterType,
+      fish,
+      season,
+      page = "1",
+      limit = "10",
+    } = req.query;
+
+    const take = Math.min(parseInt(limit, 10) || 10, 50);
+    const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
+
+    const where = {
+      status: "APPROVED",
+      ...(region ? { region: String(region) } : {}),
+      ...(waterType ? { waterType: String(waterType) } : {}),
+      ...(fish ? { fish: { some: { fish: { name: String(fish) } } } } : {}),
+      ...(season
+        ? { seasons: { some: { season: { code: String(season) } } } }
+        : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      prisma.location.findMany({
+        where,
+        include: {
+          owner: { select: { id: true, displayName: true } },
+          fish: { include: { fish: true } },
+          seasons: { include: { season: true } },
+          _count: { select: { reviews: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.location.count({ where }),
+    ]);
+
+    const locationIds = items.map((x) => x.id);
+
+    const ratingAgg = locationIds.length
+      ? await prisma.review.groupBy({
+          by: ["locationId"],
+          where: { locationId: { in: locationIds } },
+          _avg: { rating: true },
+        })
+      : [];
+
+    const ratingMap = new Map(
+      ratingAgg.map((r) => [
+        r.locationId,
+        r._avg.rating ? Number(r._avg.rating.toFixed(2)) : null,
+      ]),
+    );
+
+    const itemsWithRating = items.map((loc) => {
+      const reviewsCount = loc._count?.reviews ?? 0;
+      const avgRating = ratingMap.get(loc.id) ?? null;
+
+      const { _count, ...rest } = loc;
+
+      return { ...rest, reviewsCount, avgRating };
+    });
+
+    res.json({
+      items: itemsWithRating,
+      total,
+      page: Number(page),
+      limit: take,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /locations (owner creates) - JWT required
+router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
+  try {
+    const ownerId = req.user.id;
+
+    const {
+      title,
+      description,
+      region,
+      waterType,
+      lat,
+      lng,
+      fishNames = [],
+      seasonCodes = [],
+    } = req.body;
+
+    if (
+      !title ||
+      !description ||
+      !region ||
+      !waterType ||
+      lat == null ||
+      lng == null
+    ) {
+      return res.status(400).json({
+        error:
+          "Missing required fields: title, description, region, waterType, lat, lng",
+      });
+    }
+
+    const fishRows = await Promise.all(
+      fishNames.map((name) =>
+        prisma.fish.upsert({
+          where: { name: String(name) },
+          update: {},
+          create: { name: String(name) },
+        }),
+      ),
+    );
+
+    const seasonRows = seasonCodes.length
+      ? await prisma.season.findMany({
+          where: { code: { in: seasonCodes.map((c) => String(c)) } },
+        })
+      : [];
+
+    const location = await prisma.location.create({
+      data: {
+        ownerId,
+        title: String(title),
+        description: String(description),
+        region: String(region),
+        waterType: String(waterType),
+        lat: String(lat),
+        lng: String(lng),
+        status: "PENDING",
+        fish: { create: fishRows.map((f) => ({ fishId: f.id })) },
+        seasons: { create: seasonRows.map((s) => ({ seasonId: s.id })) },
+      },
       include: {
         owner: { select: { id: true, displayName: true } },
-        photos: true,
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
+      },
+    });
+
+    res.status(201).json(location);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /locations/:id/reviews (public)
+router.get("/:id/reviews", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const reviews = await prisma.review.findMany({
+      where: { locationId: id },
+      include: {
+        user: { select: { id: true, displayName: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    res.json({ items: locations, total: locations.length });
+    res.json({ items: reviews, total: reviews.length });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Failed to load locations" });
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /locations/:id/reviews (auth) - one review per user per location
+router.post(
+  "/:id/reviews",
+  authenticateToken,
+  requireRole("USER", "OWNER"),
+  async (req, res) => {
+    try {
+      const { id: locationId } = req.params;
+      const { rating, comment } = req.body;
+
+      const r = Number(rating);
+
+      if (!Number.isInteger(r) || r < 1 || r > 5) {
+        return res
+          .status(400)
+          .json({ error: "rating must be an integer from 1 to 5" });
+      }
+      if (!comment || String(comment).trim().length < 3) {
+        return res
+          .status(400)
+          .json({ error: "comment is required (min 3 chars)" });
+      }
+
+      // опціонально: не дозволяти робити review на не-APPROVED локацію
+      const loc = await prisma.location.findUnique({
+        where: { id: locationId },
+        select: { status: true },
+      });
+      if (!loc) return res.status(404).json({ error: "Location not found" });
+      if (loc.status !== "APPROVED") {
+        return res
+          .status(403)
+          .json({ error: "You can review only APPROVED locations" });
+      }
+
+      // create review (unique constraint handles duplicates)
+      const created = await prisma.review.create({
+        data: {
+          locationId,
+          userId: req.user.id,
+          rating: r,
+          comment: String(comment).trim(),
+        },
+        include: {
+          user: { select: { id: true, displayName: true } },
+        },
+      });
+
+      res.status(201).json(created);
+    } catch (e) {
+      // Prisma unique constraint violation -> user already reviewed
+      if (e && e.code === "P2002") {
+        return res
+          .status(409)
+          .json({ error: "You already reviewed this location" });
+      }
+      console.error(e);
+      res.status(500).json({ error: "Server error" });
+    }
+  },
+);
+
+// GET /locations/:id (public details) - only APPROVED
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const location = await prisma.location.findFirst({
+      where: { id, status: "APPROVED" },
+      include: {
+        owner: { select: { id: true, displayName: true } },
+        fish: { include: { fish: true } },
+        seasons: { include: { season: true } },
+        photos: true,
+        _count: { select: { reviews: true } },
+      },
+    });
+
+    if (!location) return res.status(404).json({ error: "Location not found" });
+
+    // avg rating
+    const agg = await prisma.review.aggregate({
+      where: { locationId: id },
+      _avg: { rating: true },
+    });
+
+    const avgRating = agg._avg.rating ? Number(agg._avg.rating.toFixed(2)) : null;
+
+    const { _count, ...rest } = location;
+
+    res.json({
+      ...rest,
+      reviewsCount: _count.reviews,
+      avgRating,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

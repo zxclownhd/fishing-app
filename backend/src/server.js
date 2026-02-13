@@ -2,32 +2,25 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const locationsRouter = require("./routes/locations.route");
+const adminRouter = require("./routes/admin.route");
+const authRouter = require("./routes/auth.route");
+const meRouter = require("./routes/me.route");
+const ownerRouter = require("./routes/owner.route");
+
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/auth", authRouter);
+app.use("/me", meRouter);
+app.use("/owner", ownerRouter);
+
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-const prisma = require("./prisma/client");
-
-app.get("/locations", async (req, res) => {
-  try {
-    const locations = await prisma.location.findMany({
-      where: { status: "APPROVED" },
-      include: {
-        owner: {
-          select: { id: true, displayName: true }
-        }
-      }
-    });
-
-    res.json(locations);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
+app.use("/locations", locationsRouter);
+app.use("/admin", adminRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`API: http://localhost:${PORT}`));
