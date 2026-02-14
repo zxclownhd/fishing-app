@@ -6,6 +6,7 @@ import LocationDetailsPage from "./pages/LocationDetailsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import OwnerDashboardPage from "./pages/OwnerDashboardPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 
 import { clearAuth, getStoredUser } from "./auth/auth";
 
@@ -86,6 +87,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/owner" element={<OwnerDashboardPage />} />
+        <Route path="/admin" element={<AdminDashboardPage />} />
         {/* Admin додамо наступним кроком */}
         {/* <Route path="/admin" element={<AdminDashboardPage />} /> */}
       </Routes>
