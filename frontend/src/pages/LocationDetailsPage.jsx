@@ -1,13 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { http } from "../api/http";
+import { getStoredUser } from "../auth/auth";
 
 export default function LocationDetailsPage() {
   const { id } = useParams();
+
+  const [user, setUser] = useState(getStoredUser());
+
   const [location, setLocation] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // review form
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const loadAll = useCallback(async () => {
+    const [locRes, revRes] = await Promise.all([
+      http.get(`/locations/${id}`),
+      http.get(`/locations/${id}/reviews`),
+    ]);
+    setLocation(locRes.data);
+    setReviews(revRes.data.items || []);
+  }, [id]);
+
+  useEffect(() => {
+    function onAuthChanged() {
+      setUser(getStoredUser());
+    }
+    window.addEventListener("authChanged", onAuthChanged);
+    return () => window.removeEventListener("authChanged", onAuthChanged);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -16,16 +43,7 @@ export default function LocationDetailsPage() {
       try {
         setLoading(true);
         setError("");
-
-        const [locRes, revRes] = await Promise.all([
-          http.get(`/locations/${id}`),
-          http.get(`/locations/${id}/reviews`),
-        ]);
-
-        if (!cancelled) {
-          setLocation(locRes.data);
-          setReviews(revRes.data.items || []);
-        }
+        await loadAll();
       } catch (err) {
         console.error(err);
         if (!cancelled) setError("Failed to load location details");
@@ -38,7 +56,33 @@ export default function LocationDetailsPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [loadAll]);
+
+  async function submitReview(e) {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      setSubmitting(true);
+      setFormError("");
+
+      await http.post(`/locations/${id}/reviews`, {
+        rating: Number(rating),
+        comment: comment.trim(),
+      });
+
+      setComment("");
+      setRating(5);
+
+      await loadAll();
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.error || "Failed to submit review";
+      setFormError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
   if (error) return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
@@ -68,7 +112,10 @@ export default function LocationDetailsPage() {
         <h3>Fish</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(location.fish || []).map((f) => (
-            <span key={f.fishId} style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}>
+            <span
+              key={f.fishId}
+              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
+            >
               {f.fish?.name}
             </span>
           ))}
@@ -79,14 +126,64 @@ export default function LocationDetailsPage() {
         <h3>Seasons</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(location.seasons || []).map((s) => (
-            <span key={s.seasonId} style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}>
+            <span
+              key={s.seasonId}
+              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
+            >
               {s.season?.code}
             </span>
           ))}
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
+      {/* Add review */}
+      <div style={{ marginTop: 18 }}>
+        <h2>Leave a review</h2>
+
+        {!user ? (
+          <div style={{ opacity: 0.8 }}>Please login to leave a review.</div>
+        ) : (
+          <form onSubmit={submitReview} style={{ display: "grid", gap: 10, maxWidth: 520 }}>
+            <label style={{ display: "grid", gap: 6 }}>
+              <span>Rating</span>
+              <select
+                value={rating}
+                onChange={(e) => setRating(e.target.value)}
+                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+                <option value={5}>5</option>
+              </select>
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
+              <span>Comment</span>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={3}
+                placeholder="Write your review..."
+                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+              />
+            </label>
+
+            <button
+              disabled={submitting}
+              style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
+            >
+              {submitting ? "Submitting..." : "Submit review"}
+            </button>
+
+            {formError && <div style={{ color: "crimson" }}>{formError}</div>}
+          </form>
+        )}
+      </div>
+
+      {/* Reviews list */}
+      <div style={{ marginTop: 18 }}>
         <h2>Reviews</h2>
 
         {reviews.length === 0 && <div style={{ opacity: 0.7 }}>No reviews yet.</div>}
