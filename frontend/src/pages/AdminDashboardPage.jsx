@@ -7,21 +7,37 @@ export default function AdminDashboardPage() {
   const [text, setText] = useState("Moderation panel");
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("PENDING");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const user = getStoredUser();
+  const totalPages = Math.ceil(total / 20);
 
-  async function loadLocations() {
+  async function loadLocations(pageArg = page) {
     setText("Loading...");
     try {
       await http.get("/health");
       const res = await http.get("/admin/locations", {
-        params: { status: status, page: 1, limit: 20 },
+        params: { status: status, page: pageArg, limit: 20 },
       });
       setItems(res.data.items);
+      setTotal(res.data.total);
       setText("Loaded from API");
     } catch {
       setText("Request failed");
     }
+  }
+
+  function Next() {
+    const next = page + 1;
+    setPage(next);
+    loadLocations(next)
+  }
+
+  function Prev() {
+    const prev = page - 1;
+    setPage(prev);
+    loadLocations(prev);
   }
 
   async function changeStatus(id, action) {
@@ -54,18 +70,24 @@ export default function AdminDashboardPage() {
         <option value={"HIDDEN"}>HIDDEN</option>
       </select>
 
-      <button onClick={ () => {loadLocations()}}>Load</button>
+      <button onClick={ () => {loadLocations()}}>Refresh</button>
 
       <p>Items: {items.length}</p>
       {items.map((it) => (
         <div key={it.id}>
           <div>{it.title || "(no title)"}</div>
 
-          <button onClick={ () => changeStatus(it.id, "approve")}>Approve</button>
-          <button onClick={ () => changeStatus(it.id, "reject")}>Reject</button>
-          <button onClick={ () => changeStatus(it.id, "hide")}>Hide</button>
+          <button onClick={ () => changeStatus(it.id, "approve")} disabled={it.status === "APPROVED"}>Approve</button>
+          <button onClick={ () => changeStatus(it.id, "reject")} disabled={it.status === "REJECTED"}>Reject</button>
+          <button onClick={ () => changeStatus(it.id, "hide")} disabled={it.status === "HIDDEN"}>Hide</button>
         </div>
       ))}
+
+      <div>
+        <button onClick={() => Prev()} disabled={page === 1}>Prev</button>
+        <p>Page:{page}</p>
+        <button onClick={() => Next()} disabled={page>=totalPages}>Next</button>
+      </div>
 
       <button
         onClick={() => {

@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import OwnerDashboardPage from "./pages/OwnerDashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 
 import { clearAuth, getStoredUser } from "./auth/auth";
 
@@ -45,6 +46,7 @@ export default function App() {
           Home
         </Link>
 
+        {user && <Link to="/profile">Profile</Link>}
         {user?.role === "OWNER" && <Link to="/owner">Owner</Link>}
         {user?.role === "ADMIN" && <Link to="/admin">Admin</Link>}
 
@@ -88,6 +90,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/owner" element={<OwnerDashboardPage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         {/* Admin додамо наступним кроком */}
         {/* <Route path="/admin" element={<AdminDashboardPage />} /> */}
       </Routes>
