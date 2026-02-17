@@ -7,6 +7,9 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
   const [text, setText] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   async function saveProfile() {
     setText("Saving...");
@@ -22,6 +25,41 @@ export default function ProfilePage() {
       }
     } catch {
       setText("Failed");
+    }
+  }
+
+  async function changePassword() {
+    setText("Changing password...");
+
+    const next = newPassword.trim();
+
+    try {
+      if (currentPassword.length === 0) {
+        setText("Enter current password");
+        return;
+      }
+
+      if (next.length < 8) {
+        setText("Password too short");
+        return;
+      }
+
+      if (next !== confirmPassword) {
+        setText("Passwords do not match");
+        return;
+      }
+
+      await http.patch("/me/password", { currentPassword, newPassword: next });
+
+      setText("Password changed");
+
+      setCurrentPassword("");
+
+      setNewPassword("");
+
+      setConfirmPassword("");
+    } catch (err) {
+      setText("Failed: " + (err.response?.data?.error || "Server error"));
     }
   }
 
@@ -56,6 +94,35 @@ export default function ProfilePage() {
             onChange={(e) => setDisplayName(e.target.value)}
           ></input>
           <button onClick={() => saveProfile()}>Save</button>
+
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Current password"
+          ></input>
+          <input
+            type="password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New password"
+          ></input>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm new password"
+          ></input>
+          <button
+            onClick={() => changePassword()}
+            disabled={
+              currentPassword.length === 0 ||
+              newPassword.length === 0 ||
+              confirmPassword.length === 0
+            }
+          >
+            Change password
+          </button>
         </div>
       )}
     </div>

@@ -3,6 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const prisma = require("../db/client");
 
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const USERNAME_RE = /^[a-zA-Z0-9._]{3,30}$/;
+
 function signToken(user) {
   return jwt.sign(
     { id: user.id, role: user.role, email: user.email },
@@ -20,16 +23,32 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "email and password are required" });
     }
 
+    const emailNorm = String(email).trim().toLowerCase();
+    const passNorm = String(password);
+    const nameNorm = displayName == null ? null : String(displayName);
+
+    if (!EMAIL_RE.test(emailNorm)) {
+      return res.status(400).json({ error: "Invalid email" });
+    }
+
+    if (passNorm.length < 8 ) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    if (nameNorm !== null && !USERNAME_RE.test(nameNorm)) {
+      return res.status(400).json({ error: "Invalid display name" });
+    }
+
     // Безпечне правило: реєстрація тільки USER/OWNER. ADMIN руками через БД.
     const safeRole = role === "OWNER" ? "OWNER" : "USER";
 
-    const passwordHash = await bcrypt.hash(String(password), 10);
+    const passwordHash = await bcrypt.hash(String(passNorm), 10);
 
     const user = await prisma.user.create({
       data: {
-        email: String(email).toLowerCase().trim(),
+        email: emailNorm,
         passwordHash,
-        displayName: displayName ? String(displayName) : null,
+        displayName: nameNorm,
         role: safeRole,
       },
       select: { id: true, email: true, role: true, displayName: true },
@@ -39,9 +58,22 @@ router.post("/register", async (req, res) => {
 
     res.status(201).json({ user, token });
   } catch (e) {
-    // якщо email вже існує, Prisma кине помилку
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
+    if (e.code === "P2002") {
+      const target = e.meta?.target || [];
+      
+      if (target?.includes("email")) {
+        return res.status(409).json({ error: "Email already taken" });
+      }
+
+      if (target?.includes("displayName")) {
+        return res.status(409).json({ error: "Display name already taken" });
+      }
+
+      return res.status(409).json({ error: "Unique constraint failed" });
+
+    } else {
+      return res.status(500).json({ error: "Server error" });
+    }
   }
 });
 
