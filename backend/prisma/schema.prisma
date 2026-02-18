@@ -27,6 +27,35 @@ enum LocationStatus {
   HIDDEN
 }
 
+enum RegionCode {
+  VINNYTSIA
+  VOLYN
+  DNIPROPETROVSK
+  DONETSK
+  ZHYTOMYR
+  ZAKARPATTIA
+  ZAPORIZHZHIA
+  IVANO_FRANKIVSK
+  KYIV
+  KIROVOHRAD
+  LUHANSK
+  LVIV
+  MYKOLAIV
+  ODESA
+  POLTAVA
+  RIVNE
+  SUMY
+  TERNOPIL
+  KHARKIV
+  KHERSON
+  KHMELNYTSKYI
+  CHERKASY
+  CHERNIVTSI
+  CHERNIHIV
+  CRIMEA
+}
+
+
 enum InquiryStatus {
   NEW
   READ
@@ -71,7 +100,7 @@ model Location {
 
   title       String
   description String
-  region      String
+  region      RegionCode
   waterType   WaterType
   lat         Decimal
   lng         Decimal

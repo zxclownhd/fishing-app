@@ -12,12 +12,37 @@ export default function HomePage() {
   const [fish, setFish] = useState("");
   const [season, setSeason] = useState("");
 
-  async function load(params = {}) {
+  const [filters, setFilters] = useState({
+    region: "",
+    waterType: "",
+    fish: "",
+    season: "",
+  });
+
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+
+  const canNext = page * limit < total;
+  const canPrev = page > 1;
+
+  async function load(activeFilters) {
+    const params = {
+      page,
+      limit,
+    };
+
+    if (activeFilters.region) params.region = activeFilters.region;
+    if (activeFilters.waterType) params.waterType = activeFilters.waterType;
+    if (activeFilters.fish) params.fish = activeFilters.fish;
+    if (activeFilters.season) params.season = activeFilters.season;
+
     try {
       setLoading(true);
       setError("");
       const res = await http.get("/locations", { params });
       setItems(res.data.items || []);
+      setTotal(res.data.total || 0);
     } catch (err) {
       console.error(err);
       setError("Failed to load locations");
@@ -27,20 +52,20 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    // initial load
-    load();
-  }, []);
+    load(filters);
+  }, [page, filters]);
 
   function onSearch(e) {
     e.preventDefault();
 
-    const params = {};
-    if (region.trim()) params.region = region.trim();
-    if (waterType.trim()) params.waterType = waterType.trim(); // e.g. LAKE / RIVER
-    if (fish.trim()) params.fish = fish.trim(); // e.g. Carp
-    if (season.trim()) params.season = season.trim(); // e.g. SPRING
+    setPage(1);
 
-    load(params);
+    setFilters({
+      region: region.trim(),
+      waterType: waterType.trim(),
+      fish: fish.trim(),
+      season: season.trim(),
+    });
   }
 
   function onReset() {
@@ -48,7 +73,14 @@ export default function HomePage() {
     setWaterType("");
     setFish("");
     setSeason("");
-    load();
+    setPage(1);
+
+    setFilters({
+      region: "",
+      waterType: "",
+      fish: "",
+      season: "",
+    });
   }
 
   return (
@@ -60,53 +92,36 @@ export default function HomePage() {
         style={{ display: "grid", gap: 8, maxWidth: 520, marginBottom: 16 }}
       >
         <input
-          placeholder="Region (e.g. Kyiv)"
+          placeholder="Region"
           value={region}
           onChange={(e) => setRegion(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
         />
 
-        <input
-          placeholder="Water type (LAKE / RIVER / POND / SEA)"
-          value={waterType}
-          onChange={(e) => setWaterType(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-        />
+        <select value={waterType} onChange={(e) => setWaterType(e.target.value)}>
+          <option value={""}>All water types</option>
+          <option value={"LAKE"}>Lake</option>
+          <option value={"RIVER"}>River</option>
+          <option value={"POND"}>Pond</option>
+          <option value={"SEA"}>Sea</option>
+        </select>
 
         <input
-          placeholder="Fish (e.g. Carp)"
+          placeholder="Fish"
           value={fish}
           onChange={(e) => setFish(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
         />
 
-        <input
-          placeholder="Season (SPRING / SUMMER / AUTUMN / WINTER)"
-          value={season}
-          onChange={(e) => setSeason(e.target.value)}
-          style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-        />
+        <select value={season} onChange={(e) => setSeason(e.target.value)}>
+          <option value={""}>All seasons</option>
+          <option value={"SPRING"}>Spring</option>
+          <option value={"SUMMER"}>Summer</option>
+          <option value={"AUTUMN"}>Autumn</option>
+          <option value={"WINTER"}>Winter</option>
+        </select>
 
         <div style={{ display: "flex", gap: 8 }}>
-          <button
-            type="submit"
-            style={{
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          >
-            Search
-          </button>
-          <button
-            type="button"
-            onClick={onReset}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          >
+          <button type="submit">Search</button>
+          <button type="button" onClick={onReset}>
             Reset
           </button>
         </div>
@@ -115,37 +130,38 @@ export default function HomePage() {
       {loading && <div>Loading...</div>}
       {error && <div style={{ color: "crimson" }}>{error}</div>}
 
-      {!loading && !error && items.length === 0 && (
-        <div style={{ opacity: 0.7 }}>No locations found.</div>
-      )}
-
       <div
         style={{
           display: "grid",
           gap: 12,
           gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-          marginTop: 12,
         }}
       >
         {items.map((loc) => (
-          <Link
-            to={`/locations/${loc.id}`}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <div
-              style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}
-            >
+          <Link key={loc.id} to={`/locations/${loc.id}`}>
+            <div style={{ border: "1px solid #ddd", padding: 12 }}>
               <div style={{ fontWeight: 700 }}>{loc.title}</div>
-              <div style={{ opacity: 0.8 }}>
+              <div>
                 {loc.region} • {loc.waterType}
               </div>
-
-              <div style={{ marginTop: 8 }}>
+              <div>
                 Rating: {loc.avgRating ?? "—"} ({loc.reviewsCount ?? 0})
               </div>
             </div>
           </Link>
         ))}
+      </div>
+
+      <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+        <button disabled={!canPrev} onClick={() => setPage(page - 1)}>
+          Prev
+        </button>
+
+        <div>Page {page}</div>
+
+        <button disabled={!canNext} onClick={() => setPage(page + 1)}>
+          Next
+        </button>
       </div>
     </div>
   );

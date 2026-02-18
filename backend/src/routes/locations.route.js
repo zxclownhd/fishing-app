@@ -2,6 +2,13 @@ const router = require("express").Router();
 const prisma = require("../db/client");
 const { authenticateToken, requireRole } = require("../middleware/auth");
 
+const REGION_CODES = new Set([
+  "VINNYTSIA","VOLYN","DNIPROPETROVSK","DONETSK","ZHYTOMYR","ZAKARPATTIA","ZAPORIZHZHIA",
+  "IVANO_FRANKIVSK","KYIV","KIROVOHRAD","LUHANSK","LVIV","MYKOLAIV","ODESA","POLTAVA",
+  "RIVNE","SUMY","TERNOPIL","KHARKIV","KHERSON","KHMELNYTSKYI","CHERKASY","CHERNIVTSI","CHERNIHIV","CRIMEA"
+]);
+
+
 // GET /locations (guest search)
 router.get("/", async (req, res) => {
   try {
@@ -14,12 +21,18 @@ router.get("/", async (req, res) => {
       limit = "10",
     } = req.query;
 
+    const regionCode = region ? String(region).trim().toUpperCase() : null;
+
+    if (regionCode && !REGION_CODES.has(regionCode)) {
+      return res.status(400).json({ error: "Invalid region" });
+    }
+
     const take = Math.min(parseInt(limit, 10) || 10, 50);
     const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
 
     const where = {
       status: "APPROVED",
-      ...(region ? { region: String(region) } : {}),
+      ...(region ? { region: regionCode } : {}),
       ...(waterType ? { waterType: String(waterType) } : {}),
       ...(fish ? { fish: { some: { fish: { name: String(fish) } } } } : {}),
       ...(season
@@ -97,6 +110,11 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       seasonCodes = [],
     } = req.body;
 
+    const regionCode = String(region).trim().toUpperCase();
+    if (!REGION_CODES.has(regionCode)) {
+      return res.status(400).json({ error: "Invalid region" });
+    }
+
     if (
       !title ||
       !description ||
@@ -132,7 +150,7 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
         ownerId,
         title: String(title),
         description: String(description),
-        region: String(region),
+        region: regionCode,
         waterType: String(waterType),
         lat: String(lat),
         lng: String(lng),
