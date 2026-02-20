@@ -47,6 +47,7 @@ router.get("/", async (req, res) => {
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
+          photos: { take: 1, orderBy: { createdAt: "desc" } },
           _count: { select: { reviews: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -108,11 +109,21 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       lng,
       fishNames = [],
       seasonCodes = [],
+      contactInfo,
+      photoUrls = [],
     } = req.body;
+
+    const urls = Array.isArray(photoUrls)
+      ? photoUrls.map((u) => String(u).trim()).filter(Boolean)
+      : [];
 
     const regionCode = String(region).trim().toUpperCase();
     if (!REGION_CODES.has(regionCode)) {
       return res.status(400).json({ error: "Invalid region" });
+    }
+
+    if (contactInfo && String(contactInfo).trim().length > 255) {
+      return res.status(400).json({ error: "contactInfo is too long (max 255 chars)" });
     }
 
     if (
@@ -155,13 +166,18 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
         lat: String(lat),
         lng: String(lng),
         status: "PENDING",
+        contactInfo: contactInfo
+          ? String(contactInfo).trim()
+          : null,
         fish: { create: fishRows.map((f) => ({ fishId: f.id })) },
         seasons: { create: seasonRows.map((s) => ({ seasonId: s.id })) },
+        photos: {create: urls.map((url) => ({url}))},
       },
       include: {
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
+        photos: true,
       },
     });
 
@@ -287,6 +303,25 @@ router.get("/:id", async (req, res) => {
       reviewsCount: _count.reviews,
       avgRating,
     });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /locations/:id/contact (auth) - contacts only for logged-in users
+router.get("/:id/contact", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const loc = await prisma.location.findFirst({
+      where: { id, status: "APPROVED" },
+      select: { id: true, contactInfo: true },
+    });
+
+    if (!loc) return res.status(404).json({ error: "Location not found" });
+
+    res.json({ contactInfo: loc.contactInfo });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Server error" });

@@ -97,7 +97,10 @@ export default function HomePage() {
           onChange={(e) => setRegion(e.target.value)}
         />
 
-        <select value={waterType} onChange={(e) => setWaterType(e.target.value)}>
+        <select
+          value={waterType}
+          onChange={(e) => setWaterType(e.target.value)}
+        >
           <option value={""}>All water types</option>
           <option value={"LAKE"}>Lake</option>
           <option value={"RIVER"}>River</option>
@@ -138,13 +141,39 @@ export default function HomePage() {
         }}
       >
         {items.map((loc) => (
-          <Link key={loc.id} to={`/locations/${loc.id}`}>
-            <div style={{ border: "1px solid #ddd", padding: 12 }}>
+          <Link
+            key={loc.id}
+            to={`/locations/${loc.id}`}
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <div
+              style={{
+                border: "1px solid #ddd",
+                padding: 12,
+                borderRadius: 10,
+              }}
+            >
+              {loc.photos?.[0]?.url && (
+                <img
+                  src={loc.photos[0].url}
+                  alt=""
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                  style={{
+                    width: "100%",
+                    height: 140,
+                    objectFit: "cover",
+                    borderRadius: 10,
+                    marginBottom: 10,
+                    display: "block",
+                  }}
+                />
+              )}
+
               <div style={{ fontWeight: 700 }}>{loc.title}</div>
-              <div>
+              <div style={{ opacity: 0.85 }}>
                 {loc.region} • {loc.waterType}
               </div>
-              <div>
+              <div style={{ opacity: 0.85 }}>
                 Rating: {loc.avgRating ?? "—"} ({loc.reviewsCount ?? 0})
               </div>
             </div>

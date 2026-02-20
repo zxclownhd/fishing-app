@@ -8,6 +8,9 @@ CREATE TYPE "WaterType" AS ENUM ('RIVER', 'LAKE', 'POND', 'SEA', 'OTHER');
 CREATE TYPE "LocationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'HIDDEN');
 
 -- CreateEnum
+CREATE TYPE "RegionCode" AS ENUM ('VINNYTSIA', 'VOLYN', 'DNIPROPETROVSK', 'DONETSK', 'ZHYTOMYR', 'ZAKARPATTIA', 'ZAPORIZHZHIA', 'IVANO_FRANKIVSK', 'KYIV', 'KIROVOHRAD', 'LUHANSK', 'LVIV', 'MYKOLAIV', 'ODESA', 'POLTAVA', 'RIVNE', 'SUMY', 'TERNOPIL', 'KHARKIV', 'KHERSON', 'KHMELNYTSKYI', 'CHERKASY', 'CHERNIVTSI', 'CHERNIHIV', 'CRIMEA');
+
+-- CreateEnum
 CREATE TYPE "InquiryStatus" AS ENUM ('NEW', 'READ', 'CLOSED');
 
 -- CreateEnum
@@ -35,13 +38,14 @@ CREATE TABLE "Location" (
     "ownerId" UUID NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "region" TEXT NOT NULL,
+    "contactinfo" TEXT,
+    "region" "RegionCode" NOT NULL,
     "waterType" "WaterType" NOT NULL,
     "lat" DECIMAL(65,30) NOT NULL,
     "lng" DECIMAL(65,30) NOT NULL,
     "status" "LocationStatus" NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Location_pkey" PRIMARY KEY ("id")
 );
@@ -135,6 +139,9 @@ CREATE TABLE "Report" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_displayName_key" ON "User"("displayName");
 
 -- CreateIndex
 CREATE INDEX "Location_status_idx" ON "Location"("status");

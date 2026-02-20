@@ -87,8 +87,10 @@ router.patch("/locations/:id", async (req, res) => {
       waterType,
       lat,
       lng,
-      fishNames,    // optional array
-      seasonCodes,  // optional array
+      fishNames, // optional array
+      seasonCodes, // optional array
+      contactInfo,
+      photoUrls,
     } = req.body;
 
     const data = {};
@@ -99,6 +101,9 @@ router.patch("/locations/:id", async (req, res) => {
     if (waterType !== undefined) data.waterType = String(waterType);
     if (lat !== undefined) data.lat = String(lat);
     if (lng !== undefined) data.lng = String(lng);
+    if ("contactInfo" in req.body) {
+      data.contactInfo = contactInfo ? String(contactInfo).trim() : null;
+    }
 
     // 3) якщо редагуємо APPROVED — повертаємо в PENDING (реалістична модерація)
     // (якщо не хочеш — скажеш, і ми це вимкнемо)
@@ -115,6 +120,19 @@ router.patch("/locations/:id", async (req, res) => {
         data,
       });
 
+      // photos: повна заміна (якщо передали масив)
+      if (Array.isArray(photoUrls)) {
+        const urls = photoUrls.map((u) => String(u).trim()).filter(Boolean);
+
+        await tx.photo.deleteMany({ where: { locationId: id } });
+
+        if (urls.length) {
+          await tx.photo.createMany({
+            data: urls.map((url) => ({ locationId: id, url })),
+          });
+        }
+      }
+
       // fishNames: повна заміна
       if (Array.isArray(fishNames)) {
         // upsert fish
@@ -124,8 +142,8 @@ router.patch("/locations/:id", async (req, res) => {
               where: { name: String(name) },
               update: {},
               create: { name: String(name) },
-            })
-          )
+            }),
+          ),
         );
 
         // clear old

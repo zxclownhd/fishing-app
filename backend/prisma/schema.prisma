@@ -100,6 +100,7 @@ model Location {
 
   title       String
   description String
+  contactInfo String?        @map("contactinfo")
   region      RegionCode
   waterType   WaterType
   lat         Decimal
