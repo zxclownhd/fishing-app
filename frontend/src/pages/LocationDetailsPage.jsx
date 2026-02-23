@@ -113,6 +113,25 @@ export default function LocationDetailsPage() {
     return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
   if (!location) return <div style={{ padding: 16 }}>Not found</div>;
 
+  const latNum = Number(location.lat);
+  const lngNum = Number(location.lng);
+
+  const hasCoords = Number.isFinite(latNum) && Number.isFinite(lngNum);
+
+  const googleMapsUrl = hasCoords
+    ? `https://www.google.com/maps/search/?api=1&query=${latNum},${lngNum}`
+    : null;
+
+  const delta = 0.01; // ~1 км (грубо)
+  const left = lngNum - delta;
+  const right = lngNum + delta;
+  const top = latNum + delta;
+  const bottom = latNum - delta;
+
+  const osmEmbedUrl = hasCoords
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${latNum}%2C${lngNum}`
+    : null;
+
   return (
     <div style={{ padding: 16 }}>
       <div style={{ marginBottom: 12 }}>
@@ -197,6 +216,37 @@ export default function LocationDetailsPage() {
           ))}
         </div>
       </div>
+
+      {hasCoords && (
+        <div style={{ marginTop: 12 }}>
+          <h3>Map</h3>
+
+          <div
+            style={{
+              borderRadius: 10,
+              overflow: "hidden",
+              border: "1px solid #ddd",
+            }}
+          >
+            <iframe
+              title="Map preview"
+              src={osmEmbedUrl}
+              width="100%"
+              height="320"
+              style={{ border: 0, display: "block" }}
+              loading="lazy"
+            />
+          </div>
+
+          {googleMapsUrl && (
+            <div style={{ marginTop: 8 }}>
+              <a href={googleMapsUrl} target="_blank" rel="noreferrer">
+                Open in Google Maps →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add review */}
       <div style={{ marginTop: 18 }}>

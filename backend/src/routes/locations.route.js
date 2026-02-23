@@ -3,11 +3,32 @@ const prisma = require("../db/client");
 const { authenticateToken, requireRole } = require("../middleware/auth");
 
 const REGION_CODES = new Set([
-  "VINNYTSIA","VOLYN","DNIPROPETROVSK","DONETSK","ZHYTOMYR","ZAKARPATTIA","ZAPORIZHZHIA",
-  "IVANO_FRANKIVSK","KYIV","KIROVOHRAD","LUHANSK","LVIV","MYKOLAIV","ODESA","POLTAVA",
-  "RIVNE","SUMY","TERNOPIL","KHARKIV","KHERSON","KHMELNYTSKYI","CHERKASY","CHERNIVTSI","CHERNIHIV","CRIMEA"
+  "VINNYTSIA",
+  "VOLYN",
+  "DNIPROPETROVSK",
+  "DONETSK",
+  "ZHYTOMYR",
+  "ZAKARPATTIA",
+  "ZAPORIZHZHIA",
+  "IVANO_FRANKIVSK",
+  "KYIV",
+  "KIROVOHRAD",
+  "LUHANSK",
+  "LVIV",
+  "MYKOLAIV",
+  "ODESA",
+  "POLTAVA",
+  "RIVNE",
+  "SUMY",
+  "TERNOPIL",
+  "KHARKIV",
+  "KHERSON",
+  "KHMELNYTSKYI",
+  "CHERKASY",
+  "CHERNIVTSI",
+  "CHERNIHIV",
+  "CRIMEA",
 ]);
-
 
 // GET /locations (guest search)
 router.get("/", async (req, res) => {
@@ -113,35 +134,53 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       photoUrls = [],
     } = req.body;
 
-    const urls = Array.isArray(photoUrls)
-      ? photoUrls.map((u) => String(u).trim()).filter(Boolean)
-      : [];
-
-    const regionCode = String(region).trim().toUpperCase();
-    if (!REGION_CODES.has(regionCode)) {
-      return res.status(400).json({ error: "Invalid region" });
-    }
-
-    if (contactInfo && String(contactInfo).trim().length > 255) {
-      return res.status(400).json({ error: "contactInfo is too long (max 255 chars)" });
-    }
-
-    if (
-      !title ||
-      !description ||
-      !region ||
-      !waterType ||
-      lat == null ||
-      lng == null
-    ) {
+    // required fields
+    if (!title || !description || !region || !waterType) {
       return res.status(400).json({
         error:
           "Missing required fields: title, description, region, waterType, lat, lng",
       });
     }
 
+    if (String(lat).trim() === "" || String(lng).trim() === "") {
+      return res.status(400).json({ error: "lat and lng are required" });
+    }
+
+    // normalize + validate region
+    const regionCode = String(region).trim().toUpperCase();
+    if (!REGION_CODES.has(regionCode)) {
+      return res.status(400).json({ error: "Invalid region" });
+    }
+
+    // validate contactInfo
+    const contact = contactInfo ? String(contactInfo).trim() : null;
+    if (contact && contact.length > 255) {
+      return res
+        .status(400)
+        .json({ error: "contactInfo is too long (max 255 chars)" });
+    }
+
+    // validate coords
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+      return res
+        .status(400)
+        .json({ error: "lat and lng must be valid numbers" });
+    }
+    if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+      return res.status(400).json({ error: "lat/lng out of range" });
+    }
+
+    // normalize photo urls
+    const urls = Array.isArray(photoUrls)
+      ? photoUrls.map((u) => String(u).trim()).filter(Boolean)
+      : [];
+
+    // upsert fish
     const fishRows = await Promise.all(
-      fishNames.map((name) =>
+      (Array.isArray(fishNames) ? fishNames : []).map((name) =>
         prisma.fish.upsert({
           where: { name: String(name) },
           update: {},
@@ -150,7 +189,8 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       ),
     );
 
-    const seasonRows = seasonCodes.length
+    // seasons (only existing)
+    const seasonRows = Array.isArray(seasonCodes) && seasonCodes.length
       ? await prisma.season.findMany({
           where: { code: { in: seasonCodes.map((c) => String(c)) } },
         })
@@ -159,19 +199,17 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
     const location = await prisma.location.create({
       data: {
         ownerId,
-        title: String(title),
-        description: String(description),
+        title: String(title).trim(),
+        description: String(description).trim(),
         region: regionCode,
         waterType: String(waterType),
-        lat: String(lat),
-        lng: String(lng),
+        lat: String(latNum),
+        lng: String(lngNum),
         status: "PENDING",
-        contactInfo: contactInfo
-          ? String(contactInfo).trim()
-          : null,
+        contactInfo: contact,
         fish: { create: fishRows.map((f) => ({ fishId: f.id })) },
         seasons: { create: seasonRows.map((s) => ({ seasonId: s.id })) },
-        photos: {create: urls.map((url) => ({url}))},
+        photos: { create: urls.map((url) => ({ url })) },
       },
       include: {
         owner: { select: { id: true, displayName: true } },
@@ -294,7 +332,9 @@ router.get("/:id", async (req, res) => {
       _avg: { rating: true },
     });
 
-    const avgRating = agg._avg.rating ? Number(agg._avg.rating.toFixed(2)) : null;
+    const avgRating = agg._avg.rating
+      ? Number(agg._avg.rating.toFixed(2))
+      : null;
 
     const { _count, ...rest } = location;
 

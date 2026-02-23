@@ -195,4 +195,62 @@ router.patch("/locations/:id", async (req, res) => {
   }
 });
 
+// POST /owner/locations/:id/hide -> set status HIDDEN
+router.post("/locations/:id/hide", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.location.findFirst({
+      where: { id, ownerId: req.user.id },
+      select: { id: true },
+    });
+    if (!existing) return res.status(404).json({ error: "Not found" });
+
+    const updated = await prisma.location.update({
+      where: { id },
+      data: { status: "HIDDEN" },
+      include: {
+        owner: { select: { id: true, displayName: true } },
+        fish: { include: { fish: true } },
+        seasons: { include: { season: true } },
+        photos: true,
+      },
+    });
+
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// POST /owner/locations/:id/unhide -> set status PENDING (send for review)
+router.post("/locations/:id/unhide", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.location.findFirst({
+      where: { id, ownerId: req.user.id },
+      select: { id: true },
+    });
+    if (!existing) return res.status(404).json({ error: "Not found" });
+
+    const updated = await prisma.location.update({
+      where: { id },
+      data: { status: "PENDING" },
+      include: {
+        owner: { select: { id: true, displayName: true } },
+        fish: { include: { fish: true } },
+        seasons: { include: { season: true } },
+        photos: true,
+      },
+    });
+
+    res.json(updated);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 module.exports = router;

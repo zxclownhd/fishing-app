@@ -31,6 +31,11 @@ export default function OwnerDashboardPage() {
   const [editDescription, setEditDescription] = useState("");
   const [editFishNames, setEditFishNames] = useState("");
   const [editSeasonCodes, setEditSeasonCodes] = useState("");
+  const [editLat, setEditLat] = useState("");
+  const [editLng, setEditLng] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editRegion, setEditRegion] = useState("");
+  const [editWaterType, setEditWaterType] = useState("LAKE");
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
@@ -64,10 +69,11 @@ export default function OwnerDashboardPage() {
   async function onCreate(e) {
     e.preventDefault();
 
-    try {
-      setCreating(true);
-      setCreateError("");
+    setCreating(true);
+    setCreateError("");
 
+    try {
+      // normalize arrays
       const fishArr = fishNames
         .split(",")
         .map((s) => s.trim())
@@ -83,13 +89,35 @@ export default function OwnerDashboardPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
+      // validate coords (avoid "" -> 0)
+      const latStr = String(lat).trim();
+      const lngStr = String(lng).trim();
+
+      if (!latStr || !lngStr) {
+        setCreateError("Lat and Lng are required");
+        return;
+      }
+
+      const latNum = Number(latStr);
+      const lngNum = Number(lngStr);
+
+      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+        setCreateError("Lat and Lng must be valid numbers");
+        return;
+      }
+
+      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+        setCreateError("Lat/Lng out of range");
+        return;
+      }
+
       await http.post("/locations", {
         title: title.trim(),
         description: description.trim(),
-        region: region.trim(),
+        region: region.trim().toUpperCase(), // ✅ match backend codes
         waterType,
-        lat: Number(lat),
-        lng: Number(lng),
+        lat: latNum,
+        lng: lngNum,
         fishNames: fishArr,
         seasonCodes: seasonArr,
         contactInfo: contactInfo.trim() || undefined,
@@ -139,6 +167,11 @@ export default function OwnerDashboardPage() {
         .filter(Boolean)
         .join(", "),
     );
+    setEditLat(String(loc.lat ?? ""));
+    setEditLng(String(loc.lng ?? ""));
+    setEditTitle(loc.title || "");
+    setEditRegion(loc.region || "");
+    setEditWaterType(loc.waterType || "LAKE");
     setEditError("");
   }
 
@@ -148,6 +181,11 @@ export default function OwnerDashboardPage() {
     setEditFishNames("");
     setEditSeasonCodes("");
     setEditContatcInfo("");
+    setEditLat("");
+    setEditLng("");
+    setEditTitle("");
+    setEditRegion("");
+    setEditWaterType("LAKE");
     setEditError("");
   }
 
@@ -174,12 +212,40 @@ export default function OwnerDashboardPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
+      const latStr = String(editLat).trim();
+      const lngStr = String(editLng).trim();
+
+      if (!latStr || !lngStr) {
+        setEditError("Lat and Lng are required");
+        return;
+      }
+
+      const latNum = Number(latStr);
+      const lngNum = Number(lngStr);
+
+      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+        setEditError("Lat and Lng must be valid numbers");
+        return;
+      }
+
+      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+        setEditError("Lat/Lng out of range");
+        return;
+      }
+
+      const regionCode = editRegion.trim().toUpperCase();
+
       await http.patch(`/owner/locations/${editingId}`, {
+        title: editTitle.trim(),
         description: editDescription.trim(),
+        region: regionCode,
+        waterType: editWaterType,
         fishNames: fishArr,
         seasonCodes: seasonArr,
         contactInfo: contactInfo.trim() || null,
         photoUrls: photoArr,
+        lat: latNum,
+        lng: lngNum,
       });
 
       await loadMyLocations();
@@ -189,6 +255,21 @@ export default function OwnerDashboardPage() {
       setEditError(err?.response?.data?.error || "Failed to update location");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleHidden(loc) {
+    try {
+      const path =
+        loc.status === "HIDDEN"
+          ? `/owner/locations/${loc.id}/unhide`
+          : `/owner/locations/${loc.id}/hide`;
+
+      await http.post(path);
+      await loadMyLocations();
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.error || "Failed to update status");
     }
   }
 
@@ -413,6 +494,17 @@ export default function OwnerDashboardPage() {
                       }}
                     />
 
+                    <input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      placeholder="Title"
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
+                    />
+
                     <textarea
                       value={editContactInfo}
                       onChange={(e) => setEditContatcInfo(e.target.value)}
@@ -424,6 +516,58 @@ export default function OwnerDashboardPage() {
                         border: "1px solid #ddd",
                       }}
                     />
+
+                    <input
+                      value={editRegion}
+                      onChange={(e) => setEditRegion(e.target.value)}
+                      placeholder="Region (e.g. KYIV)"
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
+                    />
+
+                    <select
+                      value={editWaterType}
+                      onChange={(e) => setEditWaterType(e.target.value)}
+                      style={{
+                        padding: 10,
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
+                    >
+                      <option value="LAKE">LAKE</option>
+                      <option value="RIVER">RIVER</option>
+                      <option value="POND">POND</option>
+                      <option value="SEA">SEA</option>
+                      <option value="OTHER">OTHER</option>
+                    </select>
+
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <input
+                        value={editLat}
+                        onChange={(e) => setEditLat(e.target.value)}
+                        placeholder="Lat (e.g. 50.45)"
+                        style={{
+                          padding: 10,
+                          borderRadius: 8,
+                          border: "1px solid #ddd",
+                          flex: 1,
+                        }}
+                      />
+                      <input
+                        value={editLng}
+                        onChange={(e) => setEditLng(e.target.value)}
+                        placeholder="Lng (e.g. 30.52)"
+                        style={{
+                          padding: 10,
+                          borderRadius: 8,
+                          border: "1px solid #ddd",
+                          flex: 1,
+                        }}
+                      />
+                    </div>
 
                     <input
                       value={editFishNames}
@@ -486,16 +630,32 @@ export default function OwnerDashboardPage() {
                     )}
                   </form>
                 ) : (
-                  <button
-                    onClick={() => startEdit(loc)}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: 8,
-                      border: "1px solid #ddd",
-                    }}
-                  >
-                    Edit
-                  </button>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      onClick={() => startEdit(loc)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleHidden(loc)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #ddd",
+                      }}
+                    >
+                      {loc.status === "HIDDEN"
+                        ? "Unhide (send for review)"
+                        : "Hide"}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
