@@ -178,23 +178,25 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       ? photoUrls.map((u) => String(u).trim()).filter(Boolean)
       : [];
 
-    // upsert fish
-    const fishRows = await Promise.all(
-      (Array.isArray(fishNames) ? fishNames : []).map((name) =>
-        prisma.fish.upsert({
-          where: { name: String(name) },
-          update: {},
-          create: { name: String(name) },
-        }),
-      ),
-    );
+    // fish: link only existing (no upsert)
+    const fishList = (Array.isArray(fishNames) ? fishNames : [])
+      .map((x) => String(x).trim())
+      .filter(Boolean);
 
-    // seasons (only existing)
-    const seasonRows = Array.isArray(seasonCodes) && seasonCodes.length
-      ? await prisma.season.findMany({
-          where: { code: { in: seasonCodes.map((c) => String(c)) } },
+    const fishRows = fishList.length
+      ? await prisma.fish.findMany({
+          where: { name: { in: fishList } },
+          select: { id: true },
         })
       : [];
+
+    // seasons (only existing)
+    const seasonRows =
+      Array.isArray(seasonCodes) && seasonCodes.length
+        ? await prisma.season.findMany({
+            where: { code: { in: seasonCodes.map((c) => String(c)) } },
+          })
+        : [];
 
     const location = await prisma.location.create({
       data: {

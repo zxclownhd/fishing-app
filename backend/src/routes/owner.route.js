@@ -135,21 +135,17 @@ router.patch("/locations/:id", async (req, res) => {
 
       // fishNames: повна заміна
       if (Array.isArray(fishNames)) {
-        // upsert fish
-        const fishRows = await Promise.all(
-          fishNames.map((name) =>
-            tx.fish.upsert({
-              where: { name: String(name) },
-              update: {},
-              create: { name: String(name) },
-            }),
-          ),
-        );
+        const fishList = fishNames.map((x) => String(x).trim()).filter(Boolean);
 
-        // clear old
+        const fishRows = fishList.length
+          ? await tx.fish.findMany({
+              where: { name: { in: fishList } },
+              select: { id: true },
+            })
+          : [];
+
         await tx.locationFish.deleteMany({ where: { locationId: id } });
 
-        // create new
         if (fishRows.length) {
           await tx.locationFish.createMany({
             data: fishRows.map((f) => ({ locationId: id, fishId: f.id })),
