@@ -1,15 +1,42 @@
 import { useEffect, useState } from "react";
 import { http } from "../api/http";
 import { Link } from "react-router-dom";
+import LocationCard from "../components/LocationCard";
+
+const REGION_OPTIONS = [
+  "VINNYTSIA",
+  "VOLYN",
+  "DNIPROPETROVSK",
+  "DONETSK",
+  "ZHYTOMYR",
+  "ZAKARPATTIA",
+  "ZAPORIZHZHIA",
+  "IVANO_FRANKIVSK",
+  "KYIV",
+  "KIROVOHRAD",
+  "LUHANSK",
+  "LVIV",
+  "MYKOLAIV",
+  "ODESA",
+  "POLTAVA",
+  "RIVNE",
+  "SUMY",
+  "TERNOPIL",
+  "KHARKIV",
+  "KHERSON",
+  "KHMELNYTSKYI",
+  "CHERKASY",
+  "CHERNIVTSI",
+  "CHERNIHIV",
+  "CRIMEA",
+];
 
 export default function HomePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [region, setRegion] = useState("");
   const [waterType, setWaterType] = useState("");
-  const [fish, setFish] = useState("");
   const [season, setSeason] = useState("");
 
   const [filters, setFilters] = useState({
@@ -18,6 +45,47 @@ export default function HomePage() {
     fish: "",
     season: "",
   });
+
+  const [regionQuery, setRegionQuery] = useState("");
+  const [regionSelected, setRegionSelected] = useState("");
+  const [regionOpen, setRegionOpen] = useState(false);
+
+  const q = regionQuery.trim().toLowerCase();
+  const regionFiltered = REGION_OPTIONS.filter((r) =>
+    r.toLowerCase().includes(q),
+  );
+
+  const [fishOptions, setFishOptions] = useState([]);
+  const [fishQuery, setFishQuery] = useState("");
+  const [fishSelected, setFishSelected] = useState([]);
+  const [fishOpen, setFishOpen] = useState(false);
+
+  const loadFish = async () => {
+    try {
+      const res = await http.get("/locations/fish");
+      const names = (res.data.items || []).map((item) => item.name);
+
+      setFishOptions(names);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load fish");
+    }
+  };
+
+  const fishFiltered = fishOptions
+    .filter((name) => !fishSelected.includes(name))
+    .filter((name) =>
+      name.toLowerCase().includes(fishQuery.trim().toLowerCase()),
+    )
+    .slice(0, 10);
+
+  function addFish(name) {
+    setFishSelected((prev) => (prev.includes(name) ? prev : [...prev, name]));
+  }
+
+  function removeFish(name) {
+    setFishSelected((prev) => prev.filter((x) => x !== name));
+  }
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -34,7 +102,9 @@ export default function HomePage() {
 
     if (activeFilters.region) params.region = activeFilters.region;
     if (activeFilters.waterType) params.waterType = activeFilters.waterType;
-    if (activeFilters.fish) params.fish = activeFilters.fish;
+    if (activeFilters.fish && activeFilters.fish.length) {
+      params.fish = activeFilters.fish.join(",");
+    }
     if (activeFilters.season) params.season = activeFilters.season;
 
     try {
@@ -52,6 +122,10 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    loadFish();
+  }, []);
+
+  useEffect(() => {
     load(filters);
   }, [page, filters]);
 
@@ -61,18 +135,22 @@ export default function HomePage() {
     setPage(1);
 
     setFilters({
-      region: region.trim(),
+      region: regionSelected,
       waterType: waterType.trim(),
-      fish: fish.trim(),
+      fish: fishSelected,
       season: season.trim(),
     });
   }
 
   function onReset() {
-    setRegion("");
     setWaterType("");
-    setFish("");
     setSeason("");
+    setRegionQuery("");
+    setRegionSelected("");
+    setRegionOpen(false);
+    setFishSelected([]);
+    setFishQuery("");
+    setFishOpen(false);
     setPage(1);
 
     setFilters({
@@ -91,11 +169,50 @@ export default function HomePage() {
         onSubmit={onSearch}
         style={{ display: "grid", gap: 8, maxWidth: 520, marginBottom: 16 }}
       >
-        <input
-          placeholder="Region"
-          value={region}
-          onChange={(e) => setRegion(e.target.value)}
-        />
+        <div style={{ position: "relative" }}>
+          <input
+            placeholder="Region"
+            value={regionQuery}
+            onChange={(e) => {
+              setRegionQuery(e.target.value);
+              setRegionOpen(true);
+              setRegionSelected("");
+            }}
+            onFocus={() => setRegionOpen(true)}
+            onBlur={() => setRegionOpen(false)}
+          />
+
+          {regionOpen && regionFiltered.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                zIndex: 10,
+                background: "white",
+                border: "1px solid #ddd",
+                width: "100%",
+                marginTop: 4,
+                borderRadius: 8,
+                overflow: "hidden",
+                maxHeight: 220,
+                overflowY: "auto",
+              }}
+            >
+              {regionFiltered.map((r) => (
+                <div
+                  key={r}
+                  onMouseDown={() => {
+                    setRegionSelected(r);
+                    setRegionQuery(r);
+                    setRegionOpen(false);
+                  }}
+                  style={{ padding: 8, cursor: "pointer" }}
+                >
+                  {r}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select
           value={waterType}
@@ -108,11 +225,69 @@ export default function HomePage() {
           <option value={"SEA"}>Sea</option>
         </select>
 
-        <input
-          placeholder="Fish"
-          value={fish}
-          onChange={(e) => setFish(e.target.value)}
-        />
+        <div style={{ position: "relative", display: "grid", gap: 6 }}>
+          {/* chips */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {fishSelected.map((name) => (
+              <button
+                key={name}
+                type="button"
+                onClick={() => removeFish(name)}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: 999,
+                  padding: "4px 10px",
+                }}
+              >
+                {name} ✕
+              </button>
+            ))}
+          </div>
+
+          {/* input */}
+          <input
+            placeholder="Fish (type to search)"
+            value={fishQuery}
+            onChange={(e) => {
+              setFishQuery(e.target.value);
+              setFishOpen(true);
+            }}
+            onFocus={() => setFishOpen(true)}
+            onBlur={() => setFishOpen(false)}
+          />
+
+          {/* dropdown */}
+          {fishOpen && fishFiltered.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                zIndex: 10,
+                background: "white",
+                border: "1px solid #ddd",
+                width: "100%",
+                marginTop: 72, // щоб випало під інпутом; потім відполіруєш
+                borderRadius: 8,
+                overflow: "hidden",
+                maxHeight: 220,
+                overflowY: "auto",
+              }}
+            >
+              {fishFiltered.map((name) => (
+                <div
+                  key={name}
+                  onMouseDown={() => {
+                    addFish(name);
+                    setFishQuery("");
+                    setFishOpen(false);
+                  }}
+                  style={{ padding: 8, cursor: "pointer" }}
+                >
+                  {name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <select value={season} onChange={(e) => setSeason(e.target.value)}>
           <option value={""}>All seasons</option>
@@ -141,43 +316,12 @@ export default function HomePage() {
         }}
       >
         {items.map((loc) => (
-          <Link
+          <LocationCard
             key={loc.id}
+            loc={loc}
             to={`/locations/${loc.id}`}
-            style={{ textDecoration: "none", color: "inherit" }}
-          >
-            <div
-              style={{
-                border: "1px solid #ddd",
-                padding: 12,
-                borderRadius: 10,
-              }}
-            >
-              {loc.photos?.[0]?.url && (
-                <img
-                  src={loc.photos[0].url}
-                  alt=""
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                  style={{
-                    width: "100%",
-                    height: 140,
-                    objectFit: "cover",
-                    borderRadius: 10,
-                    marginBottom: 10,
-                    display: "block",
-                  }}
-                />
-              )}
-
-              <div style={{ fontWeight: 700 }}>{loc.title}</div>
-              <div style={{ opacity: 0.85 }}>
-                {loc.region} • {loc.waterType}
-              </div>
-              <div style={{ opacity: 0.85 }}>
-                Rating: {loc.avgRating ?? "—"} ({loc.reviewsCount ?? 0})
-              </div>
-            </div>
-          </Link>
+            variant="public"
+          />
         ))}
       </div>
 
