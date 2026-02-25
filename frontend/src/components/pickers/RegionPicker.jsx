@@ -7,18 +7,16 @@ const REGION_OPTIONS = [
 ];
 
 export default function RegionPicker({ value, onChange, placeholder = "Region" }) {
-  const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = String(value || "").trim().toLowerCase();
     if (!q) return REGION_OPTIONS.slice(0, 20);
     return REGION_OPTIONS.filter((r) => r.toLowerCase().includes(q)).slice(0, 20);
-  }, [query]);
+  }, [value]);
 
   function selectRegion(r) {
     onChange(r);
-    setQuery(r);
     setOpen(false);
   }
 
@@ -26,11 +24,10 @@ export default function RegionPicker({ value, onChange, placeholder = "Region" }
     <div style={{ position: "relative" }}>
       <input
         placeholder={placeholder}
-        value={query}
+        value={value || ""}
         onChange={(e) => {
-          setQuery(e.target.value);
+          onChange(e.target.value); // даємо писати, але це буде "чернетка"
           setOpen(true);
-          onChange(""); // поки не вибрали зі списку
         }}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}

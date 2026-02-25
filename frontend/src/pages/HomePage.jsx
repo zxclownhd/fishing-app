@@ -30,7 +30,10 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / LIMIT)),
+    [total],
+  );
   const canPrev = page > 1;
   const canNext = page < totalPages;
 
@@ -94,6 +97,30 @@ export default function HomePage() {
     });
   }
 
+  function removeFilter(kind, value) {
+    if (kind === "region") setRegionSelected("");
+    if (kind === "waterType") setWaterType("");
+    if (kind === "fish")
+      setFishSelected((prev) => prev.filter((x) => x !== value));
+    if (kind === "season")
+      setSeasonsSelected((prev) => prev.filter((x) => x !== value));
+
+    setPage(1);
+
+    setFilters((prev) => {
+      const next = { ...prev };
+
+      if (kind === "region") next.region = "";
+      if (kind === "waterType") next.waterType = "";
+      if (kind === "fish")
+        next.fish = (prev.fish || []).filter((x) => x !== value);
+      if (kind === "season")
+        next.seasons = (prev.seasons || []).filter((x) => x !== value);
+
+      return next;
+    });
+  }
+
   return (
     <div style={{ padding: 16 }}>
       <h1>Fishing Locations</h1>
@@ -102,9 +129,17 @@ export default function HomePage() {
         onSubmit={onSearch}
         style={{ display: "grid", gap: 8, maxWidth: 520, marginBottom: 16 }}
       >
-        <RegionPicker value={regionSelected} onChange={setRegionSelected} placeholder="Region" />
+        <RegionPicker
+          value={regionSelected}
+          onChange={setRegionSelected}
+          placeholder="Region"
+        />
 
-        <select value={waterType} onChange={(e) => setWaterType(e.target.value)} style={input}>
+        <select
+          value={waterType}
+          onChange={(e) => setWaterType(e.target.value)}
+          style={input}
+        >
           <option value="">All water types</option>
           <option value="LAKE">Lake</option>
           <option value="RIVER">River</option>
@@ -127,6 +162,49 @@ export default function HomePage() {
         </div>
       </form>
 
+      {filters.region ||
+      filters.waterType ||
+      (filters.fish && filters.fish.length) ||
+      (filters.seasons && filters.seasons.length) ? (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 6 }}>
+            Active filters
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {filters.region ? (
+              <Chip
+                label={`Region: ${filters.region}`}
+                onRemove={() => removeFilter("region")}
+              />
+            ) : null}
+
+            {filters.waterType ? (
+              <Chip
+                label={`Water: ${filters.waterType}`}
+                onRemove={() => removeFilter("waterType")}
+              />
+            ) : null}
+
+            {(filters.fish || []).map((name) => (
+              <Chip
+                key={`fish-${name}`}
+                label={`Fish: ${name}`}
+                onRemove={() => removeFilter("fish", name)}
+              />
+            ))}
+
+            {(filters.seasons || []).map((code) => (
+              <Chip
+                key={`season-${code}`}
+                label={`Season: ${code}`}
+                onRemove={() => removeFilter("season", code)}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {loading ? <div>Loading...</div> : null}
       {error ? <div style={{ color: "crimson" }}>{error}</div> : null}
 
@@ -138,12 +216,22 @@ export default function HomePage() {
         }}
       >
         {items.map((loc) => (
-          <LocationCard key={loc.id} loc={loc} to={`/locations/${loc.id}`} variant="public" />
+          <LocationCard
+            key={loc.id}
+            loc={loc}
+            to={`/locations/${loc.id}`}
+            variant="public"
+          />
         ))}
       </div>
 
-      <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
-        <button disabled={!canPrev || loading} onClick={() => setPage((p) => p - 1)}>
+      <div
+        style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}
+      >
+        <button
+          disabled={!canPrev || loading}
+          onClick={() => setPage((p) => p - 1)}
+        >
           Prev
         </button>
 
@@ -151,11 +239,33 @@ export default function HomePage() {
           Page {page} of {totalPages}
         </div>
 
-        <button disabled={!canNext || loading} onClick={() => setPage((p) => p + 1)}>
+        <button
+          disabled={!canNext || loading}
+          onClick={() => setPage((p) => p + 1)}
+        >
           Next
         </button>
       </div>
     </div>
+  );
+}
+
+function Chip({ label, onRemove }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: 999,
+        padding: "4px 10px",
+        background: "#fff",
+        cursor: "pointer",
+      }}
+      title="Remove filter"
+    >
+      {label} ✕
+    </button>
   );
 }
 
