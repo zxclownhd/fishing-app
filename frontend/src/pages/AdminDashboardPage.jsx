@@ -17,7 +17,10 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / LIMIT)),
+    [total],
+  );
 
   async function loadLocations(pageArg = page, statusArg = status) {
     setLoading(true);
@@ -55,10 +58,10 @@ export default function AdminDashboardPage() {
     loadLocations(prev, status);
   }
 
-  async function changeStatus(id, action) {
+  async function setStatusForLocation(id, nextStatus) {
     setErrorText("");
     try {
-      await http.patch(`/admin/locations/${id}/${action}`);
+      await http.patch(`/admin/locations/${id}/status`, { status: nextStatus });
       await loadLocations(page, status);
     } catch {
       setErrorText("Request failed");
@@ -66,14 +69,14 @@ export default function AdminDashboardPage() {
   }
 
   function canDelete(it) {
-    return it.status === "PENDING" || it.status === "REJECTED" || it.status === "HIDDEN";
+    return it.status === "HIDDEN";
   }
 
   async function deleteLocation(it) {
     if (!canDelete(it)) return;
 
     const ok = window.confirm(
-      `Delete permanently?\n\nTitle: ${it.title || "(no title)"}\nStatus: ${it.status}\n\nThis will remove photos and related records.`
+      `Delete permanently?\n\nTitle: ${it.title || "(no title)"}\nStatus: ${it.status}\n\nThis will remove photos and related records.`,
     );
     if (!ok) return;
 
@@ -113,7 +116,10 @@ export default function AdminDashboardPage() {
           <button
             key={s}
             onClick={() => setStatus(s)}
-            style={{ ...styles.tabBtn, ...(status === s ? styles.tabBtnActive : null) }}
+            style={{
+              ...styles.tabBtn,
+              ...(status === s ? styles.tabBtnActive : null),
+            }}
             disabled={loading && status === s}
           >
             {s}
@@ -124,7 +130,11 @@ export default function AdminDashboardPage() {
       {errorText ? (
         <div style={styles.error}>
           <div>{errorText}</div>
-          <button onClick={() => loadLocations(page, status)} disabled={loading} style={{ marginTop: 8 }}>
+          <button
+            onClick={() => loadLocations(page, status)}
+            disabled={loading}
+            style={{ marginTop: 8 }}
+          >
             Retry
           </button>
         </div>
@@ -144,13 +154,28 @@ export default function AdminDashboardPage() {
             variant="admin"
             footer={
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {(it.fish || []).slice(0, 8).map((x) => (
-                  <span key={x.id} style={styles.chip}>
+                {(it.fish || []).slice(0, 8).map((x, idx) => (
+                  <span
+                    key={
+                      x.fishId
+                        ? `${it.id}-fish-${x.fishId}`
+                        : `${it.id}-fish-${idx}`
+                    }
+                    style={styles.chip}
+                  >
                     {x.fish?.name || "fish"}
                   </span>
                 ))}
-                {(it.seasons || []).slice(0, 8).map((x) => (
-                  <span key={x.id} style={styles.chip}>
+
+                {(it.seasons || []).slice(0, 8).map((x, idx) => (
+                  <span
+                    key={
+                      x.seasonId
+                        ? `${it.id}-season-${x.seasonId}`
+                        : `${it.id}-season-${idx}`
+                    }
+                    style={styles.chip}
+                  >
                     {x.season?.name || "season"}
                   </span>
                 ))}
@@ -159,23 +184,21 @@ export default function AdminDashboardPage() {
             actions={
               <>
                 <button
-                  onClick={() => changeStatus(it.id, "approve")}
-                  disabled={loading || it.status === "APPROVED" || status !== "PENDING"}
-                  title={status !== "PENDING" ? "Approve is for Pending only" : ""}
+                  onClick={() => setStatusForLocation(it.id, "APPROVED")}
+                  disabled={loading || it.status === "APPROVED"}
                 >
                   Approve
                 </button>
 
                 <button
-                  onClick={() => changeStatus(it.id, "reject")}
-                  disabled={loading || it.status === "REJECTED" || status !== "PENDING"}
-                  title={status !== "PENDING" ? "Reject is for Pending only" : ""}
+                  onClick={() => setStatusForLocation(it.id, "REJECTED")}
+                  disabled={loading || it.status === "REJECTED"}
                 >
                   Reject
                 </button>
 
                 <button
-                  onClick={() => changeStatus(it.id, "hide")}
+                  onClick={() => setStatusForLocation(it.id, "HIDDEN")}
                   disabled={loading || it.status === "HIDDEN"}
                 >
                   Hide
@@ -184,7 +207,11 @@ export default function AdminDashboardPage() {
                 <button
                   onClick={() => deleteLocation(it)}
                   disabled={loading || !canDelete(it)}
-                  title={!canDelete(it) ? "Approved items can only be hidden" : "Delete permanently"}
+                  title={
+                    !canDelete(it)
+                      ? "Delete is allowed only for HIDDEN"
+                      : "Delete permanently"
+                  }
                   style={canDelete(it) ? styles.dangerBtn : null}
                 >
                   Delete

@@ -24,8 +24,8 @@ router.get("/locations", async (req, res) => {
           owner: { select: { id: true, displayName: true, email: true } },
           photos: {
             take: 1,
-            orderBy: {createdAt: "desc"},
-            select: {id: true, url: true},
+            orderBy: { createdAt: "desc" },
+            select: { id: true, url: true },
           },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
@@ -44,6 +44,33 @@ router.get("/locations", async (req, res) => {
   }
 });
 
+// NEW: PATCH /admin/locations/:id/status  body: { status: "APPROVED"|"REJECTED"|"HIDDEN" }
+router.patch("/locations/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const nextStatus = String(req.body?.status || "").toUpperCase();
+
+    const allowed = ["APPROVED", "REJECTED", "HIDDEN"];
+    if (!allowed.includes(nextStatus)) {
+      return res.status(400).json({
+        error: "Invalid status",
+        allowed,
+      });
+    }
+
+    const updated = await prisma.location.update({
+      where: { id },
+      data: { status: nextStatus },
+    });
+
+    return res.json(updated);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Keep old endpoints for compatibility (optional)
 router.patch("/locations/:id/approve", async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,6 +113,7 @@ router.patch("/locations/:id/hide", async (req, res) => {
   }
 });
 
+// DELETE only if HIDDEN
 router.delete("/locations/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -95,15 +123,11 @@ router.delete("/locations/:id", async (req, res) => {
       select: { id: true, status: true, title: true },
     });
 
-    if (!loc) {
-      return res.status(404).json({ error: "Not found" });
-    }
+    if (!loc) return res.status(404).json({ error: "Not found" });
 
-    // Hard delete allowed only for these statuses
-    const allowed = loc.status === "PENDING" || loc.status === "REJECTED" || loc.status === "HIDDEN";
-    if (!allowed) {
+    if (loc.status !== "HIDDEN") {
       return res.status(409).json({
-        error: "Cannot delete this location in current status",
+        error: "Delete is allowed only for HIDDEN locations",
         status: loc.status,
       });
     }
