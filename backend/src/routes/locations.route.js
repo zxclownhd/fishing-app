@@ -228,6 +228,21 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
   }
 });
 
+// GET /fish
+router.get("/fish", async (req, res) => {
+  try {
+    const items = await prisma.fish.findMany({
+      select: { name: true },
+      orderBy: { name: "asc" },
+    });
+
+    res.json({ items });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // GET /locations/:id/reviews (public)
 router.get("/:id/reviews", async (req, res) => {
   try {
