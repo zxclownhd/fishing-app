@@ -1,47 +1,40 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
 import { Link } from "react-router-dom";
 
+import CreateLocationForm from "../components/owner/CreateLocationForm";
+import MyLocationsList from "../components/owner/MyLocationsList";
+
+const LIMIT = 12;
+
 export default function OwnerDashboardPage() {
   const user = getStoredUser();
+
+  const [activeTab, setActiveTab] = useState("LIST"); // LIST | CREATE
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // create form
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [region, setRegion] = useState("");
-  const [waterType, setWaterType] = useState("LAKE");
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
-  const [fishNames, setFishNames] = useState(""); // comma separated
-  const [seasonCodes, setSeasonCodes] = useState(""); // comma separated
-  const [contactInfo, setContactInfo] = useState("");
-  const [editContactInfo, setEditContatcInfo] = useState("");
-  const [photoUrls, setPhotoUrls] = useState(""); // comma separated
-  const [editPhotoUrls, setEditPhotoUrls] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
 
-  // edit
   const [editingId, setEditingId] = useState(null);
-  const [editDescription, setEditDescription] = useState("");
-  const [editFishNames, setEditFishNames] = useState("");
-  const [editSeasonCodes, setEditSeasonCodes] = useState("");
-  const [editLat, setEditLat] = useState("");
-  const [editLng, setEditLng] = useState("");
-  const [editTitle, setEditTitle] = useState("");
-  const [editRegion, setEditRegion] = useState("");
-  const [editWaterType, setEditWaterType] = useState("LAKE");
-  const [saving, setSaving] = useState(false);
-  const [editError, setEditError] = useState("");
 
-  async function loadMyLocations() {
-    const res = await http.get("/owner/locations");
-    setItems(res.data.items || res.data || []);
+  async function loadMyLocations(pageArg = page) {
+    const res = await http.get("/owner/locations", { params: { page: pageArg, limit: LIMIT } });
+
+    if (res.data && Array.isArray(res.data.items)) {
+      setItems(res.data.items);
+      setTotal(res.data.total || 0);
+      return;
+    }
+
+    const arr = res.data.items || res.data || [];
+    setItems(arr);
+    setTotal(Array.isArray(arr) ? arr.length : 0);
   }
 
   useEffect(() => {
@@ -51,7 +44,9 @@ export default function OwnerDashboardPage() {
       try {
         setLoading(true);
         setError("");
-        await loadMyLocations();
+        setEditingId(null);
+        setPage(1);
+        await loadMyLocations(1);
       } catch (err) {
         console.error(err);
         if (!cancelled) setError("Failed to load owner locations");
@@ -64,604 +59,170 @@ export default function OwnerDashboardPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onCreate(e) {
-    e.preventDefault();
-
-    setCreating(true);
-    setCreateError("");
-
+  async function refresh() {
+    setLoading(true);
+    setError("");
     try {
-      // normalize arrays
-      const fishArr = fishNames
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const seasonArr = seasonCodes
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const photoArr = photoUrls
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      // validate coords (avoid "" -> 0)
-      const latStr = String(lat).trim();
-      const lngStr = String(lng).trim();
-
-      if (!latStr || !lngStr) {
-        setCreateError("Lat and Lng are required");
-        return;
-      }
-
-      const latNum = Number(latStr);
-      const lngNum = Number(lngStr);
-
-      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-        setCreateError("Lat and Lng must be valid numbers");
-        return;
-      }
-
-      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-        setCreateError("Lat/Lng out of range");
-        return;
-      }
-
-      await http.post("/locations", {
-        title: title.trim(),
-        description: description.trim(),
-        region: region.trim().toUpperCase(), // ✅ match backend codes
-        waterType,
-        lat: latNum,
-        lng: lngNum,
-        fishNames: fishArr,
-        seasonCodes: seasonArr,
-        contactInfo: contactInfo.trim() || undefined,
-        photoUrls: photoArr,
-      });
-
-      // reset form
-      setTitle("");
-      setDescription("");
-      setRegion("");
-      setWaterType("LAKE");
-      setLat("");
-      setLng("");
-      setFishNames("");
-      setSeasonCodes("");
-      setContactInfo("");
-      setPhotoUrls("");
-
-      await loadMyLocations();
-    } catch (err) {
-      console.error(err);
-      setCreateError(err?.response?.data?.error || "Failed to create location");
+      await loadMyLocations(page);
+    } catch {
+      setError("Failed to load owner locations");
     } finally {
-      setCreating(false);
+      setLoading(false);
     }
+  }
+
+  async function onCreate(payload) {
+    await http.post("/locations", payload);
+    setActiveTab("LIST");
+    await refresh();
   }
 
   function startEdit(loc) {
     setEditingId(loc.id);
-    setEditDescription(loc.description || "");
-    setEditFishNames(
-      (loc.fish || [])
-        .map((x) => x.fish?.name)
-        .filter(Boolean)
-        .join(", "),
-    );
-    setEditSeasonCodes(
-      (loc.seasons || [])
-        .map((x) => x.season?.code)
-        .filter(Boolean)
-        .join(", "),
-    );
-    setEditContatcInfo(loc.contactInfo || "");
-    setEditPhotoUrls(
-      (loc.photos || [])
-        .map((p) => p.url)
-        .filter(Boolean)
-        .join(", "),
-    );
-    setEditLat(String(loc.lat ?? ""));
-    setEditLng(String(loc.lng ?? ""));
-    setEditTitle(loc.title || "");
-    setEditRegion(loc.region || "");
-    setEditWaterType(loc.waterType || "LAKE");
-    setEditError("");
+    setActiveTab("LIST");
   }
 
   function cancelEdit() {
     setEditingId(null);
-    setEditDescription("");
-    setEditFishNames("");
-    setEditSeasonCodes("");
-    setEditContatcInfo("");
-    setEditLat("");
-    setEditLng("");
-    setEditTitle("");
-    setEditRegion("");
-    setEditWaterType("LAKE");
-    setEditError("");
   }
 
-  async function saveEdit(e) {
-    e.preventDefault();
-    if (!editingId) return;
-
-    try {
-      setSaving(true);
-      setEditError("");
-
-      const fishArr = editFishNames
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const seasonArr = editSeasonCodes
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const photoArr = editPhotoUrls
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const latStr = String(editLat).trim();
-      const lngStr = String(editLng).trim();
-
-      if (!latStr || !lngStr) {
-        setEditError("Lat and Lng are required");
-        return;
-      }
-
-      const latNum = Number(latStr);
-      const lngNum = Number(lngStr);
-
-      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-        setEditError("Lat and Lng must be valid numbers");
-        return;
-      }
-
-      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-        setEditError("Lat/Lng out of range");
-        return;
-      }
-
-      const regionCode = editRegion.trim().toUpperCase();
-
-      await http.patch(`/owner/locations/${editingId}`, {
-        title: editTitle.trim(),
-        description: editDescription.trim(),
-        region: regionCode,
-        waterType: editWaterType,
-        fishNames: fishArr,
-        seasonCodes: seasonArr,
-        contactInfo: contactInfo.trim() || null,
-        photoUrls: photoArr,
-        lat: latNum,
-        lng: lngNum,
-      });
-
-      await loadMyLocations();
-      cancelEdit();
-    } catch (err) {
-      console.error(err);
-      setEditError(err?.response?.data?.error || "Failed to update location");
-    } finally {
-      setSaving(false);
-    }
+  async function onSaveEdit(id, payload) {
+    await http.patch(`/owner/locations/${id}`, payload);
+    await refresh();
   }
 
-  async function toggleHidden(loc) {
+  async function onToggleHidden(loc) {
     try {
-      const path =
-        loc.status === "HIDDEN"
-          ? `/owner/locations/${loc.id}/unhide`
-          : `/owner/locations/${loc.id}/hide`;
-
+      const path = loc.status === "HIDDEN" ? `/owner/locations/${loc.id}/unhide` : `/owner/locations/${loc.id}/hide`;
       await http.post(path);
-      await loadMyLocations();
+      await refresh();
     } catch (err) {
       console.error(err);
       alert(err?.response?.data?.error || "Failed to update status");
     }
   }
 
+  async function goNext() {
+    const next = page + 1;
+    setPage(next);
+    setLoading(true);
+    setError("");
+    setEditingId(null);
+    try {
+      await loadMyLocations(next);
+    } catch {
+      setError("Failed to load owner locations");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function goPrev() {
+    const prev = page - 1;
+    setPage(prev);
+    setLoading(true);
+    setError("");
+    setEditingId(null);
+    try {
+      await loadMyLocations(prev);
+    } catch {
+      setError("Failed to load owner locations");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (!user) return <div style={{ padding: 16 }}>Please login.</div>;
-  if (user.role !== "OWNER")
-    return <div style={{ padding: 16 }}>Owner only.</div>;
+  if (user.role !== "OWNER") return <div style={{ padding: 16 }}>Owner only.</div>;
 
   return (
-    <div style={{ padding: 16 }}>
-      <div style={{ marginBottom: 12 }}>
+    <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
+      <div style={{ marginBottom: 10 }}>
         <Link to="/">← Back</Link>
       </div>
 
-      <h1>Owner Dashboard</h1>
-
-      {/* Create */}
-      <div
-        style={{
-          marginTop: 16,
-          border: "1px solid #eee",
-          borderRadius: 10,
-          padding: 12,
-          maxWidth: 720,
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Create location</h2>
-
-        <form onSubmit={onCreate} style={{ display: "grid", gap: 10 }}>
-          <input
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <textarea
-            placeholder="Contacts (optional) — phone, email, Telegram"
-            value={contactInfo}
-            onChange={(e) => setContactInfo(e.target.value)}
-            rows={2}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <input
-            placeholder="Region (e.g. Kyiv)"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <select
-            value={waterType}
-            onChange={(e) => setWaterType(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          >
-            <option value="LAKE">LAKE</option>
-            <option value="RIVER">RIVER</option>
-            <option value="POND">POND</option>
-            <option value="SEA">SEA</option>
-            <option value="OTHER">OTHER</option>
-          </select>
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <input
-              placeholder="Lat (e.g. 50.45)"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              style={{
-                padding: 10,
-                borderRadius: 8,
-                border: "1px solid #ddd",
-                flex: 1,
-              }}
-            />
-            <input
-              placeholder="Lng (e.g. 30.52)"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              style={{
-                padding: 10,
-                borderRadius: 8,
-                border: "1px solid #ddd",
-                flex: 1,
-              }}
-            />
+      <div style={styles.header}>
+        <div>
+          <h2 style={{ margin: 0 }}>Owner Dashboard</h2>
+          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
+            Total: {total} | Page {page} of {totalPages}
           </div>
-
-          <input
-            placeholder="Fish (comma separated) e.g. Carp, Pike"
-            value={fishNames}
-            onChange={(e) => setFishNames(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <input
-            placeholder="Seasons (comma separated) e.g. SPRING, SUMMER"
-            value={seasonCodes}
-            onChange={(e) => setSeasonCodes(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <input
-            placeholder="Photo URLs (comma separated)"
-            value={photoUrls}
-            onChange={(e) => setPhotoUrls(e.target.value)}
-            style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-          />
-
-          <button
-            disabled={creating}
-            style={{
-              padding: "10px 14px",
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          >
-            {creating ? "Creating..." : "Create (PENDING)"}
-          </button>
-
-          {createError && <div style={{ color: "crimson" }}>{createError}</div>}
-        </form>
-      </div>
-
-      {/* List */}
-      <div style={{ marginTop: 24 }}>
-        <h2>My locations</h2>
-
-        {loading && <div>Loading...</div>}
-        {error && <div style={{ color: "crimson" }}>{error}</div>}
-
-        <div
-          style={{
-            display: "grid",
-            gap: 12,
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          }}
-        >
-          {items.map((loc) => (
-            <div
-              key={loc.id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 10,
-                padding: 12,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
-                <div style={{ fontWeight: 700 }}>{loc.title}</div>
-                <span style={{ opacity: 0.8 }}>{loc.status}</span>
-              </div>
-
-              <div style={{ opacity: 0.8, marginTop: 4 }}>
-                {loc.region} • {loc.waterType}
-              </div>
-
-              <div style={{ marginTop: 8, opacity: 0.9 }}>
-                {loc.description}
-              </div>
-
-              {loc.photos?.[0]?.url && (
-                <img
-                  src={loc.photos[0].url}
-                  alt=""
-                  style={{
-                    width: "100%",
-                    height: 160,
-                    objectFit: "cover",
-                    borderRadius: 10,
-                    marginTop: 10,
-                  }}
-                />
-              )}
-
-              {loc.contactInfo && (
-                <div style={{ marginTop: 6, fontSize: 13 }}>
-                  <strong>Contacts:</strong>{" "}
-                  <span style={{ opacity: 0.9 }}>{loc.contactInfo}</span>
-                </div>
-              )}
-
-              <div style={{ marginTop: 8, fontSize: 13, opacity: 0.8 }}>
-                Fish:{" "}
-                {(loc.fish || [])
-                  .map((x) => x.fish?.name)
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </div>
-
-              <div style={{ marginTop: 4, fontSize: 13, opacity: 0.8 }}>
-                Seasons:{" "}
-                {(loc.seasons || [])
-                  .map((x) => x.season?.code)
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </div>
-
-              <div style={{ marginTop: 10 }}>
-                {editingId === loc.id ? (
-                  <form onSubmit={saveEdit} style={{ display: "grid", gap: 8 }}>
-                    <textarea
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      rows={3}
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <input
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder="Title"
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <textarea
-                      value={editContactInfo}
-                      onChange={(e) => setEditContatcInfo(e.target.value)}
-                      placeholder="Contacts (optional)"
-                      rows={2}
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <input
-                      value={editRegion}
-                      onChange={(e) => setEditRegion(e.target.value)}
-                      placeholder="Region (e.g. KYIV)"
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <select
-                      value={editWaterType}
-                      onChange={(e) => setEditWaterType(e.target.value)}
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      <option value="LAKE">LAKE</option>
-                      <option value="RIVER">RIVER</option>
-                      <option value="POND">POND</option>
-                      <option value="SEA">SEA</option>
-                      <option value="OTHER">OTHER</option>
-                    </select>
-
-                    <div style={{ display: "flex", gap: 10 }}>
-                      <input
-                        value={editLat}
-                        onChange={(e) => setEditLat(e.target.value)}
-                        placeholder="Lat (e.g. 50.45)"
-                        style={{
-                          padding: 10,
-                          borderRadius: 8,
-                          border: "1px solid #ddd",
-                          flex: 1,
-                        }}
-                      />
-                      <input
-                        value={editLng}
-                        onChange={(e) => setEditLng(e.target.value)}
-                        placeholder="Lng (e.g. 30.52)"
-                        style={{
-                          padding: 10,
-                          borderRadius: 8,
-                          border: "1px solid #ddd",
-                          flex: 1,
-                        }}
-                      />
-                    </div>
-
-                    <input
-                      value={editFishNames}
-                      onChange={(e) => setEditFishNames(e.target.value)}
-                      placeholder="Fish: Carp, Pike"
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-                    <input
-                      value={editSeasonCodes}
-                      onChange={(e) => setEditSeasonCodes(e.target.value)}
-                      placeholder="Seasons: SPRING, SUMMER"
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <input
-                      value={editPhotoUrls}
-                      onChange={(e) => setEditPhotoUrls(e.target.value)}
-                      placeholder="Photo URLs (comma separated)"
-                      style={{
-                        padding: 10,
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    />
-
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        disabled={saving}
-                        style={{
-                          padding: "8px 12px",
-                          borderRadius: 8,
-                          border: "1px solid #ddd",
-                        }}
-                      >
-                        {saving ? "Saving..." : "Save (will stay PENDING)"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        style={{
-                          padding: "8px 12px",
-                          borderRadius: 8,
-                          border: "1px solid #ddd",
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-
-                    {editError && (
-                      <div style={{ color: "crimson" }}>{editError}</div>
-                    )}
-                  </form>
-                ) : (
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      onClick={() => startEdit(loc)}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleHidden(loc)}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: 8,
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      {loc.status === "HIDDEN"
-                        ? "Unhide (send for review)"
-                        : "Hide"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
+
+        <button onClick={refresh} disabled={loading}>
+          Refresh
+        </button>
       </div>
+
+      <div style={styles.tabs}>
+        <button
+          onClick={() => setActiveTab("LIST")}
+          style={{ ...styles.tabBtn, ...(activeTab === "LIST" ? styles.tabBtnActive : null) }}
+        >
+          My locations
+        </button>
+
+        <button
+          onClick={() => setActiveTab("CREATE")}
+          style={{ ...styles.tabBtn, ...(activeTab === "CREATE" ? styles.tabBtnActive : null) }}
+        >
+          Create
+        </button>
+      </div>
+
+      {activeTab === "CREATE" ? (
+        <CreateLocationForm onCreate={onCreate} />
+      ) : (
+        <MyLocationsList
+          items={items}
+          loading={loading}
+          error={error}
+          page={page}
+          total={total}
+          totalPages={totalPages}
+          onPrev={goPrev}
+          onNext={goNext}
+          onRefresh={refresh}
+          editingId={editingId}
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSaveEdit={onSaveEdit}
+          onToggleHidden={onToggleHidden}
+        />
+      )}
     </div>
   );
 }
+
+const styles = {
+  header: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    position: "sticky",
+    top: 0,
+    background: "#fff",
+    padding: "12px 0",
+    zIndex: 2,
+  },
+  tabs: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    marginTop: 8,
+  },
+  tabBtn: {
+    padding: "6px 10px",
+    borderRadius: 10,
+    border: "1px solid #ddd",
+    background: "#fff",
+    cursor: "pointer",
+  },
+  tabBtnActive: {
+    borderColor: "#111",
+  },
+};

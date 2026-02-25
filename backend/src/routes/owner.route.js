@@ -5,38 +5,42 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 // Все в /owner тільки для OWNER
 router.use(authenticateToken, requireRole("OWNER"));
 
-// GET /owner/locations?status=PENDING&page=1&limit=20
+// GET /owner/locations?page=1&limit=20
 router.get("/locations", async (req, res) => {
   try {
-    const { status, page = "1", limit = "20" } = req.query;
+    const userId = req.user.id;
 
-    const take = Math.min(parseInt(limit, 10) || 20, 100);
-    const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
+    const page = Math.max(1, parseInt(req.query.page || "1", 10));
+    const limitRaw = parseInt(req.query.limit || "20", 10);
+    const limit = Math.min(50, Math.max(1, limitRaw)); // щоб не можна було попросити 5000
+    const skip = (page - 1) * limit;
 
-    const where = {
-      ownerId: req.user.id,
-      ...(status ? { status: String(status) } : {}),
-    };
+    const where = { ownerId: userId };
 
-    const [items, total] = await Promise.all([
+    const [total, items] = await Promise.all([
+      prisma.location.count({ where }),
       prisma.location.findMany({
         where,
-        include: {
-          owner: { select: { id: true, displayName: true } },
-          fish: { include: { fish: true } },
-          seasons: { include: { season: true } },
-          photos: true,
-        },
         orderBy: { createdAt: "desc" },
         skip,
-        take,
+        take: limit,
+        include: {
+          // owner тут не обовʼязковий, але хай буде консистентно
+          owner: { select: { id: true, displayName: true, email: true } },
+
+          // owner page потребує фотки для превʼю і для редагування,
+          // тому тягнемо всі (тільки url)
+          photos: { select: { id: true, url: true, createdAt: true } },
+
+          fish: { include: { fish: true } },
+          seasons: { include: { season: true } },
+        },
       }),
-      prisma.location.count({ where }),
     ]);
 
-    res.json({ items, total, page: Number(page), limit: take });
-  } catch (e) {
-    console.error(e);
+    res.json({ items, total, page, limit });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
