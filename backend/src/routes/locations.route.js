@@ -38,6 +38,7 @@ router.get("/", async (req, res) => {
       waterType,
       fish,
       season,
+      seasons,
       page = "1",
       limit = "10",
     } = req.query;
@@ -48,6 +49,22 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid region" });
     }
 
+    const fishList = fish
+      ? String(fish)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+
+    const seasonsList = seasons
+      ? String(seasons)
+          .split(",")
+          .map((s) => s.trim().toUpperCase())
+          .filter(Boolean)
+      : season
+        ? [String(season).trim().toUpperCase()]
+        : [];
+
     const take = Math.min(parseInt(limit, 10) || 10, 50);
     const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
 
@@ -55,9 +72,11 @@ router.get("/", async (req, res) => {
       status: "APPROVED",
       ...(region ? { region: regionCode } : {}),
       ...(waterType ? { waterType: String(waterType) } : {}),
-      ...(fish ? { fish: { some: { fish: { name: String(fish) } } } } : {}),
-      ...(season
-        ? { seasons: { some: { season: { code: String(season) } } } }
+      ...(fishList.length
+        ? { fish: { some: { fish: { name: { in: fishList } } } } }
+        : {}),
+      ...(seasonsList.length
+        ? { seasons: { some: { season: { code: { in: seasonsList } } } } }
         : {}),
     };
 

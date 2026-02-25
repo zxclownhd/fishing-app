@@ -22,7 +22,11 @@ export default function MyLocationsList({
       {error ? (
         <div style={styles.error}>
           <div>{error}</div>
-          <button onClick={onRefresh} disabled={loading} style={{ marginTop: 8 }}>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            style={{ marginTop: 8 }}
+          >
             Retry
           </button>
         </div>
@@ -38,14 +42,28 @@ export default function MyLocationsList({
         {items.map((loc) => {
           const isEditing = editingId === loc.id;
 
-          const fishChips = (loc.fish || []).slice(0, 8).map((x) => (
-            <span key={x.id} style={styles.chip}>
+          const fishChips = (loc.fish || []).slice(0, 8).map((x, idx) => (
+            <span
+              key={
+                x.fishId
+                  ? `${loc.id}-fish-${x.fishId}`
+                  : `${loc.id}-fish-${idx}`
+              }
+              style={styles.chip}
+            >
               {x.fish?.name || "fish"}
             </span>
           ));
 
-          const seasonChips = (loc.seasons || []).slice(0, 8).map((x) => (
-            <span key={x.id} style={styles.chip}>
+          const seasonChips = (loc.seasons || []).slice(0, 8).map((x, idx) => (
+            <span
+              key={
+                x.seasonId
+                  ? `${loc.id}-season-${x.seasonId}`
+                  : `${loc.id}-season-${idx}`
+              }
+              style={styles.chip}
+            >
               {x.season?.code || x.season?.name || "season"}
             </span>
           ));
@@ -64,7 +82,11 @@ export default function MyLocationsList({
 
                   {isEditing ? (
                     <div style={styles.editBox}>
-                      <EditLocationForm loc={loc} onSave={onSaveEdit} onCancel={onCancelEdit} />
+                      <EditLocationForm
+                        loc={loc}
+                        onSave={onSaveEdit}
+                        onCancel={onCancelEdit}
+                      />
                     </div>
                   ) : null}
                 </div>
@@ -75,12 +97,19 @@ export default function MyLocationsList({
                     {isEditing ? "Editing" : "Edit"}
                   </button>
 
-                  <button onClick={() => onToggleHidden(loc)} disabled={loading}>
+                  <button
+                    onClick={() => onToggleHidden(loc)}
+                    disabled={loading}
+                  >
                     {loc.status === "HIDDEN" ? "Unhide" : "Hide"}
                   </button>
 
                   {isEditing ? (
-                    <button type="button" onClick={onCancelEdit} disabled={loading}>
+                    <button
+                      type="button"
+                      onClick={onCancelEdit}
+                      disabled={loading}
+                    >
                       Close edit
                     </button>
                   ) : null}

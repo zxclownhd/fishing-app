@@ -1,111 +1,52 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
-import { Link } from "react-router-dom";
 import LocationCard from "../components/LocationCard";
 
-const REGION_OPTIONS = [
-  "VINNYTSIA",
-  "VOLYN",
-  "DNIPROPETROVSK",
-  "DONETSK",
-  "ZHYTOMYR",
-  "ZAKARPATTIA",
-  "ZAPORIZHZHIA",
-  "IVANO_FRANKIVSK",
-  "KYIV",
-  "KIROVOHRAD",
-  "LUHANSK",
-  "LVIV",
-  "MYKOLAIV",
-  "ODESA",
-  "POLTAVA",
-  "RIVNE",
-  "SUMY",
-  "TERNOPIL",
-  "KHARKIV",
-  "KHERSON",
-  "KHMELNYTSKYI",
-  "CHERKASY",
-  "CHERNIVTSI",
-  "CHERNIHIV",
-  "CRIMEA",
-];
+import RegionPicker from "../components/pickers/RegionPicker";
+import FishPicker from "../components/pickers/FishPicker";
+import SeasonPicker from "../components/pickers/SeasonPicker";
+
+const LIMIT = 10;
 
 export default function HomePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // UI controls
+  const [regionSelected, setRegionSelected] = useState("");
   const [waterType, setWaterType] = useState("");
-  const [season, setSeason] = useState("");
+  const [fishSelected, setFishSelected] = useState([]);
+  const [seasonsSelected, setSeasonsSelected] = useState([]); // multi сезони
 
+  // applied filters
   const [filters, setFilters] = useState({
     region: "",
     waterType: "",
-    fish: "",
-    season: "",
+    fish: [],
+    seasons: [],
   });
-
-  const [regionQuery, setRegionQuery] = useState("");
-  const [regionSelected, setRegionSelected] = useState("");
-  const [regionOpen, setRegionOpen] = useState(false);
-
-  const q = regionQuery.trim().toLowerCase();
-  const regionFiltered = REGION_OPTIONS.filter((r) =>
-    r.toLowerCase().includes(q),
-  );
-
-  const [fishOptions, setFishOptions] = useState([]);
-  const [fishQuery, setFishQuery] = useState("");
-  const [fishSelected, setFishSelected] = useState([]);
-  const [fishOpen, setFishOpen] = useState(false);
-
-  const loadFish = async () => {
-    try {
-      const res = await http.get("/locations/fish");
-      const names = (res.data.items || []).map((item) => item.name);
-
-      setFishOptions(names);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load fish");
-    }
-  };
-
-  const fishFiltered = fishOptions
-    .filter((name) => !fishSelected.includes(name))
-    .filter((name) =>
-      name.toLowerCase().includes(fishQuery.trim().toLowerCase()),
-    )
-    .slice(0, 10);
-
-  function addFish(name) {
-    setFishSelected((prev) => (prev.includes(name) ? prev : [...prev, name]));
-  }
-
-  function removeFish(name) {
-    setFishSelected((prev) => prev.filter((x) => x !== name));
-  }
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 10;
 
-  const canNext = page * limit < total;
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
   const canPrev = page > 1;
+  const canNext = page < totalPages;
 
-  async function load(activeFilters) {
-    const params = {
-      page,
-      limit,
-    };
+  async function load(activeFilters, pageArg = page) {
+    const params = { page: pageArg, limit: LIMIT };
 
     if (activeFilters.region) params.region = activeFilters.region;
     if (activeFilters.waterType) params.waterType = activeFilters.waterType;
+
     if (activeFilters.fish && activeFilters.fish.length) {
       params.fish = activeFilters.fish.join(",");
     }
-    if (activeFilters.season) params.season = activeFilters.season;
+
+    if (activeFilters.seasons && activeFilters.seasons.length) {
+      params.seasons = activeFilters.seasons.join(",");
+    }
 
     try {
       setLoading(true);
@@ -122,42 +63,34 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    loadFish();
-  }, []);
-
-  useEffect(() => {
-    load(filters);
+    load(filters, page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, filters]);
 
   function onSearch(e) {
     e.preventDefault();
-
     setPage(1);
 
     setFilters({
       region: regionSelected,
       waterType: waterType.trim(),
       fish: fishSelected,
-      season: season.trim(),
+      seasons: seasonsSelected,
     });
   }
 
   function onReset() {
-    setWaterType("");
-    setSeason("");
-    setRegionQuery("");
     setRegionSelected("");
-    setRegionOpen(false);
+    setWaterType("");
     setFishSelected([]);
-    setFishQuery("");
-    setFishOpen(false);
+    setSeasonsSelected([]);
     setPage(1);
 
     setFilters({
       region: "",
       waterType: "",
-      fish: "",
-      season: "",
+      fish: [],
+      seasons: [],
     });
   }
 
@@ -169,144 +102,33 @@ export default function HomePage() {
         onSubmit={onSearch}
         style={{ display: "grid", gap: 8, maxWidth: 520, marginBottom: 16 }}
       >
-        <div style={{ position: "relative" }}>
-          <input
-            placeholder="Region"
-            value={regionQuery}
-            onChange={(e) => {
-              setRegionQuery(e.target.value);
-              setRegionOpen(true);
-              setRegionSelected("");
-            }}
-            onFocus={() => setRegionOpen(true)}
-            onBlur={() => setRegionOpen(false)}
-          />
+        <RegionPicker value={regionSelected} onChange={setRegionSelected} placeholder="Region" />
 
-          {regionOpen && regionFiltered.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                zIndex: 10,
-                background: "white",
-                border: "1px solid #ddd",
-                width: "100%",
-                marginTop: 4,
-                borderRadius: 8,
-                overflow: "hidden",
-                maxHeight: 220,
-                overflowY: "auto",
-              }}
-            >
-              {regionFiltered.map((r) => (
-                <div
-                  key={r}
-                  onMouseDown={() => {
-                    setRegionSelected(r);
-                    setRegionQuery(r);
-                    setRegionOpen(false);
-                  }}
-                  style={{ padding: 8, cursor: "pointer" }}
-                >
-                  {r}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <select
-          value={waterType}
-          onChange={(e) => setWaterType(e.target.value)}
-        >
-          <option value={""}>All water types</option>
-          <option value={"LAKE"}>Lake</option>
-          <option value={"RIVER"}>River</option>
-          <option value={"POND"}>Pond</option>
-          <option value={"SEA"}>Sea</option>
+        <select value={waterType} onChange={(e) => setWaterType(e.target.value)} style={input}>
+          <option value="">All water types</option>
+          <option value="LAKE">Lake</option>
+          <option value="RIVER">River</option>
+          <option value="POND">Pond</option>
+          <option value="SEA">Sea</option>
+          <option value="OTHER">Other</option>
         </select>
 
-        <div style={{ position: "relative", display: "grid", gap: 6 }}>
-          {/* chips */}
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {fishSelected.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => removeFish(name)}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: 999,
-                  padding: "4px 10px",
-                }}
-              >
-                {name} ✕
-              </button>
-            ))}
-          </div>
+        <FishPicker value={fishSelected} onChange={setFishSelected} />
 
-          {/* input */}
-          <input
-            placeholder="Fish (type to search)"
-            value={fishQuery}
-            onChange={(e) => {
-              setFishQuery(e.target.value);
-              setFishOpen(true);
-            }}
-            onFocus={() => setFishOpen(true)}
-            onBlur={() => setFishOpen(false)}
-          />
-
-          {/* dropdown */}
-          {fishOpen && fishFiltered.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                zIndex: 10,
-                background: "white",
-                border: "1px solid #ddd",
-                width: "100%",
-                marginTop: 72, // щоб випало під інпутом; потім відполіруєш
-                borderRadius: 8,
-                overflow: "hidden",
-                maxHeight: 220,
-                overflowY: "auto",
-              }}
-            >
-              {fishFiltered.map((name) => (
-                <div
-                  key={name}
-                  onMouseDown={() => {
-                    addFish(name);
-                    setFishQuery("");
-                    setFishOpen(false);
-                  }}
-                  style={{ padding: 8, cursor: "pointer" }}
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <select value={season} onChange={(e) => setSeason(e.target.value)}>
-          <option value={""}>All seasons</option>
-          <option value={"SPRING"}>Spring</option>
-          <option value={"SUMMER"}>Summer</option>
-          <option value={"AUTUMN"}>Autumn</option>
-          <option value={"WINTER"}>Winter</option>
-        </select>
+        <SeasonPicker value={seasonsSelected} onChange={setSeasonsSelected} />
 
         <div style={{ display: "flex", gap: 8 }}>
-          <button type="submit">Search</button>
-          <button type="button" onClick={onReset}>
+          <button type="submit" disabled={loading}>
+            Search
+          </button>
+          <button type="button" onClick={onReset} disabled={loading}>
             Reset
           </button>
         </div>
       </form>
 
-      {loading && <div>Loading...</div>}
-      {error && <div style={{ color: "crimson" }}>{error}</div>}
+      {loading ? <div>Loading...</div> : null}
+      {error ? <div style={{ color: "crimson" }}>{error}</div> : null}
 
       <div
         style={{
@@ -316,26 +138,25 @@ export default function HomePage() {
         }}
       >
         {items.map((loc) => (
-          <LocationCard
-            key={loc.id}
-            loc={loc}
-            to={`/locations/${loc.id}`}
-            variant="public"
-          />
+          <LocationCard key={loc.id} loc={loc} to={`/locations/${loc.id}`} variant="public" />
         ))}
       </div>
 
-      <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
-        <button disabled={!canPrev} onClick={() => setPage(page - 1)}>
+      <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
+        <button disabled={!canPrev || loading} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>
 
-        <div>Page {page}</div>
+        <div style={{ opacity: 0.8 }}>
+          Page {page} of {totalPages}
+        </div>
 
-        <button disabled={!canNext} onClick={() => setPage(page + 1)}>
+        <button disabled={!canNext || loading} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>
     </div>
   );
 }
+
+const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };

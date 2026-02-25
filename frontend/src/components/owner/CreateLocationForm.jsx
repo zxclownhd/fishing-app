@@ -1,14 +1,20 @@
 import { useState } from "react";
+import RegionPicker from "../pickers/RegionPicker";
+import FishPicker from "../pickers/FishPicker";
+import SeasonPicker from "../pickers/SeasonPicker";
 
 export default function CreateLocationForm({ onCreate }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [region, setRegion] = useState("");
+
+  const [regionSelected, setRegionSelected] = useState("");
   const [waterType, setWaterType] = useState("LAKE");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
-  const [fishNames, setFishNames] = useState("");
-  const [seasonCodes, setSeasonCodes] = useState("");
+
+  const [fishSelected, setFishSelected] = useState([]);
+  const [seasonSelected, setSeasonSelected] = useState([]);
+
   const [contactInfo, setContactInfo] = useState("");
   const [photoUrls, setPhotoUrls] = useState("");
 
@@ -21,8 +27,6 @@ export default function CreateLocationForm({ onCreate }) {
     setCreateError("");
 
     try {
-      const fishArr = fishNames.split(",").map((s) => s.trim()).filter(Boolean);
-      const seasonArr = seasonCodes.split(",").map((s) => s.trim()).filter(Boolean);
       const photoArr = photoUrls.split(",").map((s) => s.trim()).filter(Boolean);
 
       const latStr = String(lat).trim();
@@ -47,24 +51,24 @@ export default function CreateLocationForm({ onCreate }) {
       await onCreate({
         title: title.trim(),
         description: description.trim(),
-        region: region.trim().toUpperCase(),
+        region: regionSelected,
         waterType,
         lat: latNum,
         lng: lngNum,
-        fishNames: fishArr,
-        seasonCodes: seasonArr,
+        fishNames: fishSelected,
+        seasonCodes: seasonSelected,
         contactInfo: contactInfo.trim() || undefined,
         photoUrls: photoArr,
       });
 
       setTitle("");
       setDescription("");
-      setRegion("");
+      setRegionSelected("");
       setWaterType("LAKE");
       setLat("");
       setLng("");
-      setFishNames("");
-      setSeasonCodes("");
+      setFishSelected([]);
+      setSeasonSelected([]);
       setContactInfo("");
       setPhotoUrls("");
     } catch (err) {
@@ -81,23 +85,11 @@ export default function CreateLocationForm({ onCreate }) {
       <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
         <input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} style={input} />
 
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
-          style={input}
-        />
+        <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} style={input} />
 
-        <textarea
-          placeholder="Contacts (optional) phone, email, Telegram"
-          value={contactInfo}
-          onChange={(e) => setContactInfo(e.target.value)}
-          rows={2}
-          style={input}
-        />
+        <textarea placeholder="Contacts (optional) phone, email, Telegram" value={contactInfo} onChange={(e) => setContactInfo(e.target.value)} rows={2} style={input} />
 
-        <input placeholder="Region (e.g. Kyiv)" value={region} onChange={(e) => setRegion(e.target.value)} style={input} />
+        <RegionPicker value={regionSelected} onChange={setRegionSelected} />
 
         <select value={waterType} onChange={(e) => setWaterType(e.target.value)} style={input}>
           <option value="LAKE">LAKE</option>
@@ -112,19 +104,9 @@ export default function CreateLocationForm({ onCreate }) {
           <input placeholder="Lng (e.g. 30.52)" value={lng} onChange={(e) => setLng(e.target.value)} style={{ ...input, flex: 1 }} />
         </div>
 
-        <input
-          placeholder="Fish (comma separated) e.g. Carp, Pike"
-          value={fishNames}
-          onChange={(e) => setFishNames(e.target.value)}
-          style={input}
-        />
+        <FishPicker value={fishSelected} onChange={setFishSelected} />
 
-        <input
-          placeholder="Seasons (comma separated) e.g. SPRING, SUMMER"
-          value={seasonCodes}
-          onChange={(e) => setSeasonCodes(e.target.value)}
-          style={input}
-        />
+        <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
         <input placeholder="Photo URLs (comma separated)" value={photoUrls} onChange={(e) => setPhotoUrls(e.target.value)} style={input} />
 

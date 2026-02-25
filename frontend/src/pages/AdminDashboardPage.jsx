@@ -233,7 +233,9 @@ const styles = {
   tabBtn: {
     padding: "6px 10px",
     borderRadius: 10,
-    border: "1px solid #ddd",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "#ddd",
     background: "#fff",
     cursor: "pointer",
   },

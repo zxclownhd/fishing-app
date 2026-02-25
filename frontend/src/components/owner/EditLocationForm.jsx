@@ -1,30 +1,34 @@
 import { useEffect, useState } from "react";
+import RegionPicker from "../pickers/RegionPicker";
+import FishPicker from "../pickers/FishPicker";
+import SeasonPicker from "../pickers/SeasonPicker";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editDescription, setEditDescription] = useState("");
-  const [editFishNames, setEditFishNames] = useState("");
-  const [editSeasonCodes, setEditSeasonCodes] = useState("");
   const [editLat, setEditLat] = useState("");
   const [editLng, setEditLng] = useState("");
   const [editTitle, setEditTitle] = useState("");
-  const [editRegion, setEditRegion] = useState("");
+  const [editRegionSelected, setEditRegionSelected] = useState("");
   const [editWaterType, setEditWaterType] = useState("LAKE");
   const [editContactInfo, setEditContactInfo] = useState("");
   const [editPhotoUrls, setEditPhotoUrls] = useState("");
+
+  const [fishSelected, setFishSelected] = useState([]);
+  const [seasonSelected, setSeasonSelected] = useState([]);
 
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
   useEffect(() => {
     setEditDescription(loc.description || "");
-    setEditFishNames((loc.fish || []).map((x) => x.fish?.name).filter(Boolean).join(", "));
-    setEditSeasonCodes((loc.seasons || []).map((x) => x.season?.code).filter(Boolean).join(", "));
+    setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
+    setSeasonSelected((loc.seasons || []).map((x) => x.season?.code).filter(Boolean));
     setEditContactInfo(loc.contactInfo || "");
     setEditPhotoUrls((loc.photos || []).map((p) => p.url).filter(Boolean).join(", "));
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
     setEditTitle(loc.title || "");
-    setEditRegion(loc.region || "");
+    setEditRegionSelected(loc.region || "");
     setEditWaterType(loc.waterType || "LAKE");
     setEditError("");
   }, [loc]);
@@ -35,8 +39,6 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     setEditError("");
 
     try {
-      const fishArr = editFishNames.split(",").map((s) => s.trim()).filter(Boolean);
-      const seasonArr = editSeasonCodes.split(",").map((s) => s.trim()).filter(Boolean);
       const photoArr = editPhotoUrls.split(",").map((s) => s.trim()).filter(Boolean);
 
       const latStr = String(editLat).trim();
@@ -61,10 +63,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       await onSave(loc.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
-        region: editRegion.trim().toUpperCase(),
+        region: editRegionSelected,
         waterType: editWaterType,
-        fishNames: fishArr,
-        seasonCodes: seasonArr,
+        fishNames: fishSelected,
+        seasonCodes: seasonSelected,
         contactInfo: editContactInfo.trim() || null,
         photoUrls: photoArr,
         lat: latNum,
@@ -87,7 +89,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <textarea value={editContactInfo} onChange={(e) => setEditContactInfo(e.target.value)} placeholder="Contacts (optional)" rows={2} style={input} />
 
-      <input value={editRegion} onChange={(e) => setEditRegion(e.target.value)} placeholder="Region (e.g. KYIV)" style={input} />
+      <RegionPicker value={editRegionSelected} onChange={setEditRegionSelected} />
 
       <select value={editWaterType} onChange={(e) => setEditWaterType(e.target.value)} style={input}>
         <option value="LAKE">LAKE</option>
@@ -102,9 +104,9 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         <input value={editLng} onChange={(e) => setEditLng(e.target.value)} placeholder="Lng (e.g. 30.52)" style={{ ...input, flex: 1 }} />
       </div>
 
-      <input value={editFishNames} onChange={(e) => setEditFishNames(e.target.value)} placeholder="Fish: Carp, Pike" style={input} />
+      <FishPicker value={fishSelected} onChange={setFishSelected} />
 
-      <input value={editSeasonCodes} onChange={(e) => setEditSeasonCodes(e.target.value)} placeholder="Seasons: SPRING, SUMMER" style={input} />
+      <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
       <input value={editPhotoUrls} onChange={(e) => setEditPhotoUrls(e.target.value)} placeholder="Photo URLs (comma separated)" style={input} />
 
