@@ -15,6 +15,8 @@ export default function App() {
   const nav = useNavigate();
   const [user, setUser] = useState(getStoredUser());
 
+  const userLabel = user.displayName?.trim() ? user.displayName.trim() : user.email;
+
   // простий спосіб: оновлювати user при зміні localStorage після login/register
   // (ми зробимо це через custom event)
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function App() {
           {user ? (
             <>
               <span style={{ opacity: 0.8 }}>
-                {user.email} ({user.role})
+                {userLabel} ({user.role})
               </span>
               <button
                 onClick={logout}

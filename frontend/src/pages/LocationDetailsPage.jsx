@@ -143,6 +143,10 @@ export default function LocationDetailsPage() {
         {location.region} • {location.waterType}
       </div>
 
+      <div style={{ opacity: 0.75, marginTop: 6 }}>
+        Posted by: <strong>{location.owner?.displayName || "Unknown"}</strong>
+      </div>
+
       <div style={{ marginTop: 8 }}>
         Rating: {location.avgRating ?? "—"} ({location.reviewsCount ?? 0})
       </div>
