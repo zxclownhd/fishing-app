@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 import OwnerDashboardPage from "./pages/OwnerDashboardPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import FavoritesPage from "./pages/FavoritesPage";
 
 import { clearAuth, getStoredUser } from "./auth/auth";
 
@@ -54,6 +55,10 @@ export default function App() {
         {user?.role === "OWNER" && <Link to="/owner">Owner</Link>}
         {user?.role === "ADMIN" && <Link to="/admin">Admin</Link>}
 
+        {(user?.role === "OWNER" || user?.role === "USER") && (
+          <Link to="/favorites">Favorites</Link>
+        )}
+
         <div
           style={{
             marginLeft: "auto",
@@ -95,8 +100,7 @@ export default function App() {
         <Route path="/owner" element={<OwnerDashboardPage />} />
         <Route path="/admin" element={<AdminDashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        {/* Admin додамо наступним кроком */}
-        {/* <Route path="/admin" element={<AdminDashboardPage />} /> */}
+        <Route path="/favorites" element={<FavoritesPage />} />
       </Routes>
     </div>
   );

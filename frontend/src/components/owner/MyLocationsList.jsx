@@ -93,9 +93,15 @@ export default function MyLocationsList({
               }
               actions={
                 <>
-                  <button onClick={() => onStartEdit(loc)} disabled={loading}>
-                    {isEditing ? "Editing" : "Edit"}
-                  </button>
+                  {isEditing ? (
+                    <button type="button" disabled>
+                      Editing
+                    </button>
+                  ) : (
+                    <button onClick={() => onStartEdit(loc)} disabled={loading}>
+                      Edit
+                    </button>
+                  )}
 
                   <button
                     onClick={() => onToggleHidden(loc)}
@@ -103,16 +109,6 @@ export default function MyLocationsList({
                   >
                     {loc.status === "HIDDEN" ? "Unhide" : "Hide"}
                   </button>
-
-                  {isEditing ? (
-                    <button
-                      type="button"
-                      onClick={onCancelEdit}
-                      disabled={loading}
-                    >
-                      Close edit
-                    </button>
-                  ) : null}
                 </>
               }
             />

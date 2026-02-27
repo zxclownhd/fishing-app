@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
@@ -39,6 +39,81 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     setEditWaterType(loc.waterType || "LAKE");
     setEditError("");
   }, [loc]);
+
+  const isDirty = useMemo(() => {
+    const norm = (v) => String(v ?? "").trim();
+
+    const origTitle = norm(loc.title);
+    const origDesc = norm(loc.description);
+    const origContacts = norm(loc.contactInfo);
+
+    const origLat = norm(loc.lat);
+    const origLng = norm(loc.lng);
+
+    const origRegion = norm(loc.region);
+    const origWater = norm(loc.waterType || "LAKE");
+
+    const origFish = (loc.fish || [])
+      .map((x) => x.fish?.name)
+      .filter(Boolean)
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+
+    const origSeasons = (loc.seasons || [])
+      .map((x) => x.season?.code)
+      .filter(Boolean)
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+
+    const origPhotos = (loc.photos || [])
+      .map((p) => p.url)
+      .filter(Boolean)
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+
+    const curFish = (fishSelected || [])
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+    const curSeasons = (seasonSelected || [])
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+    const curPhotos = editPhotoUrls
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .sort()
+      .join("|");
+
+    return (
+      norm(editTitle) !== origTitle ||
+      norm(editDescription) !== origDesc ||
+      norm(editContactInfo) !== origContacts ||
+      norm(editLat) !== origLat ||
+      norm(editLng) !== origLng ||
+      norm(editRegionSelected) !== origRegion ||
+      norm(editWaterType) !== origWater ||
+      curFish !== origFish ||
+      curSeasons !== origSeasons ||
+      curPhotos !== origPhotos
+    );
+  }, [
+    loc,
+    editTitle,
+    editDescription,
+    editContactInfo,
+    editLat,
+    editLng,
+    editRegionSelected,
+    editWaterType,
+    fishSelected,
+    seasonSelected,
+    editPhotoUrls,
+  ]);
 
   async function submit(e) {
     e.preventDefault();
@@ -159,13 +234,20 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button disabled={saving} style={btn}>
+        <button disabled={saving || !isDirty} style={btn}>
           {saving ? "Saving..." : "Save (will stay PENDING)"}
         </button>
+
         <button type="button" onClick={onCancel} style={btn}>
           Cancel
         </button>
       </div>
+
+      {!saving && !isDirty ? (
+        <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+          No changes to save
+        </div>
+      ) : null}
 
       {editError ? <div style={{ color: "crimson" }}>{editError}</div> : null}
     </form>

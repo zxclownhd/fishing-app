@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
+import { useFavorites } from "../client/hooks/useFavorites";
 
 export default function LocationDetailsPage() {
   const { id } = useParams();
@@ -14,6 +15,8 @@ export default function LocationDetailsPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { canUseFavorites, isFavorite, toggleFavorite } = useFavorites();
 
   // review form
   const [rating, setRating] = useState(5);
@@ -142,6 +145,19 @@ export default function LocationDetailsPage() {
       <div style={{ opacity: 0.8 }}>
         {location.region} • {location.waterType}
       </div>
+
+      {canUseFavorites ? (
+        <button
+          type="button"
+          onClick={() => toggleFavorite(location.id)}
+          style={{ fontSize: 20, lineHeight: 1 }}
+          title={
+            isFavorite(location.id) ? "Remove from favorites" : "Add to favorites"
+          }
+        >
+          {isFavorite(location.id) ? "★" : "☆"}
+        </button>
+      ) : null}
 
       <div style={{ opacity: 0.75, marginTop: 6 }}>
         Posted by: <strong>{location.owner?.displayName || "Unknown"}</strong>

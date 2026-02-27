@@ -75,10 +75,16 @@ router.get(
       const skip = (page - 1) * limit;
 
       const [total, favorites] = await Promise.all([
-        prisma.favorite.count({ where: { userId } }),
+        prisma.favorite.count({ where: { userId, location: { status: "APPROVED" } } }),
         prisma.favorite.findMany({
-          where: { userId },
-          include: { location: true },
+          where: { userId, location: { status: "APPROVED" } },
+          include: {
+            location: {
+              include: {
+                photos: { take: 1, orderBy: { createdAt: "desc" } },
+              },
+            },
+          },
           orderBy: { createdAt: "desc" },
           skip,
           take: limit,

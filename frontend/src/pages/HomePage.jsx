@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
+import { useFavorites } from "../client/hooks/useFavorites";
 import LocationCard from "../components/LocationCard";
 
 import RegionPicker from "../components/pickers/RegionPicker";
@@ -29,6 +30,8 @@ export default function HomePage() {
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const { canUseFavorites, isFavorite, toggleFavorite } = useFavorites();
 
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(total / LIMIT)),
@@ -221,6 +224,26 @@ export default function HomePage() {
             loc={loc}
             to={`/locations/${loc.id}`}
             variant="public"
+            actions={
+              canUseFavorites ? (
+                <button
+                  type="button"
+                  title={
+                    isFavorite(loc.id)
+                      ? "Remove from favorites"
+                      : "Add to favorites"
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleFavorite(loc.id);
+                  }}
+                  style={{ fontSize: 18, lineHeight: 1 }}
+                >
+                  {isFavorite(loc.id) ? "★" : "☆"}
+                </button>
+              ) : null
+            }
           />
         ))}
       </div>
