@@ -88,6 +88,7 @@ model User {
 
   locations    Location[]
   reviews      Review[]
+  favorites    Favorite[]
   inquiriesOut Inquiry[] @relation("InquiryFromUser")
   inquiriesIn  Inquiry[] @relation("InquiryToOwner")
   reports      Report[]
@@ -112,6 +113,7 @@ model Location {
 
   photos      Photo[]
   reviews     Review[]
+  favorites   Favorite[]
   inquiries   Inquiry[]
   reports     Report[]
 
@@ -187,6 +189,19 @@ model Review {
 
   @@unique([locationId, userId])
   @@index([locationId])
+}
+
+model Favorite {
+  userId     String   @db.Uuid
+  locationId String   @db.Uuid
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@index([locationId])
+  @@index([userId])
 }
 
 model Inquiry {

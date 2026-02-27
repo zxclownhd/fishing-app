@@ -21,7 +21,10 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / LIMIT)),
+    [total],
+  );
 
   async function loadLocations(pageArg = page, statusArg = status) {
     setLoading(true);
@@ -140,7 +143,10 @@ export default function AdminDashboardPage() {
           <button
             key={s}
             onClick={() => setStatus(s)}
-            style={{ ...styles.tabBtn, ...(status === s ? styles.tabBtnActive : null) }}
+            style={{
+              ...styles.tabBtn,
+              ...(status === s ? styles.tabBtnActive : null),
+            }}
             disabled={loading && status === s}
           >
             {s}
@@ -151,7 +157,11 @@ export default function AdminDashboardPage() {
       {errorText ? (
         <div style={styles.error}>
           <div>{errorText}</div>
-          <button onClick={() => loadLocations(page, status)} disabled={loading} style={{ marginTop: 8 }}>
+          <button
+            onClick={() => loadLocations(page, status)}
+            disabled={loading}
+            style={{ marginTop: 8 }}
+          >
             Retry
           </button>
         </div>
@@ -173,7 +183,9 @@ export default function AdminDashboardPage() {
 
           // In list: it.photos is take:1
           // In details: full.photos is all
-          const photos = isExpanded ? (full?.photos ?? it.photos ?? []) : (it.photos ?? []);
+          const photos = isExpanded
+            ? (full?.photos ?? it.photos ?? [])
+            : (it.photos ?? []);
 
           return (
             <LocationCard
@@ -182,27 +194,49 @@ export default function AdminDashboardPage() {
               variant="admin"
               footer={
                 <div style={{ display: "grid", gap: 10 }}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {(it.fish || []).slice(0, 8).map((x, idx) => (
-                      <span
-                        key={x.fishId ? `${it.id}-fish-${x.fishId}` : `${it.id}-fish-${idx}`}
-                        style={styles.chip}
-                      >
-                        {x.fish?.name || "fish"}
-                      </span>
-                    ))}
-
-                    {(it.seasons || []).slice(0, 8).map((x, idx) => (
-                      <span
-                        key={x.seasonId ? `${it.id}-season-${x.seasonId}` : `${it.id}-season-${idx}`}
-                        style={styles.chip}
-                      >
-                        {x.season?.name || "season"}
-                      </span>
-                    ))}
+                  <div style={styles.group}>
+                    <div style={styles.groupLabel}>Fish</div>
+                    <div style={styles.groupChips}>
+                      {(it.fish || []).slice(0, 8).map((x, idx) => (
+                        <span
+                          key={
+                            x.fishId
+                              ? `${it.id}-fish-${x.fishId}`
+                              : `${it.id}-fish-${idx}`
+                          }
+                          style={styles.chip}
+                        >
+                          {x.fish?.name || "fish"}
+                        </span>
+                      ))}
+                      {!it.fish || it.fish.length === 0 ? (
+                        <span style={styles.emptyDash}>—</span>
+                      ) : null}
+                    </div>
                   </div>
 
-                  {isExpanded ? (
+                  <div style={styles.group}>
+                    <div style={styles.groupLabel}>Seasons</div>
+                    <div style={styles.groupChips}>
+                      {(it.seasons || []).slice(0, 8).map((x, idx) => (
+                        <span
+                          key={
+                            x.seasonId
+                              ? `${it.id}-season-${x.seasonId}`
+                              : `${it.id}-season-${idx}`
+                          }
+                          style={styles.chip}
+                        >
+                          {x.season?.name || x.season?.code || "season"}
+                        </span>
+                      ))}
+                      {!it.seasons || it.seasons.length === 0 ? (
+                        <span style={styles.emptyDash}>—</span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {expandedId === it.id ? (
                     <div style={styles.detailsBox}>
                       <div style={styles.detailsLabel}>Description</div>
                       <div style={styles.detailsText}>{desc || "—"}</div>
@@ -216,7 +250,6 @@ export default function AdminDashboardPage() {
 
                       <div style={{ marginTop: 10 }}>
                         <div style={styles.detailsLabel}>Photos</div>
-
                         {detailsLoadingId === it.id ? (
                           <div style={{ opacity: 0.75 }}>Loading photos...</div>
                         ) : photos && photos.length ? (
@@ -272,7 +305,11 @@ export default function AdminDashboardPage() {
                   <button
                     onClick={() => deleteLocation(it)}
                     disabled={loading || !canDelete(it)}
-                    title={!canDelete(it) ? "Delete is allowed only for HIDDEN" : "Delete permanently"}
+                    title={
+                      !canDelete(it)
+                        ? "Delete is allowed only for HIDDEN"
+                        : "Delete permanently"
+                    }
                     style={canDelete(it) ? styles.dangerBtn : null}
                   >
                     Delete
@@ -380,5 +417,25 @@ const styles = {
     maxWidth: 640,
     borderRadius: 10,
     border: "1px solid #eee",
+  },
+  group: {
+    display: "grid",
+    gap: 6,
+  },
+  groupLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  groupChips: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  emptyDash: {
+    opacity: 0.6,
+    fontSize: 13,
   },
 };
