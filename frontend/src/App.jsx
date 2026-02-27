@@ -15,7 +15,9 @@ export default function App() {
   const nav = useNavigate();
   const [user, setUser] = useState(getStoredUser());
 
-  const userLabel = user.displayName?.trim() ? user.displayName.trim() : user.email;
+  const userLabel = user?.displayName?.trim()
+    ? user.displayName.trim()
+    : user?.email || "";
 
   // простий спосіб: оновлювати user при зміні localStorage після login/register
   // (ми зробимо це через custom event)

@@ -14,13 +14,14 @@ export default function AdminDashboardPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
+  const [expandedId, setExpandedId] = useState(null);
+  const [detailsById, setDetailsById] = useState({});
+  const [detailsLoadingId, setDetailsLoadingId] = useState(null);
+
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
 
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(total / LIMIT)),
-    [total],
-  );
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
 
   async function loadLocations(pageArg = page, statusArg = status) {
     setLoading(true);
@@ -41,6 +42,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (!user || user.role !== "ADMIN") return;
+    setExpandedId(null);
     loadLocations(1, status);
     setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,6 +70,28 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function toggleDetails(id) {
+    setErrorText("");
+
+    // toggle open/close
+    setExpandedId((prev) => (prev === id ? null : id));
+
+    // if we already have full details cached, nothing else to do
+    if (detailsById[id]) return;
+
+    // fetch full details (includes ALL photos)
+    setDetailsLoadingId(id);
+    try {
+      const res = await http.get(`/admin/locations/${id}`);
+      const item = res.data.item;
+      setDetailsById((prev) => ({ ...prev, [id]: item }));
+    } catch {
+      setErrorText("Failed to load details");
+    } finally {
+      setDetailsLoadingId(null);
+    }
+  }
+
   function canDelete(it) {
     return it.status === "HIDDEN";
   }
@@ -83,10 +107,10 @@ export default function AdminDashboardPage() {
     setErrorText("");
     try {
       await http.delete(`/admin/locations/${it.id}`);
-      // if we deleted the last item on the page, try to go back one page
       const willBeEmpty = items.length === 1;
       const newPage = willBeEmpty && page > 1 ? page - 1 : page;
       setPage(newPage);
+      setExpandedId(null);
       await loadLocations(newPage, status);
     } catch {
       setErrorText("Delete failed");
@@ -116,10 +140,7 @@ export default function AdminDashboardPage() {
           <button
             key={s}
             onClick={() => setStatus(s)}
-            style={{
-              ...styles.tabBtn,
-              ...(status === s ? styles.tabBtnActive : null),
-            }}
+            style={{ ...styles.tabBtn, ...(status === s ? styles.tabBtnActive : null) }}
             disabled={loading && status === s}
           >
             {s}
@@ -130,11 +151,7 @@ export default function AdminDashboardPage() {
       {errorText ? (
         <div style={styles.error}>
           <div>{errorText}</div>
-          <button
-            onClick={() => loadLocations(page, status)}
-            disabled={loading}
-            style={{ marginTop: 8 }}
-          >
+          <button onClick={() => loadLocations(page, status)} disabled={loading} style={{ marginTop: 8 }}>
             Retry
           </button>
         </div>
@@ -147,79 +164,124 @@ export default function AdminDashboardPage() {
       ) : null}
 
       <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        {items.map((it) => (
-          <LocationCard
-            key={it.id}
-            loc={it}
-            variant="admin"
-            footer={
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {(it.fish || []).slice(0, 8).map((x, idx) => (
-                  <span
-                    key={
-                      x.fishId
-                        ? `${it.id}-fish-${x.fishId}`
-                        : `${it.id}-fish-${idx}`
-                    }
-                    style={styles.chip}
+        {items.map((it) => {
+          const full = detailsById[it.id];
+          const isExpanded = expandedId === it.id;
+
+          const desc = full?.description ?? it.description;
+          const contacts = full?.contactInfo ?? it.contactInfo;
+
+          // In list: it.photos is take:1
+          // In details: full.photos is all
+          const photos = isExpanded ? (full?.photos ?? it.photos ?? []) : (it.photos ?? []);
+
+          return (
+            <LocationCard
+              key={it.id}
+              loc={it}
+              variant="admin"
+              footer={
+                <div style={{ display: "grid", gap: 10 }}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {(it.fish || []).slice(0, 8).map((x, idx) => (
+                      <span
+                        key={x.fishId ? `${it.id}-fish-${x.fishId}` : `${it.id}-fish-${idx}`}
+                        style={styles.chip}
+                      >
+                        {x.fish?.name || "fish"}
+                      </span>
+                    ))}
+
+                    {(it.seasons || []).slice(0, 8).map((x, idx) => (
+                      <span
+                        key={x.seasonId ? `${it.id}-season-${x.seasonId}` : `${it.id}-season-${idx}`}
+                        style={styles.chip}
+                      >
+                        {x.season?.name || "season"}
+                      </span>
+                    ))}
+                  </div>
+
+                  {isExpanded ? (
+                    <div style={styles.detailsBox}>
+                      <div style={styles.detailsLabel}>Description</div>
+                      <div style={styles.detailsText}>{desc || "—"}</div>
+
+                      {contacts ? (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={styles.detailsLabel}>Contacts</div>
+                          <div style={styles.detailsText}>{contacts}</div>
+                        </div>
+                      ) : null}
+
+                      <div style={{ marginTop: 10 }}>
+                        <div style={styles.detailsLabel}>Photos</div>
+
+                        {detailsLoadingId === it.id ? (
+                          <div style={{ opacity: 0.75 }}>Loading photos...</div>
+                        ) : photos && photos.length ? (
+                          <div style={{ display: "grid", gap: 8 }}>
+                            {photos.map((p, idx) => (
+                              <img
+                                key={p.id ? `p-${p.id}` : `p-${idx}`}
+                                src={p.url}
+                                alt=""
+                                style={styles.detailsImg}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ opacity: 0.75 }}>No photos</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              }
+              actions={
+                <>
+                  <button
+                    type="button"
+                    onClick={() => toggleDetails(it.id)}
+                    disabled={loading}
                   >
-                    {x.fish?.name || "fish"}
-                  </span>
-                ))}
+                    {isExpanded ? "Close" : "Details"}
+                  </button>
 
-                {(it.seasons || []).slice(0, 8).map((x, idx) => (
-                  <span
-                    key={
-                      x.seasonId
-                        ? `${it.id}-season-${x.seasonId}`
-                        : `${it.id}-season-${idx}`
-                    }
-                    style={styles.chip}
+                  <button
+                    onClick={() => setStatusForLocation(it.id, "APPROVED")}
+                    disabled={loading || it.status === "APPROVED"}
                   >
-                    {x.season?.name || "season"}
-                  </span>
-                ))}
-              </div>
-            }
-            actions={
-              <>
-                <button
-                  onClick={() => setStatusForLocation(it.id, "APPROVED")}
-                  disabled={loading || it.status === "APPROVED"}
-                >
-                  Approve
-                </button>
+                    Approve
+                  </button>
 
-                <button
-                  onClick={() => setStatusForLocation(it.id, "REJECTED")}
-                  disabled={loading || it.status === "REJECTED"}
-                >
-                  Reject
-                </button>
+                  <button
+                    onClick={() => setStatusForLocation(it.id, "REJECTED")}
+                    disabled={loading || it.status === "REJECTED"}
+                  >
+                    Reject
+                  </button>
 
-                <button
-                  onClick={() => setStatusForLocation(it.id, "HIDDEN")}
-                  disabled={loading || it.status === "HIDDEN"}
-                >
-                  Hide
-                </button>
+                  <button
+                    onClick={() => setStatusForLocation(it.id, "HIDDEN")}
+                    disabled={loading || it.status === "HIDDEN"}
+                  >
+                    Hide
+                  </button>
 
-                <button
-                  onClick={() => deleteLocation(it)}
-                  disabled={loading || !canDelete(it)}
-                  title={
-                    !canDelete(it)
-                      ? "Delete is allowed only for HIDDEN"
-                      : "Delete permanently"
-                  }
-                  style={canDelete(it) ? styles.dangerBtn : null}
-                >
-                  Delete
-                </button>
-              </>
-            }
-          />
-        ))}
+                  <button
+                    onClick={() => deleteLocation(it)}
+                    disabled={loading || !canDelete(it)}
+                    title={!canDelete(it) ? "Delete is allowed only for HIDDEN" : "Delete permanently"}
+                    style={canDelete(it) ? styles.dangerBtn : null}
+                  >
+                    Delete
+                  </button>
+                </>
+              }
+            />
+          );
+        })}
       </div>
 
       <div style={styles.pagination}>
@@ -297,5 +359,26 @@ const styles = {
   },
   dangerBtn: {
     borderColor: "#f2b5b5",
+  },
+  detailsBox: {
+    border: "1px solid #eee",
+    borderRadius: 12,
+    padding: 12,
+    background: "#fafafa",
+  },
+  detailsLabel: {
+    fontSize: 13,
+    opacity: 0.75,
+    marginBottom: 6,
+  },
+  detailsText: {
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+  },
+  detailsImg: {
+    width: "100%",
+    maxWidth: 640,
+    borderRadius: 10,
+    border: "1px solid #eee",
   },
 };

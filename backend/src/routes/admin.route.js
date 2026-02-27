@@ -113,6 +113,29 @@ router.patch("/locations/:id/hide", async (req, res) => {
   }
 });
 
+router.get("/locations/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const item = await prisma.location.findUnique({
+      where: { id },
+      include: {
+        owner: { select: { id: true, displayName: true, email: true } },
+        photos: { orderBy: { createdAt: "desc" }, select: { id: true, url: true, createdAt: true } },
+        fish: { include: { fish: true } },
+        seasons: { include: { season: true } },
+      },
+    });
+
+    if (!item) return res.status(404).json({ error: "Not found" });
+
+    return res.json({ item });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 // DELETE only if HIDDEN
 router.delete("/locations/:id", async (req, res) => {
   try {

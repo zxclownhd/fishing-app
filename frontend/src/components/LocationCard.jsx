@@ -4,11 +4,11 @@ import { useMemo } from "react";
 
 export default function LocationCard({
   loc,
-  to,                 // optional string; if present - wrap in Link
+  to, // optional string; if present - wrap in Link
   variant = "public", // "public" | "admin"
-  actions = null,     // optional JSX (buttons etc)
-  footer = null,      // optional JSX under description
-  onClick,            // optional click handler when NOT using `to`
+  actions = null, // optional JSX (buttons etc)
+  footer = null, // optional JSX under description
+  onClick, // optional click handler when NOT using `to`
 }) {
   const photoUrl = loc?.photos?.[0]?.url || null;
 
@@ -39,7 +39,11 @@ export default function LocationCard({
     >
       <div style={styles.media}>
         {photoUrl ? (
-          <img alt={loc?.title || "Location"} src={photoUrl} style={styles.img} />
+          <img
+            alt={loc?.title || "Location"}
+            src={photoUrl}
+            style={styles.img}
+          />
         ) : (
           <div style={styles.noImg}>No photo</div>
         )}
@@ -50,21 +54,32 @@ export default function LocationCard({
           <div style={styles.title}>{loc?.title || "(no title)"}</div>
 
           {variant === "admin" && status ? (
-            <span style={{ ...styles.badge, ...badgeForStatus(status) }}>{status}</span>
+            <span style={{ ...styles.badge, ...badgeForStatus(status) }}>
+              {status}
+            </span>
           ) : null}
         </div>
 
         <div style={styles.meta}>
           <span style={styles.metaItem}>{loc?.region || "Unknown region"}</span>
           <span style={styles.dot}>•</span>
-          <span style={styles.metaItem}>{loc?.waterType || "Unknown type"}</span>
+          <span style={styles.metaItem}>
+            {loc?.waterType || "Unknown type"}
+          </span>
         </div>
 
         {variant === "admin" ? (
           <div style={styles.adminMeta}>
-            {owner?.email ? <div style={styles.adminLine}>Owner: {owner.email}</div> : null}
+            {owner ? (
+              <div style={styles.adminLine}>
+                Owner: {owner.displayName || "—"}
+                {owner.email ? ` (${owner.email})` : ""}
+              </div>
+            ) : null}
             {loc?.createdAt ? (
-              <div style={styles.adminLine}>Created: {new Date(loc.createdAt).toLocaleString()}</div>
+              <div style={styles.adminLine}>
+                Created: {new Date(loc.createdAt).toLocaleString()}
+              </div>
             ) : null}
           </div>
         ) : (
@@ -102,8 +117,10 @@ export default function LocationCard({
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
   if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
+  if (s === "APPROVED")
+    return { background: "#DFF7E6", borderColor: "#7FD39A" };
+  if (s === "REJECTED")
+    return { background: "#FFE1E1", borderColor: "#F09A9A" };
   if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
   return { background: "#EEEEEE", borderColor: "#CFCFCF" };
 }
@@ -133,8 +150,19 @@ const styles = {
   img: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   noImg: { fontSize: 12, opacity: 0.6 },
   body: { flex: 1, minWidth: 0 },
-  topRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 },
-  title: { fontSize: 16, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  topRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 700,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
   badge: {
     fontSize: 12,
     padding: "2px 8px",
@@ -142,11 +170,29 @@ const styles = {
     border: "1px solid #ddd",
     whiteSpace: "nowrap",
   },
-  meta: { marginTop: 4, fontSize: 13, opacity: 0.8, display: "flex", alignItems: "center", gap: 6 },
-  metaItem: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  meta: {
+    marginTop: 4,
+    fontSize: 13,
+    opacity: 0.8,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+  },
+  metaItem: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
   dot: { opacity: 0.6 },
   rating: { marginTop: 6, fontSize: 13, opacity: 0.8 },
-  adminMeta: { marginTop: 6, fontSize: 12, opacity: 0.8, display: "flex", gap: 12, flexWrap: "wrap" },
+  adminMeta: {
+    marginTop: 6,
+    fontSize: 12,
+    opacity: 0.8,
+    display: "flex",
+    gap: 12,
+    flexWrap: "wrap",
+  },
   adminLine: { whiteSpace: "nowrap" },
   desc: {
     marginTop: 8,

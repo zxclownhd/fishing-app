@@ -22,9 +22,16 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   useEffect(() => {
     setEditDescription(loc.description || "");
     setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
-    setSeasonSelected((loc.seasons || []).map((x) => x.season?.code).filter(Boolean));
+    setSeasonSelected(
+      (loc.seasons || []).map((x) => x.season?.code).filter(Boolean),
+    );
     setEditContactInfo(loc.contactInfo || "");
-    setEditPhotoUrls((loc.photos || []).map((p) => p.url).filter(Boolean).join(", "));
+    setEditPhotoUrls(
+      (loc.photos || [])
+        .map((p) => p.url)
+        .filter(Boolean)
+        .join(", "),
+    );
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
     setEditTitle(loc.title || "");
@@ -39,7 +46,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     setEditError("");
 
     try {
-      const photoArr = editPhotoUrls.split(",").map((s) => s.trim()).filter(Boolean);
+      const photoArr = editPhotoUrls
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
 
       const latStr = String(editLat).trim();
       const lngStr = String(editLng).trim();
@@ -83,15 +93,38 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
-      <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)} rows={3} style={input} />
+      <input
+        value={editTitle}
+        onChange={(e) => setEditTitle(e.target.value)}
+        placeholder="Title"
+        style={input}
+      />
 
-      <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} placeholder="Title" style={input} />
+      <textarea
+        value={editDescription}
+        onChange={(e) => setEditDescription(e.target.value)}
+        rows={3}
+        style={input}
+      />
 
-      <textarea value={editContactInfo} onChange={(e) => setEditContactInfo(e.target.value)} placeholder="Contacts (optional)" rows={2} style={input} />
+      <textarea
+        value={editContactInfo}
+        onChange={(e) => setEditContactInfo(e.target.value)}
+        placeholder="Contacts (optional)"
+        rows={2}
+        style={input}
+      />
 
-      <RegionPicker value={editRegionSelected} onChange={setEditRegionSelected} />
+      <RegionPicker
+        value={editRegionSelected}
+        onChange={setEditRegionSelected}
+      />
 
-      <select value={editWaterType} onChange={(e) => setEditWaterType(e.target.value)} style={input}>
+      <select
+        value={editWaterType}
+        onChange={(e) => setEditWaterType(e.target.value)}
+        style={input}
+      >
         <option value="LAKE">LAKE</option>
         <option value="RIVER">RIVER</option>
         <option value="POND">POND</option>
@@ -100,15 +133,30 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       </select>
 
       <div style={{ display: "flex", gap: 10 }}>
-        <input value={editLat} onChange={(e) => setEditLat(e.target.value)} placeholder="Lat (e.g. 50.45)" style={{ ...input, flex: 1 }} />
-        <input value={editLng} onChange={(e) => setEditLng(e.target.value)} placeholder="Lng (e.g. 30.52)" style={{ ...input, flex: 1 }} />
+        <input
+          value={editLat}
+          onChange={(e) => setEditLat(e.target.value)}
+          placeholder="Lat (e.g. 50.45)"
+          style={{ ...input, flex: 1 }}
+        />
+        <input
+          value={editLng}
+          onChange={(e) => setEditLng(e.target.value)}
+          placeholder="Lng (e.g. 30.52)"
+          style={{ ...input, flex: 1 }}
+        />
       </div>
 
       <FishPicker value={fishSelected} onChange={setFishSelected} />
 
       <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-      <input value={editPhotoUrls} onChange={(e) => setEditPhotoUrls(e.target.value)} placeholder="Photo URLs (comma separated)" style={input} />
+      <input
+        value={editPhotoUrls}
+        onChange={(e) => setEditPhotoUrls(e.target.value)}
+        placeholder="Photo URLs (comma separated)"
+        style={input}
+      />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button disabled={saving} style={btn}>
