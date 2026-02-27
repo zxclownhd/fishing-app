@@ -181,6 +181,10 @@ export default function AdminDashboardPage() {
           const desc = full?.description ?? it.description;
           const contacts = full?.contactInfo ?? it.contactInfo;
 
+          const latNum = Number(it.lat);
+          const lngNum = Number(it.lng);
+          const coordsOk = Number.isFinite(latNum) && Number.isFinite(lngNum);
+
           // In list: it.photos is take:1
           // In details: full.photos is all
           const photos = isExpanded
@@ -247,6 +251,40 @@ export default function AdminDashboardPage() {
                           <div style={styles.detailsText}>{contacts}</div>
                         </div>
                       ) : null}
+
+                      <div style={{ marginTop: 10 }}>
+                        <div style={styles.detailsLabel}>Coordinates</div>
+
+                        {coordsOk ? (
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              alignItems: "center",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={styles.detailsText}>
+                              {latNum.toFixed(6)}, {lngNum.toFixed(6)}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  `https://www.google.com/maps?q=${latNum},${lngNum}`,
+                                  "_blank",
+                                  "noopener,noreferrer",
+                                )
+                              }
+                            >
+                              Open in Google Maps
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ opacity: 0.75 }}>Invalid coords</div>
+                        )}
+                      </div>
 
                       <div style={{ marginTop: 10 }}>
                         <div style={styles.detailsLabel}>Photos</div>
