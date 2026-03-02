@@ -2,6 +2,7 @@ import { useState } from "react";
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
+import PhotoUploader from "./PhotoUploader";
 
 export default function CreateLocationForm({ onCreate }) {
   const [title, setTitle] = useState("");
@@ -16,7 +17,7 @@ export default function CreateLocationForm({ onCreate }) {
   const [seasonSelected, setSeasonSelected] = useState([]);
 
   const [contactInfo, setContactInfo] = useState("");
-  const [photoUrls, setPhotoUrls] = useState("");
+  const [photoUrls, setPhotoUrls] = useState([]);
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -27,8 +28,6 @@ export default function CreateLocationForm({ onCreate }) {
     setCreateError("");
 
     try {
-      const photoArr = photoUrls.split(",").map((s) => s.trim()).filter(Boolean);
-
       const latStr = String(lat).trim();
       const lngStr = String(lng).trim();
       if (!latStr || !lngStr) {
@@ -58,7 +57,7 @@ export default function CreateLocationForm({ onCreate }) {
         fishNames: fishSelected,
         seasonCodes: seasonSelected,
         contactInfo: contactInfo.trim() || undefined,
-        photoUrls: photoArr,
+        photoUrls: photoUrls,
       });
 
       setTitle("");
@@ -70,7 +69,7 @@ export default function CreateLocationForm({ onCreate }) {
       setFishSelected([]);
       setSeasonSelected([]);
       setContactInfo("");
-      setPhotoUrls("");
+      setPhotoUrls([]);
     } catch (err) {
       setCreateError(err?.response?.data?.error || "Failed to create location");
     } finally {
@@ -108,7 +107,7 @@ export default function CreateLocationForm({ onCreate }) {
 
         <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-        <input placeholder="Photo URLs (comma separated)" value={photoUrls} onChange={(e) => setPhotoUrls(e.target.value)} style={input} />
+        <PhotoUploader urls={photoUrls} onChange={setPhotoUrls} max={5} />
 
         <button disabled={creating} style={btn}>
           {creating ? "Creating..." : "Create (PENDING)"}

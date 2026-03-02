@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
+import PhotoUploader from "./PhotoUploader";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editDescription, setEditDescription] = useState("");
@@ -11,7 +12,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editRegionSelected, setEditRegionSelected] = useState("");
   const [editWaterType, setEditWaterType] = useState("LAKE");
   const [editContactInfo, setEditContactInfo] = useState("");
-  const [editPhotoUrls, setEditPhotoUrls] = useState("");
+  const [editPhotoUrls, setEditPhotoUrls] = useState([]);
 
   const [fishSelected, setFishSelected] = useState([]);
   const [seasonSelected, setSeasonSelected] = useState([]);
@@ -26,17 +27,12 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       (loc.seasons || []).map((x) => x.season?.code).filter(Boolean),
     );
     setEditContactInfo(loc.contactInfo || "");
-    setEditPhotoUrls(
-      (loc.photos || [])
-        .map((p) => p.url)
-        .filter(Boolean)
-        .join(", "),
-    );
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
     setEditTitle(loc.title || "");
     setEditRegionSelected(loc.region || "");
     setEditWaterType(loc.waterType || "LAKE");
+    setEditPhotoUrls((loc.photos || []).map((p) => p.url).filter(Boolean));
     setEditError("");
   }, [loc]);
 
@@ -82,9 +78,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .map((s) => s.trim())
       .sort()
       .join("|");
-    const curPhotos = editPhotoUrls
-      .split(",")
-      .map((s) => s.trim())
+    const curPhotos = (editPhotoUrls || [])
+      .map((s) => String(s).trim())
       .filter(Boolean)
       .sort()
       .join("|");
@@ -121,11 +116,6 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     setEditError("");
 
     try {
-      const photoArr = editPhotoUrls
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-
       const latStr = String(editLat).trim();
       const lngStr = String(editLng).trim();
       if (!latStr || !lngStr) {
@@ -153,7 +143,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         fishNames: fishSelected,
         seasonCodes: seasonSelected,
         contactInfo: editContactInfo.trim() || null,
-        photoUrls: photoArr,
+        photoUrls: editPhotoUrls,
         lat: latNum,
         lng: lngNum,
       });
@@ -226,11 +216,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-      <input
-        value={editPhotoUrls}
-        onChange={(e) => setEditPhotoUrls(e.target.value)}
-        placeholder="Photo URLs (comma separated)"
-        style={input}
+      <PhotoUploader
+        urls={editPhotoUrls}
+        onChange={setEditPhotoUrls}
+        max={10}
       />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
