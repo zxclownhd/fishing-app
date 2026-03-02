@@ -16,20 +16,47 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
       return;
     }
 
-    const left = Math.max(0, max - (urls?.length || 0));
+    const current = urls?.length || 0;
+    const left = Math.max(0, max - current);
 
-    const picked = Array.from(files)
+    if (left === 0) {
+      setErrorText(`Max ${max} photos reached`);
+      return;
+    }
+
+    const arr = Array.from(files);
+
+    const nonImages = arr.filter((f) => !f.type?.startsWith("image/"));
+    const tooBig = arr.filter(
+      (f) => f.type?.startsWith("image/") && f.size > MAX_BYTES,
+    );
+
+    const picked = arr
       .filter((f) => f.type?.startsWith("image/"))
       .filter((f) => f.size <= MAX_BYTES)
       .slice(0, left);
 
     if (!picked.length) {
-      setErrorText("Only images up to 10MB are allowed");
+      if (nonImages.length) {
+        setErrorText("Only images are allowed");
+        return;
+      }
+      if (tooBig.length) {
+        setErrorText("Some images are too large (max 10MB)");
+        return;
+      }
+      setErrorText("Nothing to upload");
       return;
     }
 
+    // якщо юзер вибрав більше, ніж можна додати, покажемо норм підказку
+    if (arr.length > left) {
+      setErrorText(`Only ${left} more photo(s) can be added (max ${max})`);
+    } else {
+      setErrorText("");
+    }
+
     setUploading(true);
-    setErrorText("");
 
     try {
       const uploaded = [];
@@ -51,6 +78,9 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
       }
 
       onChange([...(urls || []), ...uploaded]);
+
+      // прибрати підказку після успіху
+      setErrorText("");
     } catch (e) {
       console.error(e);
       setErrorText("Upload failed");
@@ -75,6 +105,7 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
 
   function removeAt(idx) {
     onChange((urls || []).filter((_, i) => i !== idx));
+    setErrorText("");
   }
 
   return (
@@ -91,8 +122,19 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
       }}
       onDrop={onDrop}
     >
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
           {uploading ? "Uploading..." : "Add photos"}
         </button>
 
@@ -135,8 +177,16 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
                   border: "1px solid #eee",
                 }}
               />
-              <div style={{ wordBreak: "break-word", fontSize: 13, opacity: 0.85 }}>{u}</div>
-              <button type="button" onClick={() => removeAt(idx)} disabled={uploading}>
+              <div
+                style={{ wordBreak: "break-word", fontSize: 13, opacity: 0.85 }}
+              >
+                {u}
+              </div>
+              <button
+                type="button"
+                onClick={() => removeAt(idx)}
+                disabled={uploading}
+              >
                 Remove
               </button>
             </div>

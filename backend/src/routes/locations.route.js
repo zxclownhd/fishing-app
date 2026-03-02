@@ -30,6 +30,14 @@ const REGION_CODES = new Set([
   "CRIMEA",
 ]);
 
+function normalizePhotoUrls(photoUrls, max = 5) {
+  if (!Array.isArray(photoUrls)) return [];
+  const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
+
+  const unique = [...new Set(cleaned)];
+  return unique.slice(0, max);
+}
+
 // GET /locations (guest search)
 router.get("/", async (req, res) => {
   try {
@@ -193,9 +201,11 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
     }
 
     // normalize photo urls
-    const urls = Array.isArray(photoUrls)
-      ? photoUrls.map((u) => String(u).trim()).filter(Boolean)
-      : [];
+    const urls = normalizePhotoUrls(photoUrls, 5);
+
+    if (urls.length < 1) {
+      return res.status(400).json({ error: "At least 1 photo is required" });
+    }
 
     // fish: link only existing (no upsert)
     const fishList = (Array.isArray(fishNames) ? fishNames : [])

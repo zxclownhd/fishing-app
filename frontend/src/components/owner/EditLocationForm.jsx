@@ -135,6 +135,15 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         return;
       }
 
+      if (!editPhotoUrls || editPhotoUrls.length < 1) {
+        setEditError("At least 1 photo is required");
+        return;
+      }
+      if (editPhotoUrls.length > 5) {
+        setEditError("Max 5 photos");
+        return;
+      }
+
       await onSave(loc.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
@@ -216,11 +225,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-      <PhotoUploader
-        urls={editPhotoUrls}
-        onChange={setEditPhotoUrls}
-        max={10}
-      />
+      <PhotoUploader urls={editPhotoUrls} onChange={setEditPhotoUrls} max={5} />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button disabled={saving || !isDirty} style={btn}>

@@ -5,6 +5,14 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 // Все в /owner тільки для OWNER
 router.use(authenticateToken, requireRole("OWNER"));
 
+function normalizePhotoUrls(photoUrls, max = 5) {
+  if (!Array.isArray(photoUrls)) return [];
+  const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
+
+  const unique = [...new Set(cleaned)];
+  return unique.slice(0, max);
+}
+
 // GET /owner/locations?page=1&limit=20
 router.get("/locations", async (req, res) => {
   try {
@@ -115,6 +123,16 @@ router.patch("/locations/:id", async (req, res) => {
       data.status = "PENDING";
     }
 
+    let normalizedPhotoUrls = null;
+
+    if (Array.isArray(photoUrls)) {
+      normalizedPhotoUrls = normalizePhotoUrls(photoUrls, 5);
+
+      if (normalizedPhotoUrls.length < 1) {
+        return res.status(400).json({ error: "At least 1 photo is required" });
+      }
+    }
+
     // 4) оновлення зв’язків fish/seasons (якщо передали масиви)
     // робимо транзакцією, щоб не лишити БД "напів-оновленою"
     const result = await prisma.$transaction(async (tx) => {
@@ -125,16 +143,12 @@ router.patch("/locations/:id", async (req, res) => {
       });
 
       // photos: повна заміна (якщо передали масив)
-      if (Array.isArray(photoUrls)) {
-        const urls = photoUrls.map((u) => String(u).trim()).filter(Boolean);
-
+      if (normalizedPhotoUrls) {
         await tx.photo.deleteMany({ where: { locationId: id } });
 
-        if (urls.length) {
-          await tx.photo.createMany({
-            data: urls.map((url) => ({ locationId: id, url })),
-          });
-        }
+        await tx.photo.createMany({
+          data: normalizedPhotoUrls.map((url) => ({ locationId: id, url })),
+        });
       }
 
       // fishNames: повна заміна
