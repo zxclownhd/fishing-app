@@ -1,15 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
 import { useFavorites } from "../client/hooks/useFavorites";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 export default function LocationDetailsPage() {
   const { id } = useParams();
 
   const [user, setUser] = useState(getStoredUser());
-
   const [contactInfo, setContactInfo] = useState(null);
 
   const [location, setLocation] = useState(null);
@@ -52,7 +52,7 @@ export default function LocationDetailsPage() {
         await loadAll();
       } catch (err) {
         console.error(err);
-        if (!cancelled) setError("Failed to load location details");
+        if (!cancelled) setError(getErrorMessage(err, "Failed to load location details"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -72,10 +72,13 @@ export default function LocationDetailsPage() {
         setContactInfo(null);
         return;
       }
+
       try {
         const res = await http.get(`/locations/${id}/contact`);
         if (!cancelled) setContactInfo(res.data.contactInfo || null);
-      } catch {
+      } catch (e) {
+        // it's OK to be silent here, but logging helps in dev
+        console.error("Failed to load contacts:", getErrorMessage(e, "Failed to load contacts"));
         if (!cancelled) setContactInfo(null);
       }
     }
@@ -105,16 +108,14 @@ export default function LocationDetailsPage() {
       await loadAll();
     } catch (err) {
       console.error(err);
-      const msg = err?.response?.data?.error || "Failed to submit review";
-      setFormError(msg);
+      setFormError(getErrorMessage(err, "Failed to submit review"));
     } finally {
       setSubmitting(false);
     }
   }
 
   if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
-  if (error)
-    return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
+  if (error) return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
   if (!location) return <div style={{ padding: 16 }}>Not found</div>;
 
   const latNum = Number(location.lat);
@@ -126,7 +127,7 @@ export default function LocationDetailsPage() {
     ? `https://www.google.com/maps/search/?api=1&query=${latNum},${lngNum}`
     : null;
 
-  const delta = 0.01; // ~1 км (грубо)
+  const delta = 0.01;
   const left = lngNum - delta;
   const right = lngNum + delta;
   const top = latNum + delta;
@@ -152,11 +153,7 @@ export default function LocationDetailsPage() {
           type="button"
           onClick={() => toggleFavorite(location.id)}
           style={{ fontSize: 20, lineHeight: 1 }}
-          title={
-            isFavorite(location.id)
-              ? "Remove from favorites"
-              : "Add to favorites"
-          }
+          title={isFavorite(location.id) ? "Remove from favorites" : "Add to favorites"}
         >
           {isFavorite(location.id) ? "★" : "☆"}
         </button>
@@ -220,11 +217,7 @@ export default function LocationDetailsPage() {
           {(location.fish || []).map((f) => (
             <span
               key={f.fishId}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 999,
-                padding: "4px 10px",
-              }}
+              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
             >
               {f.fish?.name}
             </span>
@@ -238,11 +231,7 @@ export default function LocationDetailsPage() {
           {(location.seasons || []).map((s) => (
             <span
               key={s.seasonId}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 999,
-                padding: "4px 10px",
-              }}
+              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
             >
               {s.season?.code}
             </span>
@@ -254,13 +243,7 @@ export default function LocationDetailsPage() {
         <div style={{ marginTop: 12 }}>
           <h3>Map</h3>
 
-          <div
-            style={{
-              borderRadius: 10,
-              overflow: "hidden",
-              border: "1px solid #ddd",
-            }}
-          >
+          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ddd" }}>
             <iframe
               title="Map preview"
               src={osmEmbedUrl}
@@ -281,27 +264,19 @@ export default function LocationDetailsPage() {
         </div>
       )}
 
-      {/* Add review */}
       <div style={{ marginTop: 18 }}>
         <h2>Leave a review</h2>
 
         {!user ? (
           <div style={{ opacity: 0.8 }}>Please login to leave a review.</div>
         ) : (
-          <form
-            onSubmit={submitReview}
-            style={{ display: "grid", gap: 10, maxWidth: 520 }}
-          >
+          <form onSubmit={submitReview} style={{ display: "grid", gap: 10, maxWidth: 520 }}>
             <label style={{ display: "grid", gap: 6 }}>
               <span>Rating</span>
               <select
                 value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                }}
+                onChange={(e) => setRating(Number(e.target.value))}
+                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
               >
                 <option value={1}>1</option>
                 <option value={2}>2</option>
@@ -318,21 +293,13 @@ export default function LocationDetailsPage() {
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
                 placeholder="Write your review..."
-                style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                }}
+                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
               />
             </label>
 
             <button
               disabled={submitting}
-              style={{
-                padding: "10px 14px",
-                borderRadius: 8,
-                border: "1px solid #ddd",
-              }}
+              style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
             >
               {submitting ? "Submitting..." : "Submit review"}
             </button>
@@ -342,20 +309,14 @@ export default function LocationDetailsPage() {
         )}
       </div>
 
-      {/* Reviews list */}
       <div style={{ marginTop: 18 }}>
         <h2>Reviews</h2>
 
-        {reviews.length === 0 && (
-          <div style={{ opacity: 0.7 }}>No reviews yet.</div>
-        )}
+        {reviews.length === 0 && <div style={{ opacity: 0.7 }}>No reviews yet.</div>}
 
         <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
           {reviews.map((r) => (
-            <div
-              key={r.id}
-              style={{ border: "1px solid #eee", borderRadius: 8, padding: 10 }}
-            >
+            <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 8, padding: 10 }}>
               <div style={{ fontWeight: 700 }}>
                 {r.user?.displayName ?? "Anonymous"} • {r.rating}/5
               </div>

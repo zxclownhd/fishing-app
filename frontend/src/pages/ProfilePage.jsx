@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
 import { Navigate, Link } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../auth/auth";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 export default function ProfilePage() {
   const storedUser = getStoredUser();
@@ -49,7 +50,6 @@ export default function ProfilePage() {
       setProfile(user);
       setDisplayName(user?.displayName || "");
 
-      // sync stored user for UI header if needed
       if (user) {
         localStorage.setItem("user", JSON.stringify(user));
         window.dispatchEvent(new Event("authChanged"));
@@ -61,7 +61,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(err?.response?.data?.error || "Failed to load profile");
+      setErrorText(getErrorMessage(err, "Failed to load profile"));
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(err?.response?.data?.error || "Failed to save");
+      setErrorText(getErrorMessage(err, "Failed to save"));
       setInfoText("");
     }
   }
@@ -142,7 +142,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(err?.response?.data?.error || "Failed to change password");
+      setErrorText(getErrorMessage(err, "Failed to change password"));
       setInfoText("");
     }
   }

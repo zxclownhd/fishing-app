@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 
 import CreateLocationForm from "../components/owner/CreateLocationForm";
 import MyLocationsList from "../components/owner/MyLocationsList";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 const LIMIT = 12;
 
@@ -51,7 +52,7 @@ export default function OwnerDashboardPage() {
         await loadMyLocations(1);
       } catch (err) {
         console.error(err);
-        if (!cancelled) setError("Failed to load owner locations");
+        if (!cancelled) setError(getErrorMessage(err, "Failed to load owner locations"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -69,27 +70,26 @@ export default function OwnerDashboardPage() {
     setError("");
     try {
       await loadMyLocations(page);
-    } catch {
-      setError("Failed to load owner locations");
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to load owner locations"));
     } finally {
       setLoading(false);
     }
   }
 
   async function onCreate(payload) {
-    // Prefer new backend contract: photos: [{ url, publicId }]
-    // Keep photoUrls only as backward compatibility
     const safePayload = { ...payload };
 
-    if (Array.isArray(safePayload.photos) && safePayload.photos.length) {
-      // ok
-    } else if (Array.isArray(safePayload.photoUrls) && safePayload.photoUrls.length) {
-      // old contract still ok
+    try {
+      setError("");
+      await http.post("/locations", safePayload);
+      setActiveTab("LIST");
+      await refresh();
+    } catch (e) {
+      // keep user on CREATE, show error
+      setError(getErrorMessage(e, "Failed to create location"));
+      throw e; // let CreateLocationForm show it too if it wants
     }
-
-    await http.post("/locations", safePayload);
-    setActiveTab("LIST");
-    await refresh();
   }
 
   function startEdit(loc) {
@@ -102,26 +102,30 @@ export default function OwnerDashboardPage() {
   }
 
   async function onSaveEdit(id, payload) {
-    await http.patch(`/owner/locations/${id}`, payload);
-
-    // important: reload to get fresh Photo IDs for newly added photos
-    await refresh();
-
-    // optional UX: close edit after save
-    setEditingId(null);
+    try {
+      setError("");
+      await http.patch(`/owner/locations/${id}`, payload);
+      await refresh();
+      setEditingId(null);
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to update location"));
+      throw e; // let EditLocationForm show it too
+    }
   }
 
   async function onToggleHidden(loc) {
     try {
+      setError("");
       const path =
         loc.status === "HIDDEN"
           ? `/owner/locations/${loc.id}/unhide`
           : `/owner/locations/${loc.id}/hide`;
+
       await http.post(path);
       await refresh();
-    } catch (err) {
-      console.error(err);
-      alert(err?.response?.data?.error || "Failed to update status");
+    } catch (e) {
+      console.error(e);
+      setError(getErrorMessage(e, "Failed to update status"));
     }
   }
 
@@ -131,10 +135,11 @@ export default function OwnerDashboardPage() {
     setLoading(true);
     setError("");
     setEditingId(null);
+
     try {
       await loadMyLocations(next);
-    } catch {
-      setError("Failed to load owner locations");
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to load owner locations"));
     } finally {
       setLoading(false);
     }
@@ -146,10 +151,11 @@ export default function OwnerDashboardPage() {
     setLoading(true);
     setError("");
     setEditingId(null);
+
     try {
       await loadMyLocations(prev);
-    } catch {
-      setError("Failed to load owner locations");
+    } catch (e) {
+      setError(getErrorMessage(e, "Failed to load owner locations"));
     } finally {
       setLoading(false);
     }
@@ -177,6 +183,12 @@ export default function OwnerDashboardPage() {
         </button>
       </div>
 
+      {error ? (
+        <div style={{ marginTop: 12, padding: 12, border: "1px solid #f2b5b5", background: "#fff0f0", borderRadius: 12 }}>
+          {error}
+        </div>
+      ) : null}
+
       <div style={styles.tabs}>
         <button
           onClick={() => setActiveTab("LIST")}
@@ -194,10 +206,7 @@ export default function OwnerDashboardPage() {
       </div>
 
       {activeTab === "CREATE" ? (
-        <CreateLocationForm
-          onCreate={onCreate}
-          onCancel={() => setActiveTab("LIST")}
-        />
+        <CreateLocationForm onCreate={onCreate} onCancel={() => setActiveTab("LIST")} />
       ) : (
         <MyLocationsList
           items={items}

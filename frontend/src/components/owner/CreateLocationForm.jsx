@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
+import { getErrorMessage } from "../../api/getErrorMessage";
 
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
@@ -45,7 +46,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     try {
       await http.post("/photos/cleanup", { publicIds });
     } catch (e) {
-      console.error("cleanup failed", e);
+      console.error("cleanup failed:", getErrorMessage(e, "cleanup failed"));
     }
   }
 
@@ -57,7 +58,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       if (!publicIds.length) return;
 
       http.post("/photos/cleanup", { publicIds }).catch((e) => {
-        console.error("cleanup failed", e);
+        console.error("cleanup failed:", getErrorMessage(e, "cleanup failed"));
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,7 +119,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         contactInfo: contactInfo.trim() || undefined,
 
         photos: normalizedPhotos,
-        photoUrls: normalizedPhotos.map((p) => p.url), // можна потім прибрати
+        photoUrls: normalizedPhotos.map((p) => p.url), // optional backward compat
       });
 
       createdRef.current = true;
@@ -134,7 +135,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       setContactInfo("");
       setPhotos([]);
     } catch (err) {
-      setCreateError(err?.response?.data?.error || "Failed to create location");
+      setCreateError(getErrorMessage(err, "Failed to create location"));
     } finally {
       setCreating(false);
     }
@@ -144,7 +145,6 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     if (creating) return;
     await cleanupDrafts();
 
-    // if parent gave onCancel (ex: switch tab to LIST), call it
     if (typeof onCancel === "function") onCancel();
   }
 

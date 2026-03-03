@@ -7,6 +7,7 @@ import RegionPicker from "../components/pickers/RegionPicker";
 import FishPicker from "../components/pickers/FishPicker";
 import SeasonPicker from "../components/pickers/SeasonPicker";
 import SortPicker from "../components/pickers/SortPicker";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 const LIMIT = 10;
 
@@ -71,7 +72,7 @@ export default function HomePage() {
       setTotal(res.data.total || 0);
     } catch (err) {
       console.error(err);
-      setError("Failed to load locations");
+      setError(getErrorMessage(err, "Failed to load locations"));
     } finally {
       setLoading(false);
     }
@@ -115,10 +116,8 @@ export default function HomePage() {
   function removeFilter(kind, value) {
     if (kind === "region") setRegionSelected("");
     if (kind === "waterType") setWaterType("");
-    if (kind === "fish")
-      setFishSelected((prev) => prev.filter((x) => x !== value));
-    if (kind === "season")
-      setSeasonsSelected((prev) => prev.filter((x) => x !== value));
+    if (kind === "fish") setFishSelected((prev) => prev.filter((x) => x !== value));
+    if (kind === "season") setSeasonsSelected((prev) => prev.filter((x) => x !== value));
 
     setPage(1);
 
@@ -127,10 +126,8 @@ export default function HomePage() {
 
       if (kind === "region") next.region = "";
       if (kind === "waterType") next.waterType = "";
-      if (kind === "fish")
-        next.fish = (prev.fish || []).filter((x) => x !== value);
-      if (kind === "season")
-        next.seasons = (prev.seasons || []).filter((x) => x !== value);
+      if (kind === "fish") next.fish = (prev.fish || []).filter((x) => x !== value);
+      if (kind === "season") next.seasons = (prev.seasons || []).filter((x) => x !== value);
 
       return next;
     });
@@ -140,7 +137,7 @@ export default function HomePage() {
     setSortValue(nextSortValue);
     setPage(1);
 
-    // apply immediately (store-like behavior)
+    // apply immediately
     setFilters((prev) => ({
       ...prev,
       sortValue: nextSortValue,
@@ -204,10 +201,7 @@ export default function HomePage() {
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {filters.region ? (
-              <Chip
-                label={`Region: ${filters.region}`}
-                onRemove={() => removeFilter("region")}
-              />
+              <Chip label={`Region: ${filters.region}`} onRemove={() => removeFilter("region")} />
             ) : null}
 
             {filters.waterType ? (
@@ -256,11 +250,7 @@ export default function HomePage() {
               canUseFavorites ? (
                 <button
                   type="button"
-                  title={
-                    isFavorite(loc.id)
-                      ? "Remove from favorites"
-                      : "Add to favorites"
-                  }
+                  title={isFavorite(loc.id) ? "Remove from favorites" : "Add to favorites"}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -276,13 +266,8 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div
-        style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}
-      >
-        <button
-          disabled={!canPrev || loading}
-          onClick={() => setPage((p) => p - 1)}
-        >
+      <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
+        <button disabled={!canPrev || loading} onClick={() => setPage((p) => p - 1)}>
           Prev
         </button>
 
@@ -290,10 +275,7 @@ export default function HomePage() {
           Page {page} of {totalPages}
         </div>
 
-        <button
-          disabled={!canNext || loading}
-          onClick={() => setPage((p) => p + 1)}
-        >
+        <button disabled={!canNext || loading} onClick={() => setPage((p) => p + 1)}>
           Next
         </button>
       </div>

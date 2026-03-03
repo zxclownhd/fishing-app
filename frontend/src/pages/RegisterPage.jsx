@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../auth/auth";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 export default function RegisterPage() {
   const nav = useNavigate();
@@ -12,41 +13,41 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
 
-
   async function onSubmit(e) {
     e.preventDefault();
     setError("");
 
     const emailTrim = email.trim().toLowerCase();
-    const displayNameTrim = displayName;
+    const displayNameTrim = displayName.trim();
 
-    const validationEmail = (email) => {
+    const validationEmail = (emailValue) => {
       const regexForMail = /^\S+@\S+\.\S+$/;
-      return regexForMail.test(email);
+      return regexForMail.test(emailValue);
     };
-    const validationDisplayName = (displayName) => {
+
+    const validationDisplayName = (displayNameValue) => {
       const regexForDisplayName = /^[a-zA-Z0-9._]{3,30}$/;
-      return regexForDisplayName.test(displayName);
+      return regexForDisplayName.test(displayNameValue);
     };
 
     if (!validationEmail(emailTrim)) {
       setError("Invalid email");
       return;
-    };
+    }
 
     if (!validationDisplayName(displayNameTrim)) {
-      setError("Display name: only letters, numbers, . and _");
+      setError("Display name: only letters, numbers, . and _ (3–30 chars)");
       return;
     }
 
-    if(password.length < 8) {
-      setError("Password must be at least 8 character");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
-    };
+    }
 
     if (password !== confirmPassword) {
-    setError("Password does not match")
-    return;
+      setError("Password does not match");
+      return;
     }
 
     try {
@@ -59,22 +60,11 @@ export default function RegisterPage() {
       });
       nav("/");
     } catch (err) {
-      setError(err.response?.data?.error || "Registration failed");
+      setError(getErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);
     }
   }
-
-  //const emailTrim = email.trim().toLowerCase();
-  //const displayNameTrim = displayName;
-
-  //const emailValid = /^\S+@\S+\.\S+$/.test(emailTrim);
-  //const displayNameValid = /^[a-zA-Z0-9._]+$/.test(displayNameTrim);
-
-  //const passwordValid = password.length >= 8;
-  //const passwordsMatch = password === confirmPassword;
-
-  //const canSubmit = emailValid && displayNameValid && passwordValid && passwordsMatch;
 
   return (
     <div style={{ padding: 16, maxWidth: 420 }}>
@@ -120,7 +110,10 @@ export default function RegisterPage() {
           <option value="OWNER">OWNER</option>
         </select>
 
-        <button disabled={loading} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}>
+        <button
+          disabled={loading}
+          style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
+        >
           {loading ? "..." : "Create account"}
         </button>
 

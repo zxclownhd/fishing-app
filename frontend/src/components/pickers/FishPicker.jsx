@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../api/http";
+import { getErrorMessage } from "../../api/getErrorMessage";
 
 export default function FishPicker({ value, onChange }) {
   const [options, setOptions] = useState([]);
@@ -8,15 +9,18 @@ export default function FishPicker({ value, onChange }) {
 
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       try {
         const res = await http.get("/locations/fish");
         const names = (res.data.items || []).map((x) => x.name).filter(Boolean);
         if (!cancelled) setOptions(names);
-      } catch {
+      } catch (e) {
+        console.error("Failed to load fish:", getErrorMessage(e, "Failed to load fish"));
         if (!cancelled) setOptions([]);
       }
     }
+
     load();
     return () => {
       cancelled = true;
@@ -84,7 +88,12 @@ export default function FishPicker({ value, onChange }) {
 }
 
 const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd", width: "100%" };
-const chipBtn = { border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px", background: "#fff" };
+const chipBtn = {
+  border: "1px solid #ddd",
+  borderRadius: 999,
+  padding: "4px 10px",
+  background: "#fff",
+};
 const dropdown = {
   position: "absolute",
   zIndex: 10,

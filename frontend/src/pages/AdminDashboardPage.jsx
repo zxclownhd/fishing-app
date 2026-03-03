@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 const LIMIT = 20;
 
@@ -30,15 +31,15 @@ export default function AdminDashboardPage() {
   async function loadLocations(pageArg = page, statusArg = status) {
     setLoading(true);
     setErrorText("");
+
     try {
-      await http.get("/health");
       const res = await http.get("/admin/locations", {
         params: { status: statusArg, page: pageArg, limit: LIMIT },
       });
       setItems(res.data.items || []);
       setTotal(res.data.total || 0);
-    } catch {
-      setErrorText("Request failed");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Failed to load locations"));
     } finally {
       setLoading(false);
     }
@@ -69,8 +70,8 @@ export default function AdminDashboardPage() {
     try {
       await http.patch(`/admin/locations/${id}/status`, { status: nextStatus });
       await loadLocations(page, status);
-    } catch {
-      setErrorText("Request failed");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Failed to update status"));
     }
   }
 
@@ -80,17 +81,16 @@ export default function AdminDashboardPage() {
     // toggle open/close
     setExpandedId((prev) => (prev === id ? null : id));
 
-    // if we already have full details cached, nothing else to do
+    // cached already
     if (detailsById[id]) return;
 
-    // fetch full details (includes ALL photos)
     setDetailsLoadingId(id);
     try {
       const res = await http.get(`/admin/locations/${id}`);
       const item = res.data.item;
       setDetailsById((prev) => ({ ...prev, [id]: item }));
-    } catch {
-      setErrorText("Failed to load details");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Failed to load details"));
     } finally {
       setDetailsLoadingId(null);
     }
@@ -116,8 +116,8 @@ export default function AdminDashboardPage() {
       setPage(newPage);
       setExpandedId(null);
       await loadLocations(newPage, status);
-    } catch {
-      setErrorText("Delete failed");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Delete failed"));
     }
   }
 
@@ -186,11 +186,7 @@ export default function AdminDashboardPage() {
           const lngNum = Number(it.lng);
           const coordsOk = Number.isFinite(latNum) && Number.isFinite(lngNum);
 
-          // In list: it.photos is take:1
-          // In details: full.photos is all
-          const photos = isExpanded
-            ? (full?.photos ?? it.photos ?? [])
-            : (it.photos ?? []);
+          const photos = isExpanded ? (full?.photos ?? it.photos ?? []) : (it.photos ?? []);
 
           return (
             <LocationCard
@@ -204,11 +200,7 @@ export default function AdminDashboardPage() {
                     <div style={styles.groupChips}>
                       {(it.fish || []).slice(0, 8).map((x, idx) => (
                         <span
-                          key={
-                            x.fishId
-                              ? `${it.id}-fish-${x.fishId}`
-                              : `${it.id}-fish-${idx}`
-                          }
+                          key={x.fishId ? `${it.id}-fish-${x.fishId}` : `${it.id}-fish-${idx}`}
                           style={styles.chip}
                         >
                           {x.fish?.name || "fish"}
@@ -226,9 +218,7 @@ export default function AdminDashboardPage() {
                       {(it.seasons || []).slice(0, 8).map((x, idx) => (
                         <span
                           key={
-                            x.seasonId
-                              ? `${it.id}-season-${x.seasonId}`
-                              : `${it.id}-season-${idx}`
+                            x.seasonId ? `${it.id}-season-${x.seasonId}` : `${it.id}-season-${idx}`
                           }
                           style={styles.chip}
                         >
@@ -322,11 +312,7 @@ export default function AdminDashboardPage() {
               }
               actions={
                 <>
-                  <button
-                    type="button"
-                    onClick={() => toggleDetails(it.id)}
-                    disabled={loading}
-                  >
+                  <button type="button" onClick={() => toggleDetails(it.id)} disabled={loading}>
                     {isExpanded ? "Close" : "Details"}
                   </button>
 
@@ -354,11 +340,7 @@ export default function AdminDashboardPage() {
                   <button
                     onClick={() => deleteLocation(it)}
                     disabled={loading || !canDelete(it)}
-                    title={
-                      !canDelete(it)
-                        ? "Delete is allowed only for HIDDEN"
-                        : "Delete permanently"
-                    }
+                    title={!canDelete(it) ? "Delete is allowed only for HIDDEN" : "Delete permanently"}
                     style={canDelete(it) ? styles.dangerBtn : null}
                   >
                     Delete

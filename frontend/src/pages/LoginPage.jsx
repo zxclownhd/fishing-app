@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../auth/auth";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 export default function LoginPage() {
   const nav = useNavigate();
@@ -18,7 +19,10 @@ export default function LoginPage() {
       nav("/");
     } catch (err) {
       console.error(err);
-      setError("Invalid credentials");
+
+      // For login, keep a safe fallback
+      const msg = getErrorMessage(err, "Invalid credentials");
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -43,7 +47,10 @@ export default function LoginPage() {
           style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
         />
 
-        <button disabled={loading} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}>
+        <button
+          disabled={loading}
+          style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
+        >
           {loading ? "..." : "Login"}
         </button>
 

@@ -5,6 +5,7 @@ import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
 import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
+import { getErrorMessage } from "../../api/getErrorMessage";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const user = getStoredUser();
@@ -26,11 +27,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
-  // NEW: so unmount cleanup won't run after successful save
+  // so unmount cleanup won't run after successful save
   const savedRef = useRef(false);
 
   useEffect(() => {
-    // when editing a new location, reset the saved flag
     savedRef.current = false;
 
     setEditDescription(loc.description || "");
@@ -45,8 +45,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
     setPhotos(
       (loc.photos || [])
-        .map((p) => ({ id: p.id, url: p.url }))
-        .filter((p) => p.url)
+        .map((p) => ({ id: p.id, url: p.url, publicId: p.publicId }))
+        .filter((p) => p.url),
     );
 
     setEditError("");
@@ -134,11 +134,11 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     try {
       await http.post("/photos/cleanup", { publicIds });
     } catch (e) {
-      console.error("cleanup failed", e);
+      console.error("cleanup failed:", getErrorMessage(e, "cleanup failed"));
     }
   }
 
-  // NEW: cleanup drafts when the edit form unmounts (e.g., tab switch / closing edit)
+  // cleanup drafts when the edit form unmounts (tab switch / closing edit)
   useEffect(() => {
     return () => {
       if (savedRef.current) return;
@@ -147,7 +147,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       if (!publicIds.length) return;
 
       http.post("/photos/cleanup", { publicIds }).catch((e) => {
-        console.error("cleanup failed", e);
+        console.error("cleanup failed:", getErrorMessage(e, "cleanup failed"));
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,12 +209,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         photoUrls: (photos || []).map((p) => p.url).filter(Boolean),
       });
 
-      // NEW: mark as saved so unmount cleanup won't delete the photos
       savedRef.current = true;
-
       onCancel();
     } catch (err) {
-      setEditError(err?.response?.data?.error || "Failed to update location");
+      setEditError(getErrorMessage(err, "Failed to update location"));
     } finally {
       setSaving(false);
     }
@@ -223,8 +221,28 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   async function handleRemove(photo) {
     setEditError("");
 
-    if (photo?.id) {
-      await http.delete(`/photos/${photo.id}`);
+    if (!photo) return;
+
+    // optimistic UI remove (optional). safer after delete, so do after success
+    if (photo.id) {
+      try {
+        await http.delete(`/photos/${photo.id}`);
+        setPhotos((prev) => (prev || []).filter((p) => p.id !== photo.id));
+      } catch (e) {
+        setEditError(getErrorMessage(e, "Failed to delete photo"));
+      }
+      return;
+    }
+
+    // draft photo (no id) remove locally
+    if (photo.publicId) {
+      setPhotos((prev) => (prev || []).filter((p) => p.publicId !== photo.publicId));
+      return;
+    }
+
+    // fallback: remove by url
+    if (photo.url) {
+      setPhotos((prev) => (prev || []).filter((p) => p.url !== photo.url));
     }
   }
 

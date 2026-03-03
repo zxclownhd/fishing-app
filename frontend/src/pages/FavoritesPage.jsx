@@ -3,6 +3,7 @@ import { http } from "../api/http";
 import { Navigate, useNavigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
+import { getErrorMessage } from "../api/getErrorMessage";
 
 const LIMIT = 20;
 
@@ -31,8 +32,8 @@ export default function FavoritesPage() {
       });
       setItems(res.data.items || []);
       setTotal(res.data.total || 0);
-    } catch {
-      setErrorText("Request failed");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Failed to load favorites"));
     } finally {
       setLoading(false);
     }
@@ -48,8 +49,8 @@ export default function FavoritesPage() {
         setItems((prev) => prev.filter((x) => x.id !== id));
         setTotal((prev) => Math.max(0, prev - 1));
       }
-    } catch {
-      setErrorText("Remove failed");
+    } catch (e) {
+      setErrorText(getErrorMessage(e, "Failed to remove favorite"));
     }
   }
 
