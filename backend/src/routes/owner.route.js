@@ -4,6 +4,7 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 // Everything in /owner is OWNER only
 router.use(authenticateToken, requireRole("OWNER"));
@@ -79,7 +80,7 @@ router.get(
     });
 
     if (!location) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     res.json(location);
@@ -133,7 +134,7 @@ router.patch(
       });
 
       if (!current) {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
 
       const nextData =
@@ -147,7 +148,7 @@ router.patch(
       });
 
       if (upd.count !== 1) {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
 
       // 2) fishNames: full replace
@@ -246,7 +247,7 @@ router.post(
     });
 
     if (!existing) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     try {
@@ -264,7 +265,7 @@ router.post(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }
@@ -283,7 +284,7 @@ router.post(
     });
 
     if (!existing) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     try {
@@ -301,7 +302,7 @@ router.post(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }

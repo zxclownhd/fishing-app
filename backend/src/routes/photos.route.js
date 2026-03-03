@@ -6,6 +6,7 @@ const cloudinary = require("../utils/cloudinary");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 // POST /photos/cleanup
 // body: { publicIds: string[] }
@@ -24,7 +25,7 @@ router.post(
     }
 
     if (cleaned.length > 20) {
-      throw new AppError(400, "VALIDATION_ERROR", "Too many publicIds (max 20)", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Too many publicIds (max 20)", {
         field: "publicIds",
         max: 20,
       });
@@ -60,7 +61,7 @@ router.delete(
     const photoId = String(req.params.id || "").trim();
 
     if (!photoId) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid photo id", { field: "id" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid photo id", { field: "id" });
     }
 
     const photo = await prisma.photo.findUnique({
@@ -74,14 +75,14 @@ router.delete(
     });
 
     if (!photo) {
-      throw new AppError(404, "NOT_FOUND", "Photo not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Photo not found");
     }
 
     const isAdmin = req.user.role === "ADMIN";
     const isOwner = photo.location?.ownerId === req.user.id;
 
     if (!isAdmin && !isOwner) {
-      throw new AppError(403, "FORBIDDEN", "Forbidden");
+      throw new AppError(403, ErrorCode.FORBIDDEN, "Forbidden");
     }
 
     // 1) delete from Cloudinary
@@ -94,7 +95,7 @@ router.delete(
       await prisma.photo.delete({ where: { id: photoId } });
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Photo not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Photo not found");
       }
       throw e;
     }

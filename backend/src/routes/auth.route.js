@@ -5,6 +5,7 @@ const prisma = require("../db/client");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const USERNAME_RE = /^[a-zA-Z0-9._]{3,30}$/;
@@ -24,7 +25,7 @@ router.post(
     const { email, password, displayName, role } = req.body;
 
     if (!email || !password) {
-      throw new AppError(400, "VALIDATION_ERROR", "email and password are required", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "email and password are required", {
         fields: ["email", "password"],
       });
     }
@@ -34,18 +35,18 @@ router.post(
     const nameNorm = displayName == null ? null : String(displayName);
 
     if (!EMAIL_RE.test(emailNorm)) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid email", { field: "email" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid email", { field: "email" });
     }
 
     if (passNorm.length < 8) {
-      throw new AppError(400, "VALIDATION_ERROR", "Password must be at least 8 characters", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Password must be at least 8 characters", {
         field: "password",
         min: 8,
       });
     }
 
     if (nameNorm !== null && !USERNAME_RE.test(nameNorm)) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid display name", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid display name", {
         field: "displayName",
       });
     }
@@ -74,16 +75,16 @@ router.post(
         const target = e.meta?.target || [];
 
         if (Array.isArray(target) && target.includes("email")) {
-          throw new AppError(409, "CONFLICT", "Email already taken", { field: "email" });
+          throw new AppError(409, ErrorCode.CONFLICT, "Email already taken", { field: "email" });
         }
 
         if (Array.isArray(target) && target.includes("displayName")) {
-          throw new AppError(409, "CONFLICT", "Display name already taken", {
+          throw new AppError(409, ErrorCode.CONFLICT, "Display name already taken", {
             field: "displayName",
           });
         }
 
-        throw new AppError(409, "CONFLICT", "Unique constraint failed", {
+        throw new AppError(409, ErrorCode.CONFLICT, "Unique constraint failed", {
           target,
         });
       }
@@ -100,7 +101,7 @@ router.post(
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw new AppError(400, "VALIDATION_ERROR", "email and password are required", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "email and password are required", {
         fields: ["email", "password"],
       });
     }
@@ -113,12 +114,12 @@ router.post(
 
     // Security: do not reveal which field is wrong
     if (!user) {
-      throw new AppError(401, "UNAUTHORIZED", "Invalid credentials");
+      throw new AppError(401, ErrorCode.UNAUTHORIZED, "Invalid credentials");
     }
 
     const ok = await bcrypt.compare(String(password), user.passwordHash);
     if (!ok) {
-      throw new AppError(401, "UNAUTHORIZED", "Invalid credentials");
+      throw new AppError(401, ErrorCode.UNAUTHORIZED, "Invalid credentials");
     }
 
     const token = signToken(user);

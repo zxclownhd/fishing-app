@@ -4,6 +4,7 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 // POST /favorites/:locationId
 router.post(
@@ -15,7 +16,7 @@ router.post(
     const locationId = req.params.locationId;
 
     if (!locationId) {
-      throw new AppError(400, "VALIDATION_ERROR", "No location", { field: "locationId" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "No location", { field: "locationId" });
     }
 
     const fav = await prisma.favorite.upsert({
@@ -40,7 +41,7 @@ router.delete(
     const locationId = req.params.locationId;
 
     if (!locationId) {
-      throw new AppError(400, "VALIDATION_ERROR", "No location", { field: "locationId" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "No location", { field: "locationId" });
     }
 
     const deleteResult = await prisma.favorite.deleteMany({

@@ -4,6 +4,7 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 const REGION_CODES = new Set([
   "VINNYTSIA",
@@ -82,7 +83,7 @@ router.get(
     const regionCode = region ? String(region).trim().toUpperCase() : null;
 
     if (regionCode && !REGION_CODES.has(regionCode)) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid region", { field: "region" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid region", { field: "region" });
     }
 
     const fishList = fish
@@ -267,26 +268,26 @@ router.post(
     if (!title || !description || !region || !waterType) {
       throw new AppError(
         400,
-        "VALIDATION_ERROR",
+        ErrorCode.VALIDATION_ERROR,
         "Missing required fields: title, description, region, waterType, lat, lng",
         { fields: ["title", "description", "region", "waterType", "lat", "lng"] },
       );
     }
 
     if (String(lat).trim() === "" || String(lng).trim() === "") {
-      throw new AppError(400, "VALIDATION_ERROR", "lat and lng are required", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "lat and lng are required", {
         fields: ["lat", "lng"],
       });
     }
 
     const regionCode = String(region).trim().toUpperCase();
     if (!REGION_CODES.has(regionCode)) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid region", { field: "region" });
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid region", { field: "region" });
     }
 
     const contact = contactInfo ? String(contactInfo).trim() : null;
     if (contact && contact.length > 255) {
-      throw new AppError(400, "VALIDATION_ERROR", "contactInfo is too long (max 255 chars)", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "contactInfo is too long (max 255 chars)", {
         field: "contactInfo",
         max: 255,
       });
@@ -296,12 +297,12 @@ router.post(
     const lngNum = Number(lng);
 
     if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-      throw new AppError(400, "VALIDATION_ERROR", "lat and lng must be valid numbers", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "lat and lng must be valid numbers", {
         fields: ["lat", "lng"],
       });
     }
     if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-      throw new AppError(400, "VALIDATION_ERROR", "lat/lng out of range", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "lat/lng out of range", {
         latRange: [-90, 90],
         lngRange: [-180, 180],
       });
@@ -314,7 +315,7 @@ router.post(
       if (urls.length) {
         throw new AppError(
           400,
-          "VALIDATION_ERROR",
+          ErrorCode.VALIDATION_ERROR,
           "Photos must include publicId now. Send `photos: [{ url, publicId }]` instead of `photoUrls`.",
           { field: "photos" },
         );
@@ -322,7 +323,7 @@ router.post(
     }
 
     if (normalizedPhotos.length < 1) {
-      throw new AppError(400, "VALIDATION_ERROR", "At least 1 photo is required", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "At least 1 photo is required", {
         field: "photos",
         min: 1,
       });
@@ -422,7 +423,7 @@ router.post(
     const r = Number(rating);
 
     if (!Number.isInteger(r) || r < 1 || r > 5) {
-      throw new AppError(400, "VALIDATION_ERROR", "rating must be an integer from 1 to 5", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "rating must be an integer from 1 to 5", {
         field: "rating",
         min: 1,
         max: 5,
@@ -430,7 +431,7 @@ router.post(
     }
 
     if (!comment || String(comment).trim().length < 3) {
-      throw new AppError(400, "VALIDATION_ERROR", "comment is required (min 3 chars)", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "comment is required (min 3 chars)", {
         field: "comment",
         minLen: 3,
       });
@@ -442,11 +443,11 @@ router.post(
     });
 
     if (!loc) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     if (loc.status !== "APPROVED") {
-      throw new AppError(403, "FORBIDDEN", "You can review only APPROVED locations");
+      throw new AppError(403, ErrorCode.FORBIDDEN, "You can review only APPROVED locations");
     }
 
     try {
@@ -465,7 +466,7 @@ router.post(
       res.status(201).json(created);
     } catch (e) {
       if (e && e.code === "P2002") {
-        throw new AppError(409, "CONFLICT", "You already reviewed this location");
+        throw new AppError(409, ErrorCode.CONFLICT, "You already reviewed this location");
       }
       throw e;
     }
@@ -490,7 +491,7 @@ router.get(
     });
 
     if (!location) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     const agg = await prisma.review.aggregate({
@@ -523,7 +524,7 @@ router.get(
     });
 
     if (!loc) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     res.json({ contactInfo: loc.contactInfo });

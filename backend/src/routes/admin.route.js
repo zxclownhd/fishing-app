@@ -3,6 +3,7 @@ const prisma = require("../db/client");
 const { authenticateToken, requireRole } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 // All /admin routes require JWT + ADMIN role
 router.use(authenticateToken, requireRole("ADMIN"));
@@ -54,7 +55,7 @@ router.patch(
 
     const allowed = ["APPROVED", "REJECTED", "HIDDEN"];
     if (!allowed.includes(nextStatus)) {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid status", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid status", {
         allowed,
       });
     }
@@ -68,7 +69,7 @@ router.patch(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }
@@ -89,7 +90,7 @@ router.patch(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }
@@ -109,7 +110,7 @@ router.patch(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }
@@ -129,7 +130,7 @@ router.patch(
       res.json(updated);
     } catch (e) {
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "Location not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
       }
       throw e;
     }
@@ -155,7 +156,7 @@ router.get(
     });
 
     if (!item) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     res.json({ item });
@@ -174,11 +175,11 @@ router.delete(
     });
 
     if (!loc) {
-      throw new AppError(404, "NOT_FOUND", "Location not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "Location not found");
     }
 
     if (loc.status !== "HIDDEN") {
-      throw new AppError(409, "CONFLICT", "Delete is allowed only for HIDDEN locations", {
+      throw new AppError(409, ErrorCode.CONFLICT, "Delete is allowed only for HIDDEN locations", {
         status: loc.status,
       });
     }

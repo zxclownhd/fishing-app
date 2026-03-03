@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
+const { ErrorCode } = require("../utils/errorCodes");
 
 // GET /me -> current user
 router.get(
@@ -23,7 +24,7 @@ router.get(
     });
 
     if (!user) {
-      throw new AppError(404, "NOT_FOUND", "User not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "User not found");
     }
 
     res.json({ user });
@@ -38,7 +39,7 @@ router.patch(
     const newDisplayName = req.body?.displayName;
 
     if (typeof newDisplayName !== "string") {
-      throw new AppError(400, "VALIDATION_ERROR", "Invalid displayName", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid displayName", {
         field: "displayName",
       });
     }
@@ -46,7 +47,7 @@ router.patch(
     const trimmed = newDisplayName.trim();
 
     if (trimmed.length < 2) {
-      throw new AppError(400, "VALIDATION_ERROR", "displayName is too short", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "displayName is too short", {
         field: "displayName",
         minLen: 2,
       });
@@ -69,12 +70,12 @@ router.patch(
     } catch (e) {
       // unique conflict for displayName if you have such constraint
       if (e && e.code === "P2002") {
-        throw new AppError(409, "CONFLICT", "Display name already taken", {
+        throw new AppError(409, ErrorCode.CONFLICT, "Display name already taken", {
           field: "displayName",
         });
       }
       if (e && e.code === "P2025") {
-        throw new AppError(404, "NOT_FOUND", "User not found");
+        throw new AppError(404, ErrorCode.NOT_FOUND, "User not found");
       }
       throw e;
     }
@@ -90,13 +91,13 @@ router.patch(
     const newPassword = req.body?.newPassword;
 
     if (typeof currentPassword !== "string" || typeof newPassword !== "string") {
-      throw new AppError(400, "VALIDATION_ERROR", "currentPassword and newPassword are required", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "currentPassword and newPassword are required", {
         fields: ["currentPassword", "newPassword"],
       });
     }
 
     if (newPassword.length < 8) {
-      throw new AppError(400, "VALIDATION_ERROR", "Password must be at least 8 characters", {
+      throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Password must be at least 8 characters", {
         field: "newPassword",
         min: 8,
       });
@@ -111,13 +112,13 @@ router.patch(
     });
 
     if (!user) {
-      throw new AppError(404, "NOT_FOUND", "User not found");
+      throw new AppError(404, ErrorCode.NOT_FOUND, "User not found");
     }
 
     const ok = await bcrypt.compare(currentPassword, user.passwordHash);
 
     if (!ok) {
-      throw new AppError(401, "UNAUTHORIZED", "Wrong password");
+      throw new AppError(401, ErrorCode.UNAUTHORIZED, "Wrong password");
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
