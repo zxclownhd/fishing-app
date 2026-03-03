@@ -3,6 +3,7 @@ import { http } from "../api/http";
 import { Navigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
+import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 
 const LIMIT = 20;
 
@@ -292,14 +293,24 @@ export default function AdminDashboardPage() {
                           <div style={{ opacity: 0.75 }}>Loading photos...</div>
                         ) : photos && photos.length ? (
                           <div style={{ display: "grid", gap: 8 }}>
-                            {photos.map((p, idx) => (
-                              <img
-                                key={p.id ? `p-${p.id}` : `p-${idx}`}
-                                src={p.url}
-                                alt=""
-                                style={styles.detailsImg}
-                              />
-                            ))}
+                            {photos.map((p, idx) => {
+                              const src = getCloudinaryVariant(p.url, {
+                                w: 1200,
+                                h: 900,
+                                crop: "fit",
+                              });
+
+                              return (
+                                <img
+                                  key={p.id ? `p-${p.id}` : `p-${idx}`}
+                                  src={src}
+                                  alt=""
+                                  loading="lazy"
+                                  decoding="async"
+                                  style={styles.detailsImg}
+                                />
+                              );
+                            })}
                           </div>
                         ) : (
                           <div style={{ opacity: 0.75 }}>No photos</div>

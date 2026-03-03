@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
 import { useFavorites } from "../client/hooks/useFavorites";
+import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 
 export default function LocationDetailsPage() {
   const { id } = useParams();
@@ -152,7 +153,9 @@ export default function LocationDetailsPage() {
           onClick={() => toggleFavorite(location.id)}
           style={{ fontSize: 20, lineHeight: 1 }}
           title={
-            isFavorite(location.id) ? "Remove from favorites" : "Add to favorites"
+            isFavorite(location.id)
+              ? "Remove from favorites"
+              : "Add to favorites"
           }
         >
           {isFavorite(location.id) ? "★" : "☆"}
@@ -176,14 +179,24 @@ export default function LocationDetailsPage() {
         <div style={{ marginTop: 12 }}>
           <h3>Photos</h3>
           <div style={{ display: "grid", gap: 10 }}>
-            {location.photos.map((p) => (
-              <img
-                key={p.id}
-                src={p.url}
-                alt=""
-                style={{ width: "100%", maxWidth: 760, borderRadius: 10 }}
-              />
-            ))}
+            {location.photos.map((p) => {
+              const bigUrl = getCloudinaryVariant(p.url, {
+                w: 1400,
+                h: 1000,
+                crop: "fit",
+              });
+
+              return (
+                <img
+                  key={p.id}
+                  src={bigUrl}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  style={{ width: "100%", maxWidth: 760, borderRadius: 10 }}
+                />
+              );
+            })}
           </div>
         </div>
       )}

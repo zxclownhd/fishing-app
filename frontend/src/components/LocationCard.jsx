@@ -1,6 +1,7 @@
 // src/client/components/LocationCard.jsx
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
+import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 
 export default function LocationCard({
   loc,
@@ -11,6 +12,15 @@ export default function LocationCard({
   onClick, // optional click handler when NOT using `to`
 }) {
   const photoUrl = loc?.photos?.[0]?.url || null;
+
+  const thumbUrl = photoUrl
+    ? getCloudinaryVariant(photoUrl, {
+        w: 400,
+        h: 280,
+        crop: "fill",
+        gravity: "auto",
+      })
+    : "";
 
   const ratingText = useMemo(() => {
     if (variant !== "public") return null;
@@ -41,7 +51,9 @@ export default function LocationCard({
         {photoUrl ? (
           <img
             alt={loc?.title || "Location"}
-            src={photoUrl}
+            src={thumbUrl}
+            loading="lazy"
+            decoding="async"
             style={styles.img}
           />
         ) : (
