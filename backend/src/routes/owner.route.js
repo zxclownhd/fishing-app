@@ -5,12 +5,25 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 // Все в /owner тільки для OWNER
 router.use(authenticateToken, requireRole("OWNER"));
 
-function normalizePhotoUrls(photoUrls, max = 5) {
-  if (!Array.isArray(photoUrls)) return [];
-  const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
+function normalizePhotoInputs(photos, max = 5) {
+  if (!Array.isArray(photos)) return [];
 
-  const unique = [...new Set(cleaned)];
-  return unique.slice(0, max);
+  const cleaned = photos
+    .map((p) => ({
+      url: p?.url ? String(p.url).trim() : "",
+      publicId: p?.publicId ? String(p.publicId).trim() : "",
+    }))
+    .filter((p) => p.url && p.publicId);
+
+  const uniqueByUrl = [];
+  const seen = new Set();
+  for (const p of cleaned) {
+    if (seen.has(p.url)) continue;
+    seen.add(p.url);
+    uniqueByUrl.push(p);
+  }
+
+  return uniqueByUrl.slice(0, max);
 }
 
 // GET /owner/locations?page=1&limit=20
@@ -20,7 +33,7 @@ router.get("/locations", async (req, res) => {
 
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
     const limitRaw = parseInt(req.query.limit || "20", 10);
-    const limit = Math.min(50, Math.max(1, limitRaw)); // щоб не можна було попросити 5000
+    const limit = Math.min(50, Math.max(1, limitRaw));
     const skip = (page - 1) * limit;
 
     const where = { ownerId: userId };
@@ -33,13 +46,8 @@ router.get("/locations", async (req, res) => {
         skip,
         take: limit,
         include: {
-          // owner тут не обовʼязковий, але хай буде консистентно
           owner: { select: { id: true, displayName: true, email: true } },
-
-          // owner page потребує фотки для превʼю і для редагування,
-          // тому тягнемо всі (тільки url)
           photos: { select: { id: true, url: true, createdAt: true } },
-
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
         },
@@ -53,7 +61,7 @@ router.get("/locations", async (req, res) => {
   }
 });
 
-// (опц) GET /owner/locations/:id -> деталі, але тільки свої
+// GET /owner/locations/:id -> деталі, але тільки свої
 router.get("/locations/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -64,7 +72,7 @@ router.get("/locations/:id", async (req, res) => {
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: true,
+        photos: { select: { id: true, url: true, createdAt: true } },
       },
     });
 
@@ -77,13 +85,12 @@ router.get("/locations/:id", async (req, res) => {
   }
 });
 
-// PATCH /owner/locations/:id  (update only own location)
-// Business rule: if location was APPROVED and owner changes content -> set back to PENDING
+// PATCH /owner/locations/:id
+// Правило: якщо було APPROVED і owner міняє контент, повертаємо в PENDING
 router.patch("/locations/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1) знайти локацію тільки якщо вона належить owner
     const existing = await prisma.location.findFirst({
       where: { id, ownerId: req.user.id },
       select: { id: true, status: true },
@@ -91,7 +98,6 @@ router.patch("/locations/:id", async (req, res) => {
 
     if (!existing) return res.status(404).json({ error: "Not found" });
 
-    // 2) дозволені поля для оновлення
     const {
       title,
       description,
@@ -99,10 +105,10 @@ router.patch("/locations/:id", async (req, res) => {
       waterType,
       lat,
       lng,
-      fishNames, // optional array
-      seasonCodes, // optional array
+      fishNames,
+      seasonCodes,
       contactInfo,
-      photoUrls,
+      photos, // optional: [{ url, publicId }] додаємо тільки нові
     } = req.body;
 
     const data = {};
@@ -117,39 +123,17 @@ router.patch("/locations/:id", async (req, res) => {
       data.contactInfo = contactInfo ? String(contactInfo).trim() : null;
     }
 
-    // 3) якщо редагуємо APPROVED — повертаємо в PENDING (реалістична модерація)
-    // (якщо не хочеш — скажеш, і ми це вимкнемо)
     if (existing.status === "APPROVED") {
       data.status = "PENDING";
     }
 
-    let normalizedPhotoUrls = null;
+    const normalizedNewPhotos = Array.isArray(photos) ? normalizePhotoInputs(photos, 5) : null;
 
-    if (Array.isArray(photoUrls)) {
-      normalizedPhotoUrls = normalizePhotoUrls(photoUrls, 5);
-
-      if (normalizedPhotoUrls.length < 1) {
-        return res.status(400).json({ error: "At least 1 photo is required" });
-      }
-    }
-
-    // 4) оновлення зв’язків fish/seasons (якщо передали масиви)
-    // робимо транзакцією, щоб не лишити БД "напів-оновленою"
     const result = await prisma.$transaction(async (tx) => {
-      // update base fields
       await tx.location.update({
         where: { id },
         data,
       });
-
-      // photos: повна заміна (якщо передали масив)
-      if (normalizedPhotoUrls) {
-        await tx.photo.deleteMany({ where: { locationId: id } });
-
-        await tx.photo.createMany({
-          data: normalizedPhotoUrls.map((url) => ({ locationId: id, url })),
-        });
-      }
 
       // fishNames: повна заміна
       if (Array.isArray(fishNames)) {
@@ -172,11 +156,12 @@ router.patch("/locations/:id", async (req, res) => {
         }
       }
 
-      // seasonCodes: повна заміна (тільки існуючі seasons)
+      // seasonCodes: повна заміна
       if (Array.isArray(seasonCodes)) {
         const seasonRows = seasonCodes.length
           ? await tx.season.findMany({
               where: { code: { in: seasonCodes.map((c) => String(c)) } },
+              select: { id: true },
             })
           : [];
 
@@ -190,14 +175,41 @@ router.patch("/locations/:id", async (req, res) => {
         }
       }
 
-      // return updated location
+      // photos: додаємо тільки нові, не видаляємо нічого
+      if (normalizedNewPhotos) {
+        const existingPhotos = await tx.photo.findMany({
+          where: { locationId: id },
+          select: { url: true },
+        });
+
+        const existingUrls = new Set(existingPhotos.map((p) => p.url));
+        const currentCount = existingPhotos.length;
+
+        const remainingSlots = Math.max(0, 5 - currentCount);
+        if (remainingSlots > 0) {
+          const toAdd = normalizedNewPhotos
+            .filter((p) => !existingUrls.has(p.url))
+            .slice(0, remainingSlots);
+
+          if (toAdd.length) {
+            await tx.photo.createMany({
+              data: toAdd.map((p) => ({
+                locationId: id,
+                url: p.url,
+                publicId: p.publicId,
+              })),
+            });
+          }
+        }
+      }
+
       return tx.location.findUnique({
         where: { id },
         include: {
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
-          photos: true,
+          photos: { select: { id: true, url: true, createdAt: true } },
         },
       });
     });
@@ -227,7 +239,7 @@ router.post("/locations/:id/hide", async (req, res) => {
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: true,
+        photos: { select: { id: true, url: true, createdAt: true } },
       },
     });
 
@@ -238,7 +250,7 @@ router.post("/locations/:id/hide", async (req, res) => {
   }
 });
 
-// POST /owner/locations/:id/unhide -> set status PENDING (send for review)
+// POST /owner/locations/:id/unhide -> set status PENDING
 router.post("/locations/:id/unhide", async (req, res) => {
   try {
     const { id } = req.params;
@@ -256,7 +268,7 @@ router.post("/locations/:id/unhide", async (req, res) => {
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: true,
+        photos: { select: { id: true, url: true, createdAt: true } },
       },
     });
 

@@ -1,6 +1,18 @@
 import { useRef, useState } from "react";
 
-export default function PhotoUploader({ urls, onChange, max = 10 }) {
+/**
+ * Photos format:
+ * - existing from DB: { id: "uuid", url: "https://...", createdAt?: "..." }
+ * - new after Cloudinary upload (not saved yet): { url: "https://...", publicId: "abc/123" }
+ *
+ * Props:
+ * - photos: array of photo objects (see above)
+ * - onChange: (nextPhotos) => void
+ * - max: max photos allowed (default 5 or 10, up to you)
+ * - onRemove: optional async (photo) => void
+ *   If provided and photo.id exists, you can call your API DELETE /photos/:id there.
+ */
+export default function PhotoUploader({ photos = [], onChange, max = 10, onRemove }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -10,13 +22,26 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
 
   const MAX_BYTES = 10 * 1024 * 1024;
 
+  function uniqByUrl(list) {
+    const out = [];
+    const seen = new Set();
+    for (const p of list) {
+      const url = p?.url ? String(p.url).trim() : "";
+      if (!url) continue;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      out.push({ ...p, url });
+    }
+    return out;
+  }
+
   async function upload(files) {
     if (!cloudName || !uploadPreset) {
       setErrorText("Cloudinary env is missing");
       return;
     }
 
-    const current = urls?.length || 0;
+    const current = Array.isArray(photos) ? photos.length : 0;
     const left = Math.max(0, max - current);
 
     if (left === 0) {
@@ -27,9 +52,7 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
     const arr = Array.from(files);
 
     const nonImages = arr.filter((f) => !f.type?.startsWith("image/"));
-    const tooBig = arr.filter(
-      (f) => f.type?.startsWith("image/") && f.size > MAX_BYTES,
-    );
+    const tooBig = arr.filter((f) => f.type?.startsWith("image/") && f.size > MAX_BYTES);
 
     const picked = arr
       .filter((f) => f.type?.startsWith("image/"))
@@ -49,7 +72,6 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
       return;
     }
 
-    // якщо юзер вибрав більше, ніж можна додати, покажемо норм підказку
     if (arr.length > left) {
       setErrorText(`Only ${left} more photo(s) can be added (max ${max})`);
     } else {
@@ -60,6 +82,7 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
 
     try {
       const uploaded = [];
+
       for (const file of picked) {
         const form = new FormData();
         form.append("file", file);
@@ -67,19 +90,24 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
 
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body: form },
+          { method: "POST", body: form }
         );
 
         if (!res.ok) throw new Error("Upload failed");
-        const data = await res.json();
-        if (!data.secure_url) throw new Error("No secure_url");
 
-        uploaded.push(data.secure_url);
+        const data = await res.json();
+
+        if (!data.secure_url) throw new Error("No secure_url");
+        if (!data.public_id) throw new Error("No public_id");
+
+        uploaded.push({
+          url: data.secure_url,
+          publicId: data.public_id,
+        });
       }
 
-      onChange([...(urls || []), ...uploaded]);
-
-      // прибрати підказку після успіху
+      const next = uniqByUrl([...(photos || []), ...uploaded]).slice(0, max);
+      onChange(next);
       setErrorText("");
     } catch (e) {
       console.error(e);
@@ -103,9 +131,19 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
     if (files?.length) upload(files);
   }
 
-  function removeAt(idx) {
-    onChange((urls || []).filter((_, i) => i !== idx));
-    setErrorText("");
+  async function removePhoto(photo, idx) {
+    try {
+      if (typeof onRemove === "function") {
+        await onRemove(photo);
+      }
+
+      const next = (photos || []).filter((_, i) => i !== idx);
+      onChange(next);
+      setErrorText("");
+    } catch (e) {
+      console.error(e);
+      setErrorText("Failed to remove photo");
+    }
   }
 
   return (
@@ -130,11 +168,7 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
           flexWrap: "wrap",
         }}
       >
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-        >
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>
           {uploading ? "Uploading..." : "Add photos"}
         </button>
 
@@ -154,11 +188,11 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
         onChange={onPick}
       />
 
-      {(urls || []).length ? (
+      {(photos || []).length ? (
         <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-          {(urls || []).map((u, idx) => (
+          {(photos || []).map((p, idx) => (
             <div
-              key={`${u}-${idx}`}
+              key={`${p?.id || p?.publicId || p?.url}-${idx}`}
               style={{
                 display: "grid",
                 gridTemplateColumns: "80px 1fr auto",
@@ -167,7 +201,7 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
               }}
             >
               <img
-                src={u}
+                src={p.url}
                 alt=""
                 style={{
                   width: 80,
@@ -177,15 +211,21 @@ export default function PhotoUploader({ urls, onChange, max = 10 }) {
                   border: "1px solid #eee",
                 }}
               />
-              <div
-                style={{ wordBreak: "break-word", fontSize: 13, opacity: 0.85 }}
-              >
-                {u}
+
+              <div style={{ display: "grid", gap: 4 }}>
+                <div style={{ wordBreak: "break-word", fontSize: 13, opacity: 0.85 }}>
+                  {p.url}
+                </div>
+                <div style={{ fontSize: 12, opacity: 0.65 }}>
+                  {p.id ? "Saved" : "Not saved yet"}
+                </div>
               </div>
+
               <button
                 type="button"
-                onClick={() => removeAt(idx)}
+                onClick={() => removePhoto(p, idx)}
                 disabled={uploading}
+                title={p.id ? "Deletes from DB and Cloudinary (via API)" : "Removes only locally"}
               >
                 Remove
               </button>

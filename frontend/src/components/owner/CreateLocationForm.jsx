@@ -17,7 +17,10 @@ export default function CreateLocationForm({ onCreate }) {
   const [seasonSelected, setSeasonSelected] = useState([]);
 
   const [contactInfo, setContactInfo] = useState("");
-  const [photoUrls, setPhotoUrls] = useState([]);
+
+  // NEW: photos are objects now:
+  // [{ url, publicId }] (new uploads) or { id, url } (not expected on create, but ok)
+  const [photos, setPhotos] = useState([]);
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -47,11 +50,20 @@ export default function CreateLocationForm({ onCreate }) {
         return;
       }
 
-      if (!photoUrls || photoUrls.length < 1) {
+      const normalizedPhotos = Array.isArray(photos)
+        ? photos
+            .map((p) => ({
+              url: p?.url ? String(p.url).trim() : "",
+              publicId: p?.publicId ? String(p.publicId).trim() : "",
+            }))
+            .filter((p) => p.url && p.publicId)
+        : [];
+
+      if (normalizedPhotos.length < 1) {
         setCreateError("At least 1 photo is required");
         return;
       }
-      if (photoUrls.length > 5) {
+      if (normalizedPhotos.length > 5) {
         setCreateError("Max 5 photos");
         return;
       }
@@ -66,7 +78,12 @@ export default function CreateLocationForm({ onCreate }) {
         fishNames: fishSelected,
         seasonCodes: seasonSelected,
         contactInfo: contactInfo.trim() || undefined,
-        photoUrls: photoUrls,
+
+        // NEW (preferred): backend should accept this
+        photos: normalizedPhotos,
+
+        // BACKWARD COMPAT (optional): if your backend still expects photoUrls
+        photoUrls: normalizedPhotos.map((p) => p.url),
       });
 
       setTitle("");
@@ -78,7 +95,7 @@ export default function CreateLocationForm({ onCreate }) {
       setFishSelected([]);
       setSeasonSelected([]);
       setContactInfo("");
-      setPhotoUrls([]);
+      setPhotos([]);
     } catch (err) {
       setCreateError(err?.response?.data?.error || "Failed to create location");
     } finally {
@@ -147,15 +164,14 @@ export default function CreateLocationForm({ onCreate }) {
 
         <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-        <PhotoUploader urls={photoUrls} onChange={setPhotoUrls} max={5} />
+        {/* NEW: PhotoUploader works with objects now */}
+        <PhotoUploader photos={photos} onChange={setPhotos} max={5} />
 
         <button disabled={creating} style={btn}>
           {creating ? "Creating..." : "Create (PENDING)"}
         </button>
 
-        {createError ? (
-          <div style={{ color: "crimson" }}>{createError}</div>
-        ) : null}
+        {createError ? <div style={{ color: "crimson" }}>{createError}</div> : null}
       </form>
     </div>
   );

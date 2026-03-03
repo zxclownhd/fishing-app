@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -55,28 +56,6 @@ enum RegionCode {
   CRIMEA
 }
 
-
-enum InquiryStatus {
-  NEW
-  READ
-  CLOSED
-}
-
-enum ReportReason {
-  SPAM
-  WRONG_INFO
-  DANGEROUS
-  PRIVATE_PROPERTY
-  OTHER
-}
-
-enum ReportStatus {
-  NEW
-  IN_REVIEW
-  RESOLVED
-  DISMISSED
-}
-
 model User {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String   @unique
@@ -89,9 +68,6 @@ model User {
   locations    Location[]
   reviews      Review[]
   favorites    Favorite[]
-  inquiriesOut Inquiry[] @relation("InquiryFromUser")
-  inquiriesIn  Inquiry[] @relation("InquiryToOwner")
-  reports      Report[]
 }
 
 model Location {
@@ -114,8 +90,6 @@ model Location {
   photos      Photo[]
   reviews     Review[]
   favorites   Favorite[]
-  inquiries   Inquiry[]
-  reports     Report[]
 
   fish        LocationFish[]
   seasons     LocationSeason[]
@@ -164,13 +138,16 @@ model LocationSeason {
 model Photo {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   locationId String   @db.Uuid
+
   url        String
-  caption    String?
+  publicId   String
+
   createdAt  DateTime @default(now())
 
   location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
 
   @@index([locationId])
+  @@index([publicId])
 }
 
 model Review {
@@ -202,44 +179,4 @@ model Favorite {
   @@id([userId, locationId])
   @@index([locationId])
   @@index([userId])
-}
-
-model Inquiry {
-  id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  locationId String        @db.Uuid
-  fromUserId String        @db.Uuid
-  ownerId    String        @db.Uuid
-
-  subject    String
-  message    String
-  status     InquiryStatus @default(NEW)
-
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-
-  location   Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  fromUser   User          @relation("InquiryFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
-  owner      User          @relation("InquiryToOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-
-  @@index([ownerId, status])
-  @@index([fromUserId])
-}
-
-model Report {
-  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  locationId     String       @db.Uuid
-  reporterUserId String?      @db.Uuid
-
-  reason         ReportReason
-  details        String?
-  status         ReportStatus @default(NEW)
-
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  location       Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  reporterUser   User?        @relation(fields: [reporterUserId], references: [id], onDelete: SetNull)
-
-  @@index([status])
-  @@index([locationId])
 }

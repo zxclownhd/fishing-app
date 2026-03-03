@@ -33,9 +33,29 @@ const REGION_CODES = new Set([
 function normalizePhotoUrls(photoUrls, max = 5) {
   if (!Array.isArray(photoUrls)) return [];
   const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
-
   const unique = [...new Set(cleaned)];
   return unique.slice(0, max);
+}
+
+function normalizePhotos(photos, max = 5) {
+  if (!Array.isArray(photos)) return [];
+
+  const cleaned = photos
+    .map((p) => ({
+      url: p?.url ? String(p.url).trim() : "",
+      publicId: p?.publicId ? String(p.publicId).trim() : "",
+    }))
+    .filter((p) => p.url && p.publicId);
+
+  const out = [];
+  const seen = new Set();
+  for (const p of cleaned) {
+    if (seen.has(p.url)) continue;
+    seen.add(p.url);
+    out.push(p);
+  }
+
+  return out.slice(0, max);
 }
 
 // GET /locations (guest search)
@@ -158,6 +178,11 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       fishNames = [],
       seasonCodes = [],
       contactInfo,
+
+      // NEW preferred:
+      photos = null,
+
+      // OLD fallback:
       photoUrls = [],
     } = req.body;
 
@@ -200,10 +225,23 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       return res.status(400).json({ error: "lat/lng out of range" });
     }
 
-    // normalize photo urls
-    const urls = normalizePhotoUrls(photoUrls, 5);
+    // Photos: NEW format first
+    const normalizedPhotos = Array.isArray(photos) ? normalizePhotos(photos, 5) : [];
 
-    if (urls.length < 1) {
+    // Backward compatibility:
+    // If client still sends photoUrls only, we cannot create Photo without publicId
+    // (assuming Prisma Photo.publicId is required)
+    if (!normalizedPhotos.length) {
+      const urls = normalizePhotoUrls(photoUrls, 5);
+      if (urls.length) {
+        return res.status(400).json({
+          error:
+            "Photos must include publicId now. Send `photos: [{ url, publicId }]` instead of `photoUrls`.",
+        });
+      }
+    }
+
+    if (normalizedPhotos.length < 1) {
       return res.status(400).json({ error: "At least 1 photo is required" });
     }
 
@@ -224,6 +262,7 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       Array.isArray(seasonCodes) && seasonCodes.length
         ? await prisma.season.findMany({
             where: { code: { in: seasonCodes.map((c) => String(c)) } },
+            select: { id: true },
           })
         : [];
 
@@ -240,7 +279,14 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
         contactInfo: contact,
         fish: { create: fishRows.map((f) => ({ fishId: f.id })) },
         seasons: { create: seasonRows.map((s) => ({ seasonId: s.id })) },
-        photos: { create: urls.map((url) => ({ url })) },
+
+        // NEW: store url + publicId
+        photos: {
+          create: normalizedPhotos.map((p) => ({
+            url: p.url,
+            publicId: p.publicId,
+          })),
+        },
       },
       include: {
         owner: { select: { id: true, displayName: true } },
@@ -315,7 +361,6 @@ router.post(
           .json({ error: "comment is required (min 3 chars)" });
       }
 
-      // опціонально: не дозволяти робити review на не-APPROVED локацію
       const loc = await prisma.location.findUnique({
         where: { id: locationId },
         select: { status: true },
@@ -327,7 +372,6 @@ router.post(
           .json({ error: "You can review only APPROVED locations" });
       }
 
-      // create review (unique constraint handles duplicates)
       const created = await prisma.review.create({
         data: {
           locationId,
@@ -342,7 +386,6 @@ router.post(
 
       res.status(201).json(created);
     } catch (e) {
-      // Prisma unique constraint violation -> user already reviewed
       if (e && e.code === "P2002") {
         return res
           .status(409)
@@ -372,7 +415,6 @@ router.get("/:id", async (req, res) => {
 
     if (!location) return res.status(404).json({ error: "Location not found" });
 
-    // avg rating
     const agg = await prisma.review.aggregate({
       where: { locationId: id },
       _avg: { rating: true },
@@ -395,7 +437,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// GET /locations/:id/contact (auth) - contacts only for logged-in users
+// GET /locations/:id/contact (auth)
 router.get("/:id/contact", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;

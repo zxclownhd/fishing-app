@@ -24,7 +24,9 @@ export default function OwnerDashboardPage() {
   const [editingId, setEditingId] = useState(null);
 
   async function loadMyLocations(pageArg = page) {
-    const res = await http.get("/owner/locations", { params: { page: pageArg, limit: LIMIT } });
+    const res = await http.get("/owner/locations", {
+      params: { page: pageArg, limit: LIMIT },
+    });
 
     if (res.data && Array.isArray(res.data.items)) {
       setItems(res.data.items);
@@ -75,7 +77,17 @@ export default function OwnerDashboardPage() {
   }
 
   async function onCreate(payload) {
-    await http.post("/locations", payload);
+    // Prefer new backend contract: photos: [{ url, publicId }]
+    // Keep photoUrls only as backward compatibility
+    const safePayload = { ...payload };
+
+    if (Array.isArray(safePayload.photos) && safePayload.photos.length) {
+      // ok
+    } else if (Array.isArray(safePayload.photoUrls) && safePayload.photoUrls.length) {
+      // old contract still ok
+    }
+
+    await http.post("/locations", safePayload);
     setActiveTab("LIST");
     await refresh();
   }
@@ -91,12 +103,20 @@ export default function OwnerDashboardPage() {
 
   async function onSaveEdit(id, payload) {
     await http.patch(`/owner/locations/${id}`, payload);
+
+    // important: reload to get fresh Photo IDs for newly added photos
     await refresh();
+
+    // optional UX: close edit after save
+    setEditingId(null);
   }
 
   async function onToggleHidden(loc) {
     try {
-      const path = loc.status === "HIDDEN" ? `/owner/locations/${loc.id}/unhide` : `/owner/locations/${loc.id}/hide`;
+      const path =
+        loc.status === "HIDDEN"
+          ? `/owner/locations/${loc.id}/unhide`
+          : `/owner/locations/${loc.id}/hide`;
       await http.post(path);
       await refresh();
     } catch (err) {

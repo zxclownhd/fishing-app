@@ -3,6 +3,7 @@ import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
+import { http } from "../../api/http";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editDescription, setEditDescription] = useState("");
@@ -12,7 +13,11 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editRegionSelected, setEditRegionSelected] = useState("");
   const [editWaterType, setEditWaterType] = useState("LAKE");
   const [editContactInfo, setEditContactInfo] = useState("");
-  const [editPhotoUrls, setEditPhotoUrls] = useState([]);
+
+  // NEW: objects instead of urls
+  // existing: { id, url }
+  // new: { url, publicId }
+  const [photos, setPhotos] = useState([]);
 
   const [fishSelected, setFishSelected] = useState([]);
   const [seasonSelected, setSeasonSelected] = useState([]);
@@ -23,16 +28,20 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   useEffect(() => {
     setEditDescription(loc.description || "");
     setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
-    setSeasonSelected(
-      (loc.seasons || []).map((x) => x.season?.code).filter(Boolean),
-    );
+    setSeasonSelected((loc.seasons || []).map((x) => x.season?.code).filter(Boolean));
     setEditContactInfo(loc.contactInfo || "");
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
     setEditTitle(loc.title || "");
     setEditRegionSelected(loc.region || "");
     setEditWaterType(loc.waterType || "LAKE");
-    setEditPhotoUrls((loc.photos || []).map((p) => p.url).filter(Boolean));
+
+    setPhotos(
+      (loc.photos || [])
+        .map((p) => ({ id: p.id, url: p.url }))
+        .filter((p) => p.url)
+    );
+
     setEditError("");
   }, [loc]);
 
@@ -74,12 +83,14 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .map((s) => s.trim())
       .sort()
       .join("|");
+
     const curSeasons = (seasonSelected || [])
       .map((s) => s.trim())
       .sort()
       .join("|");
-    const curPhotos = (editPhotoUrls || [])
-      .map((s) => String(s).trim())
+
+    const curPhotos = (photos || [])
+      .map((p) => String(p.url || "").trim())
       .filter(Boolean)
       .sort()
       .join("|");
@@ -107,7 +118,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     editWaterType,
     fishSelected,
     seasonSelected,
-    editPhotoUrls,
+    photos,
   ]);
 
   async function submit(e) {
@@ -135,14 +146,23 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         return;
       }
 
-      if (!editPhotoUrls || editPhotoUrls.length < 1) {
+      if (!photos || photos.length < 1) {
         setEditError("At least 1 photo is required");
         return;
       }
-      if (editPhotoUrls.length > 5) {
+      if (photos.length > 5) {
         setEditError("Max 5 photos");
         return;
       }
+
+      // NEW: only send new photos (without id) to backend PATCH
+      const newPhotos = (photos || [])
+        .filter((p) => !p.id)
+        .map((p) => ({
+          url: p?.url ? String(p.url).trim() : "",
+          publicId: p?.publicId ? String(p.publicId).trim() : "",
+        }))
+        .filter((p) => p.url && p.publicId);
 
       await onSave(loc.id, {
         title: editTitle.trim(),
@@ -152,9 +172,14 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         fishNames: fishSelected,
         seasonCodes: seasonSelected,
         contactInfo: editContactInfo.trim() || null,
-        photoUrls: editPhotoUrls,
         lat: latNum,
         lng: lngNum,
+
+        // NEW preferred
+        photos: newPhotos,
+
+        // BACKWARD COMPAT optional (safe to keep for now)
+        photoUrls: (photos || []).map((p) => p.url).filter(Boolean),
       });
 
       onCancel();
@@ -162,6 +187,15 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       setEditError(err?.response?.data?.error || "Failed to update location");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRemove(photo) {
+    setEditError("");
+
+    // If photo already saved in DB, delete via backend so it deletes from Cloudinary too
+    if (photo?.id) {
+      await http.delete(`/photos/${photo.id}`);
     }
   }
 
@@ -189,10 +223,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         style={input}
       />
 
-      <RegionPicker
-        value={editRegionSelected}
-        onChange={setEditRegionSelected}
-      />
+      <RegionPicker value={editRegionSelected} onChange={setEditRegionSelected} />
 
       <select
         value={editWaterType}
@@ -225,7 +256,12 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-      <PhotoUploader urls={editPhotoUrls} onChange={setEditPhotoUrls} max={5} />
+      <PhotoUploader
+        photos={photos}
+        onChange={setPhotos}
+        max={5}
+        onRemove={handleRemove}
+      />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button disabled={saving || !isDirty} style={btn}>
