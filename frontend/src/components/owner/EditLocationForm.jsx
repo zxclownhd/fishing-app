@@ -1,11 +1,15 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
 import { http } from "../../api/http";
+import { getStoredUser } from "../../auth/auth";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
+  const user = getStoredUser();
+  const draftFolder = user ? `drafts/${user.id}` : undefined;
+
   const [editDescription, setEditDescription] = useState("");
   const [editLat, setEditLat] = useState("");
   const [editLng, setEditLng] = useState("");
@@ -14,9 +18,6 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editWaterType, setEditWaterType] = useState("LAKE");
   const [editContactInfo, setEditContactInfo] = useState("");
 
-  // NEW: objects instead of urls
-  // existing: { id, url }
-  // new: { url, publicId }
   const [photos, setPhotos] = useState([]);
 
   const [fishSelected, setFishSelected] = useState([]);
@@ -25,7 +26,13 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
+  // NEW: so unmount cleanup won't run after successful save
+  const savedRef = useRef(false);
+
   useEffect(() => {
+    // when editing a new location, reset the saved flag
+    savedRef.current = false;
+
     setEditDescription(loc.description || "");
     setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
     setSeasonSelected((loc.seasons || []).map((x) => x.season?.code).filter(Boolean));
@@ -79,16 +86,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .sort()
       .join("|");
 
-    const curFish = (fishSelected || [])
-      .map((s) => s.trim())
-      .sort()
-      .join("|");
-
-    const curSeasons = (seasonSelected || [])
-      .map((s) => s.trim())
-      .sort()
-      .join("|");
-
+    const curFish = (fishSelected || []).map((s) => s.trim()).sort().join("|");
+    const curSeasons = (seasonSelected || []).map((s) => s.trim()).sort().join("|");
     const curPhotos = (photos || [])
       .map((p) => String(p.url || "").trim())
       .filter(Boolean)
@@ -120,6 +119,39 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     seasonSelected,
     photos,
   ]);
+
+  function getDraftPublicIds() {
+    return (photos || [])
+      .filter((p) => !p.id && p.publicId)
+      .map((p) => String(p.publicId).trim())
+      .filter(Boolean);
+  }
+
+  async function cleanupDrafts() {
+    const publicIds = getDraftPublicIds();
+    if (!publicIds.length) return;
+
+    try {
+      await http.post("/photos/cleanup", { publicIds });
+    } catch (e) {
+      console.error("cleanup failed", e);
+    }
+  }
+
+  // NEW: cleanup drafts when the edit form unmounts (e.g., tab switch / closing edit)
+  useEffect(() => {
+    return () => {
+      if (savedRef.current) return;
+
+      const publicIds = getDraftPublicIds();
+      if (!publicIds.length) return;
+
+      http.post("/photos/cleanup", { publicIds }).catch((e) => {
+        console.error("cleanup failed", e);
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos]);
 
   async function submit(e) {
     e.preventDefault();
@@ -155,7 +187,6 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         return;
       }
 
-      // NEW: only send new photos (without id) to backend PATCH
       const newPhotos = (photos || [])
         .filter((p) => !p.id)
         .map((p) => ({
@@ -174,13 +205,12 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         contactInfo: editContactInfo.trim() || null,
         lat: latNum,
         lng: lngNum,
-
-        // NEW preferred
         photos: newPhotos,
-
-        // BACKWARD COMPAT optional (safe to keep for now)
         photoUrls: (photos || []).map((p) => p.url).filter(Boolean),
       });
+
+      // NEW: mark as saved so unmount cleanup won't delete the photos
+      savedRef.current = true;
 
       onCancel();
     } catch (err) {
@@ -193,10 +223,15 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   async function handleRemove(photo) {
     setEditError("");
 
-    // If photo already saved in DB, delete via backend so it deletes from Cloudinary too
     if (photo?.id) {
       await http.delete(`/photos/${photo.id}`);
     }
+  }
+
+  async function cancel() {
+    if (saving) return;
+    await cleanupDrafts();
+    onCancel();
   }
 
   return (
@@ -261,6 +296,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         onChange={setPhotos}
         max={5}
         onRemove={handleRemove}
+        draftFolder={draftFolder}
       />
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -268,7 +304,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
           {saving ? "Saving..." : "Save (will stay PENDING)"}
         </button>
 
-        <button type="button" onClick={onCancel} style={btn}>
+        <button type="button" onClick={cancel} style={btn} disabled={saving}>
           Cancel
         </button>
       </div>

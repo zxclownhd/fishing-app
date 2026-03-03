@@ -194,7 +194,10 @@ export default function OwnerDashboardPage() {
       </div>
 
       {activeTab === "CREATE" ? (
-        <CreateLocationForm onCreate={onCreate} />
+        <CreateLocationForm
+          onCreate={onCreate}
+          onCancel={() => setActiveTab("LIST")}
+        />
       ) : (
         <MyLocationsList
           items={items}

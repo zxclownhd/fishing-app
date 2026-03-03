@@ -4,6 +4,49 @@ const prisma = require("../db/client");
 const { authenticateToken } = require("../middleware/auth");
 const cloudinary = require("../utils/cloudinary");
 
+// POST /photos/cleanup
+// body: { publicIds: string[] }
+router.post("/cleanup", authenticateToken, async (req, res) => {
+  try {
+    const publicIds = Array.isArray(req.body?.publicIds) ? req.body.publicIds : [];
+
+    const cleaned = publicIds
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    if (!cleaned.length) return res.json({ deleted: 0 });
+
+    // safety limits
+    if (cleaned.length > 20) {
+      return res.status(400).json({ error: "Too many publicIds (max 20)" });
+    }
+
+    const prefix = `drafts/${req.user.id}/`;
+
+    // allow only own draft folder
+    const allowed = cleaned.filter((id) => id.startsWith(prefix));
+
+    if (!allowed.length) return res.json({ deleted: 0 });
+
+    // delete in Cloudinary (batch)
+    // cloudinary.api.delete_resources works better for batch deletes
+    const result = await cloudinary.api.delete_resources(allowed, {
+      resource_type: "image",
+      type: "upload",
+    });
+
+    // result.deleted is an object: { publicId: "deleted" | "not_found" | ... }
+    const deletedCount = result?.deleted
+      ? Object.values(result.deleted).filter((v) => v === "deleted").length
+      : 0;
+
+    return res.json({ deleted: deletedCount });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
 // DELETE /photos/:id
 router.delete("/:id", authenticateToken, async (req, res) => {
   try {

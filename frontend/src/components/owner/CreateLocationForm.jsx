@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { http } from "../../api/http";
+import { getStoredUser } from "../../auth/auth";
+
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
 
-export default function CreateLocationForm({ onCreate }) {
+export default function CreateLocationForm({ onCreate, onCancel }) {
+  const user = getStoredUser();
+  const draftFolder = user ? `drafts/${user.id}` : undefined;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -18,12 +24,44 @@ export default function CreateLocationForm({ onCreate }) {
 
   const [contactInfo, setContactInfo] = useState("");
 
-  // NEW: photos are objects now:
-  // [{ url, publicId }] (new uploads) or { id, url } (not expected on create, but ok)
   const [photos, setPhotos] = useState([]);
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+
+  const createdRef = useRef(false);
+
+  function getDraftPublicIds() {
+    return (photos || [])
+      .filter((p) => !p.id && p.publicId)
+      .map((p) => String(p.publicId).trim())
+      .filter(Boolean);
+  }
+
+  async function cleanupDrafts() {
+    const publicIds = getDraftPublicIds();
+    if (!publicIds.length) return;
+
+    try {
+      await http.post("/photos/cleanup", { publicIds });
+    } catch (e) {
+      console.error("cleanup failed", e);
+    }
+  }
+
+  // cleanup when leaving the create form without creating
+  useEffect(() => {
+    return () => {
+      if (createdRef.current) return;
+      const publicIds = getDraftPublicIds();
+      if (!publicIds.length) return;
+
+      http.post("/photos/cleanup", { publicIds }).catch((e) => {
+        console.error("cleanup failed", e);
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos]);
 
   async function submit(e) {
     e.preventDefault();
@@ -79,12 +117,11 @@ export default function CreateLocationForm({ onCreate }) {
         seasonCodes: seasonSelected,
         contactInfo: contactInfo.trim() || undefined,
 
-        // NEW (preferred): backend should accept this
         photos: normalizedPhotos,
-
-        // BACKWARD COMPAT (optional): if your backend still expects photoUrls
-        photoUrls: normalizedPhotos.map((p) => p.url),
+        photoUrls: normalizedPhotos.map((p) => p.url), // можна потім прибрати
       });
+
+      createdRef.current = true;
 
       setTitle("");
       setDescription("");
@@ -101,6 +138,14 @@ export default function CreateLocationForm({ onCreate }) {
     } finally {
       setCreating(false);
     }
+  }
+
+  async function cancel() {
+    if (creating) return;
+    await cleanupDrafts();
+
+    // if parent gave onCancel (ex: switch tab to LIST), call it
+    if (typeof onCancel === "function") onCancel();
   }
 
   return (
@@ -164,12 +209,22 @@ export default function CreateLocationForm({ onCreate }) {
 
         <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
 
-        {/* NEW: PhotoUploader works with objects now */}
-        <PhotoUploader photos={photos} onChange={setPhotos} max={5} />
+        <PhotoUploader
+          photos={photos}
+          onChange={setPhotos}
+          max={5}
+          draftFolder={draftFolder}
+        />
 
-        <button disabled={creating} style={btn}>
-          {creating ? "Creating..." : "Create (PENDING)"}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button disabled={creating} style={btn}>
+            {creating ? "Creating..." : "Create (PENDING)"}
+          </button>
+
+          <button type="button" onClick={cancel} disabled={creating} style={btn}>
+            Cancel
+          </button>
+        </div>
 
         {createError ? <div style={{ color: "crimson" }}>{createError}</div> : null}
       </form>

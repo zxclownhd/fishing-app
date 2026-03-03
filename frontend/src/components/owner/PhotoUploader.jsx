@@ -11,8 +11,16 @@ import { useRef, useState } from "react";
  * - max: max photos allowed (default 5 or 10, up to you)
  * - onRemove: optional async (photo) => void
  *   If provided and photo.id exists, you can call your API DELETE /photos/:id there.
+ * - draftFolder: optional string, e.g. `drafts/<userId>`
+ *   If provided, uploads will go to that Cloudinary folder (helps cleanup safety).
  */
-export default function PhotoUploader({ photos = [], onChange, max = 10, onRemove }) {
+export default function PhotoUploader({
+  photos = [],
+  onChange,
+  max = 10,
+  onRemove,
+  draftFolder,
+}) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -52,7 +60,9 @@ export default function PhotoUploader({ photos = [], onChange, max = 10, onRemov
     const arr = Array.from(files);
 
     const nonImages = arr.filter((f) => !f.type?.startsWith("image/"));
-    const tooBig = arr.filter((f) => f.type?.startsWith("image/") && f.size > MAX_BYTES);
+    const tooBig = arr.filter(
+      (f) => f.type?.startsWith("image/") && f.size > MAX_BYTES
+    );
 
     const picked = arr
       .filter((f) => f.type?.startsWith("image/"))
@@ -87,6 +97,11 @@ export default function PhotoUploader({ photos = [], onChange, max = 10, onRemov
         const form = new FormData();
         form.append("file", file);
         form.append("upload_preset", uploadPreset);
+
+        // NEW: put drafts into a user-scoped folder for safe cleanup
+        if (draftFolder) {
+          form.append("folder", String(draftFolder));
+        }
 
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
@@ -168,7 +183,11 @@ export default function PhotoUploader({ photos = [], onChange, max = 10, onRemov
           flexWrap: "wrap",
         }}
       >
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
           {uploading ? "Uploading..." : "Add photos"}
         </button>
 
@@ -213,7 +232,13 @@ export default function PhotoUploader({ photos = [], onChange, max = 10, onRemov
               />
 
               <div style={{ display: "grid", gap: 4 }}>
-                <div style={{ wordBreak: "break-word", fontSize: 13, opacity: 0.85 }}>
+                <div
+                  style={{
+                    wordBreak: "break-word",
+                    fontSize: 13,
+                    opacity: 0.85,
+                  }}
+                >
                   {p.url}
                 </div>
                 <div style={{ fontSize: 12, opacity: 0.65 }}>
@@ -225,7 +250,11 @@ export default function PhotoUploader({ photos = [], onChange, max = 10, onRemov
                 type="button"
                 onClick={() => removePhoto(p, idx)}
                 disabled={uploading}
-                title={p.id ? "Deletes from DB and Cloudinary (via API)" : "Removes only locally"}
+                title={
+                  p.id
+                    ? "Deletes from DB and Cloudinary (via API)"
+                    : "Removes only locally"
+                }
               >
                 Remove
               </button>
