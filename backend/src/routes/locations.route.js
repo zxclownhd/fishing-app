@@ -69,6 +69,10 @@ router.get("/", async (req, res) => {
       seasons,
       page = "1",
       limit = "10",
+
+      // NEW for dropdown
+      sort = "createdAt", // createdAt | updatedAt | rating
+      order = "desc",     // asc | desc
     } = req.query;
 
     const regionCode = region ? String(region).trim().toUpperCase() : null;
@@ -94,11 +98,12 @@ router.get("/", async (req, res) => {
         : [];
 
     const take = Math.min(parseInt(limit, 10) || 10, 50);
-    const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (pageNum - 1) * take;
 
     const where = {
       status: "APPROVED",
-      ...(region ? { region: regionCode } : {}),
+      ...(regionCode ? { region: regionCode } : {}),
       ...(waterType ? { waterType: String(waterType) } : {}),
       ...(fishList.length
         ? { fish: { some: { fish: { name: { in: fishList } } } } }
@@ -108,9 +113,49 @@ router.get("/", async (req, res) => {
         : {}),
     };
 
-    const [items, total] = await Promise.all([
-      prisma.location.findMany({
+    const sortKey = String(sort).toLowerCase();
+    const sortOrder = String(order).toLowerCase() === "asc" ? "asc" : "desc";
+
+    const total = await prisma.location.count({ where });
+
+    // SORT BY RATING (avg review rating across all matching locations)
+    if (sortKey === "rating") {
+      // 1) take all matching ids (filters apply)
+      const allIdsRows = await prisma.location.findMany({
         where,
+        select: { id: true },
+      });
+      const allIds = allIdsRows.map((x) => x.id);
+
+      if (!allIds.length) {
+        return res.json({ items: [], total: 0, page: pageNum, limit: take });
+      }
+
+      // 2) group by reviews and order by avg rating
+      const ratedAgg = await prisma.review.groupBy({
+        by: ["locationId"],
+        where: { locationId: { in: allIds } },
+        _avg: { rating: true },
+        orderBy: { _avg: { rating: sortOrder } },
+      });
+
+      const ratedIdsOrdered = ratedAgg.map((x) => x.locationId);
+
+      // 3) push locations without reviews to the end (stable fallback)
+      const unratedRows = await prisma.location.findMany({
+        where: { ...where, id: { notIn: ratedIdsOrdered } },
+        select: { id: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const orderedIds = [...ratedIdsOrdered, ...unratedRows.map((x) => x.id)];
+
+      // 4) pagination on ordered ids
+      const pageIds = orderedIds.slice(skip, skip + take);
+
+      // 5) load entities, then restore ordering
+      const itemsRaw = await prisma.location.findMany({
+        where: { id: { in: pageIds } },
         include: {
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
@@ -118,12 +163,50 @@ router.get("/", async (req, res) => {
           photos: { take: 1, orderBy: { createdAt: "desc" } },
           _count: { select: { reviews: true } },
         },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take,
-      }),
-      prisma.location.count({ where }),
-    ]);
+      });
+
+      const byId = new Map(itemsRaw.map((x) => [x.id, x]));
+      const itemsOrdered = pageIds.map((id) => byId.get(id)).filter(Boolean);
+
+      // 6) avg rating map (for this response)
+      const ratingMap = new Map(
+        ratedAgg.map((r) => [
+          r.locationId,
+          r._avg.rating ? Number(r._avg.rating.toFixed(2)) : null,
+        ]),
+      );
+
+      const itemsWithRating = itemsOrdered.map((loc) => {
+        const reviewsCount = loc._count?.reviews ?? 0;
+        const avgRating = ratingMap.get(loc.id) ?? null;
+        const { _count, ...rest } = loc;
+        return { ...rest, reviewsCount, avgRating };
+      });
+
+      return res.json({
+        items: itemsWithRating,
+        total,
+        page: pageNum,
+        limit: take,
+      });
+    }
+
+    // SORT BY DATE FIELDS (createdAt or updatedAt)
+    const orderField = sortKey === "updatedat" ? "updatedAt" : "createdAt";
+
+    const items = await prisma.location.findMany({
+      where,
+      include: {
+        owner: { select: { id: true, displayName: true } },
+        fish: { include: { fish: true } },
+        seasons: { include: { season: true } },
+        photos: { take: 1, orderBy: { createdAt: "desc" } },
+        _count: { select: { reviews: true } },
+      },
+      orderBy: { [orderField]: sortOrder },
+      skip,
+      take,
+    });
 
     const locationIds = items.map((x) => x.id);
 
@@ -145,16 +228,14 @@ router.get("/", async (req, res) => {
     const itemsWithRating = items.map((loc) => {
       const reviewsCount = loc._count?.reviews ?? 0;
       const avgRating = ratingMap.get(loc.id) ?? null;
-
       const { _count, ...rest } = loc;
-
       return { ...rest, reviewsCount, avgRating };
     });
 
     res.json({
       items: itemsWithRating,
       total,
-      page: Number(page),
+      page: pageNum,
       limit: take,
     });
   } catch (err) {

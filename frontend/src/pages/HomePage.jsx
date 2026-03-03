@@ -6,6 +6,7 @@ import LocationCard from "../components/LocationCard";
 import RegionPicker from "../components/pickers/RegionPicker";
 import FishPicker from "../components/pickers/FishPicker";
 import SeasonPicker from "../components/pickers/SeasonPicker";
+import SortPicker from "../components/pickers/SortPicker";
 
 const LIMIT = 10;
 
@@ -18,7 +19,8 @@ export default function HomePage() {
   const [regionSelected, setRegionSelected] = useState("");
   const [waterType, setWaterType] = useState("");
   const [fishSelected, setFishSelected] = useState([]);
-  const [seasonsSelected, setSeasonsSelected] = useState([]); // multi сезони
+  const [seasonsSelected, setSeasonsSelected] = useState([]);
+  const [sortValue, setSortValue] = useState("createdAt:desc");
 
   // applied filters
   const [filters, setFilters] = useState({
@@ -26,6 +28,7 @@ export default function HomePage() {
     waterType: "",
     fish: [],
     seasons: [],
+    sortValue: "createdAt:desc",
   });
 
   const [page, setPage] = useState(1);
@@ -53,6 +56,12 @@ export default function HomePage() {
     if (activeFilters.seasons && activeFilters.seasons.length) {
       params.seasons = activeFilters.seasons.join(",");
     }
+
+    // sort
+    const sv = activeFilters.sortValue || "createdAt:desc";
+    const [sort, order] = sv.split(":");
+    params.sort = sort || "createdAt";
+    params.order = order === "asc" ? "asc" : "desc";
 
     try {
       setLoading(true);
@@ -82,6 +91,7 @@ export default function HomePage() {
       waterType: waterType.trim(),
       fish: fishSelected,
       seasons: seasonsSelected,
+      sortValue,
     });
   }
 
@@ -90,6 +100,7 @@ export default function HomePage() {
     setWaterType("");
     setFishSelected([]);
     setSeasonsSelected([]);
+    setSortValue("createdAt:desc");
     setPage(1);
 
     setFilters({
@@ -97,6 +108,7 @@ export default function HomePage() {
       waterType: "",
       fish: [],
       seasons: [],
+      sortValue: "createdAt:desc",
     });
   }
 
@@ -123,6 +135,23 @@ export default function HomePage() {
       return next;
     });
   }
+
+  function onSortChange(nextSortValue) {
+    setSortValue(nextSortValue);
+    setPage(1);
+
+    // apply immediately (store-like behavior)
+    setFilters((prev) => ({
+      ...prev,
+      sortValue: nextSortValue,
+    }));
+  }
+
+  const hasActiveFilters =
+    filters.region ||
+    filters.waterType ||
+    (filters.fish && filters.fish.length) ||
+    (filters.seasons && filters.seasons.length);
 
   return (
     <div style={{ padding: 16 }}>
@@ -163,12 +192,11 @@ export default function HomePage() {
             Reset
           </button>
         </div>
+
+        <SortPicker value={sortValue} onChange={onSortChange} />
       </form>
 
-      {filters.region ||
-      filters.waterType ||
-      (filters.fish && filters.fish.length) ||
-      (filters.seasons && filters.seasons.length) ? (
+      {hasActiveFilters ? (
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 6 }}>
             Active filters
