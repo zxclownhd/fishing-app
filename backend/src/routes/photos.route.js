@@ -4,21 +4,30 @@ const prisma = require("../db/client");
 const { authenticateToken } = require("../middleware/auth");
 const cloudinary = require("../utils/cloudinary");
 
+const { asyncHandler } = require("../utils/asyncHandler");
+const { AppError } = require("../utils/AppError");
+
 // POST /photos/cleanup
 // body: { publicIds: string[] }
-router.post("/cleanup", authenticateToken, async (req, res) => {
-  try {
+router.post(
+  "/cleanup",
+  authenticateToken,
+  asyncHandler(async (req, res) => {
     const publicIds = Array.isArray(req.body?.publicIds) ? req.body.publicIds : [];
 
     const cleaned = publicIds
       .map((x) => String(x || "").trim())
       .filter(Boolean);
 
-    if (!cleaned.length) return res.json({ deleted: 0 });
+    if (!cleaned.length) {
+      return res.json({ deleted: 0 });
+    }
 
-    // safety limits
     if (cleaned.length > 20) {
-      return res.status(400).json({ error: "Too many publicIds (max 20)" });
+      throw new AppError(400, "VALIDATION_ERROR", "Too many publicIds (max 20)", {
+        field: "publicIds",
+        max: 20,
+      });
     }
 
     const prefix = `drafts/${req.user.id}/`;
@@ -26,31 +35,33 @@ router.post("/cleanup", authenticateToken, async (req, res) => {
     // allow only own draft folder
     const allowed = cleaned.filter((id) => id.startsWith(prefix));
 
-    if (!allowed.length) return res.json({ deleted: 0 });
+    if (!allowed.length) {
+      return res.json({ deleted: 0 });
+    }
 
-    // delete in Cloudinary (batch)
-    // cloudinary.api.delete_resources works better for batch deletes
     const result = await cloudinary.api.delete_resources(allowed, {
       resource_type: "image",
       type: "upload",
     });
 
-    // result.deleted is an object: { publicId: "deleted" | "not_found" | ... }
     const deletedCount = result?.deleted
       ? Object.values(result.deleted).filter((v) => v === "deleted").length
       : 0;
 
-    return res.json({ deleted: deletedCount });
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+    res.json({ deleted: deletedCount });
+  }),
+);
 
 // DELETE /photos/:id
-router.delete("/:id", authenticateToken, async (req, res) => {
-  try {
-    const photoId = String(req.params.id);
+router.delete(
+  "/:id",
+  authenticateToken,
+  asyncHandler(async (req, res) => {
+    const photoId = String(req.params.id || "").trim();
+
+    if (!photoId) {
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid photo id", { field: "id" });
+    }
 
     const photo = await prisma.photo.findUnique({
       where: { id: photoId },
@@ -62,29 +73,34 @@ router.delete("/:id", authenticateToken, async (req, res) => {
       },
     });
 
-    if (!photo) return res.status(404).json({ error: "Photo not found" });
+    if (!photo) {
+      throw new AppError(404, "NOT_FOUND", "Photo not found");
+    }
 
     const isAdmin = req.user.role === "ADMIN";
     const isOwner = photo.location?.ownerId === req.user.id;
 
     if (!isAdmin && !isOwner) {
-      return res.status(403).json({ error: "Forbidden" });
+      throw new AppError(403, "FORBIDDEN", "Forbidden");
     }
 
-    // 1) видаляємо з Cloudinary
+    // 1) delete from Cloudinary
     if (photo.publicId) {
-      // result може бути: "ok", "not found", ...
       await cloudinary.uploader.destroy(photo.publicId);
     }
 
-    // 2) видаляємо з БД
-    await prisma.photo.delete({ where: { id: photoId } });
+    // 2) delete from DB
+    try {
+      await prisma.photo.delete({ where: { id: photoId } });
+    } catch (e) {
+      if (e && e.code === "P2025") {
+        throw new AppError(404, "NOT_FOUND", "Photo not found");
+      }
+      throw e;
+    }
 
-    return res.status(204).send();
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+    res.status(204).send();
+  }),
+);
 
 module.exports = router;

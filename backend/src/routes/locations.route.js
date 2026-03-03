@@ -2,6 +2,9 @@ const router = require("express").Router();
 const prisma = require("../db/client");
 const { authenticateToken, requireRole } = require("../middleware/auth");
 
+const { asyncHandler } = require("../utils/asyncHandler");
+const { AppError } = require("../utils/AppError");
+
 const REGION_CODES = new Set([
   "VINNYTSIA",
   "VOLYN",
@@ -59,8 +62,9 @@ function normalizePhotos(photos, max = 5) {
 }
 
 // GET /locations (guest search)
-router.get("/", async (req, res) => {
-  try {
+router.get(
+  "/",
+  asyncHandler(async (req, res) => {
     const {
       region,
       waterType,
@@ -70,15 +74,15 @@ router.get("/", async (req, res) => {
       page = "1",
       limit = "10",
 
-      // NEW for dropdown
+      // dropdown sort
       sort = "createdAt", // createdAt | updatedAt | rating
-      order = "desc",     // asc | desc
+      order = "desc", // asc | desc
     } = req.query;
 
     const regionCode = region ? String(region).trim().toUpperCase() : null;
 
     if (regionCode && !REGION_CODES.has(regionCode)) {
-      return res.status(400).json({ error: "Invalid region" });
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid region", { field: "region" });
     }
 
     const fishList = fish
@@ -118,9 +122,8 @@ router.get("/", async (req, res) => {
 
     const total = await prisma.location.count({ where });
 
-    // SORT BY RATING (avg review rating across all matching locations)
+    // SORT BY RATING
     if (sortKey === "rating") {
-      // 1) take all matching ids (filters apply)
       const allIdsRows = await prisma.location.findMany({
         where,
         select: { id: true },
@@ -131,7 +134,6 @@ router.get("/", async (req, res) => {
         return res.json({ items: [], total: 0, page: pageNum, limit: take });
       }
 
-      // 2) group by reviews and order by avg rating
       const ratedAgg = await prisma.review.groupBy({
         by: ["locationId"],
         where: { locationId: { in: allIds } },
@@ -141,7 +143,6 @@ router.get("/", async (req, res) => {
 
       const ratedIdsOrdered = ratedAgg.map((x) => x.locationId);
 
-      // 3) push locations without reviews to the end (stable fallback)
       const unratedRows = await prisma.location.findMany({
         where: { ...where, id: { notIn: ratedIdsOrdered } },
         select: { id: true },
@@ -149,11 +150,8 @@ router.get("/", async (req, res) => {
       });
 
       const orderedIds = [...ratedIdsOrdered, ...unratedRows.map((x) => x.id)];
-
-      // 4) pagination on ordered ids
       const pageIds = orderedIds.slice(skip, skip + take);
 
-      // 5) load entities, then restore ordering
       const itemsRaw = await prisma.location.findMany({
         where: { id: { in: pageIds } },
         include: {
@@ -168,7 +166,6 @@ router.get("/", async (req, res) => {
       const byId = new Map(itemsRaw.map((x) => [x.id, x]));
       const itemsOrdered = pageIds.map((id) => byId.get(id)).filter(Boolean);
 
-      // 6) avg rating map (for this response)
       const ratingMap = new Map(
         ratedAgg.map((r) => [
           r.locationId,
@@ -191,7 +188,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // SORT BY DATE FIELDS (createdAt or updatedAt)
+    // SORT BY createdAt / updatedAt
     const orderField = sortKey === "updatedat" ? "updatedAt" : "createdAt";
 
     const items = await prisma.location.findMany({
@@ -238,15 +235,15 @@ router.get("/", async (req, res) => {
       page: pageNum,
       limit: take,
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
-// POST /locations (owner creates) - JWT required
-router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
-  try {
+// POST /locations (owner creates)
+router.post(
+  "/",
+  authenticateToken,
+  requireRole("OWNER"),
+  asyncHandler(async (req, res) => {
     const ownerId = req.user.id;
 
     const {
@@ -260,73 +257,77 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
       seasonCodes = [],
       contactInfo,
 
-      // NEW preferred:
+      // new
       photos = null,
 
-      // OLD fallback:
+      // old fallback
       photoUrls = [],
     } = req.body;
 
-    // required fields
     if (!title || !description || !region || !waterType) {
-      return res.status(400).json({
-        error:
-          "Missing required fields: title, description, region, waterType, lat, lng",
-      });
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "Missing required fields: title, description, region, waterType, lat, lng",
+        { fields: ["title", "description", "region", "waterType", "lat", "lng"] },
+      );
     }
 
     if (String(lat).trim() === "" || String(lng).trim() === "") {
-      return res.status(400).json({ error: "lat and lng are required" });
+      throw new AppError(400, "VALIDATION_ERROR", "lat and lng are required", {
+        fields: ["lat", "lng"],
+      });
     }
 
-    // normalize + validate region
     const regionCode = String(region).trim().toUpperCase();
     if (!REGION_CODES.has(regionCode)) {
-      return res.status(400).json({ error: "Invalid region" });
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid region", { field: "region" });
     }
 
-    // validate contactInfo
     const contact = contactInfo ? String(contactInfo).trim() : null;
     if (contact && contact.length > 255) {
-      return res
-        .status(400)
-        .json({ error: "contactInfo is too long (max 255 chars)" });
+      throw new AppError(400, "VALIDATION_ERROR", "contactInfo is too long (max 255 chars)", {
+        field: "contactInfo",
+        max: 255,
+      });
     }
 
-    // validate coords
     const latNum = Number(lat);
     const lngNum = Number(lng);
 
     if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-      return res
-        .status(400)
-        .json({ error: "lat and lng must be valid numbers" });
+      throw new AppError(400, "VALIDATION_ERROR", "lat and lng must be valid numbers", {
+        fields: ["lat", "lng"],
+      });
     }
     if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-      return res.status(400).json({ error: "lat/lng out of range" });
+      throw new AppError(400, "VALIDATION_ERROR", "lat/lng out of range", {
+        latRange: [-90, 90],
+        lngRange: [-180, 180],
+      });
     }
 
-    // Photos: NEW format first
     const normalizedPhotos = Array.isArray(photos) ? normalizePhotos(photos, 5) : [];
 
-    // Backward compatibility:
-    // If client still sends photoUrls only, we cannot create Photo without publicId
-    // (assuming Prisma Photo.publicId is required)
     if (!normalizedPhotos.length) {
       const urls = normalizePhotoUrls(photoUrls, 5);
       if (urls.length) {
-        return res.status(400).json({
-          error:
-            "Photos must include publicId now. Send `photos: [{ url, publicId }]` instead of `photoUrls`.",
-        });
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "Photos must include publicId now. Send `photos: [{ url, publicId }]` instead of `photoUrls`.",
+          { field: "photos" },
+        );
       }
     }
 
     if (normalizedPhotos.length < 1) {
-      return res.status(400).json({ error: "At least 1 photo is required" });
+      throw new AppError(400, "VALIDATION_ERROR", "At least 1 photo is required", {
+        field: "photos",
+        min: 1,
+      });
     }
 
-    // fish: link only existing (no upsert)
     const fishList = (Array.isArray(fishNames) ? fishNames : [])
       .map((x) => String(x).trim())
       .filter(Boolean);
@@ -338,7 +339,6 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
         })
       : [];
 
-    // seasons (only existing)
     const seasonRows =
       Array.isArray(seasonCodes) && seasonCodes.length
         ? await prisma.season.findMany({
@@ -360,8 +360,6 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
         contactInfo: contact,
         fish: { create: fishRows.map((f) => ({ fishId: f.id })) },
         seasons: { create: seasonRows.map((s) => ({ seasonId: s.id })) },
-
-        // NEW: store url + publicId
         photos: {
           create: normalizedPhotos.map((p) => ({
             url: p.url,
@@ -378,30 +376,26 @@ router.post("/", authenticateToken, requireRole("OWNER"), async (req, res) => {
     });
 
     res.status(201).json(location);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 // GET /fish
-router.get("/fish", async (req, res) => {
-  try {
+router.get(
+  "/fish",
+  asyncHandler(async (req, res) => {
     const items = await prisma.fish.findMany({
       select: { name: true },
       orderBy: { name: "asc" },
     });
 
     res.json({ items });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 // GET /locations/:id/reviews (public)
-router.get("/:id/reviews", async (req, res) => {
-  try {
+router.get(
+  "/:id/reviews",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const reviews = await prisma.review.findMany({
@@ -413,46 +407,49 @@ router.get("/:id/reviews", async (req, res) => {
     });
 
     res.json({ items: reviews, total: reviews.length });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 // POST /locations/:id/reviews (auth) - one review per user per location
 router.post(
   "/:id/reviews",
   authenticateToken,
   requireRole("USER", "OWNER"),
-  async (req, res) => {
-    try {
-      const { id: locationId } = req.params;
-      const { rating, comment } = req.body;
+  asyncHandler(async (req, res) => {
+    const { id: locationId } = req.params;
+    const { rating, comment } = req.body;
 
-      const r = Number(rating);
+    const r = Number(rating);
 
-      if (!Number.isInteger(r) || r < 1 || r > 5) {
-        return res
-          .status(400)
-          .json({ error: "rating must be an integer from 1 to 5" });
-      }
-      if (!comment || String(comment).trim().length < 3) {
-        return res
-          .status(400)
-          .json({ error: "comment is required (min 3 chars)" });
-      }
-
-      const loc = await prisma.location.findUnique({
-        where: { id: locationId },
-        select: { status: true },
+    if (!Number.isInteger(r) || r < 1 || r > 5) {
+      throw new AppError(400, "VALIDATION_ERROR", "rating must be an integer from 1 to 5", {
+        field: "rating",
+        min: 1,
+        max: 5,
       });
-      if (!loc) return res.status(404).json({ error: "Location not found" });
-      if (loc.status !== "APPROVED") {
-        return res
-          .status(403)
-          .json({ error: "You can review only APPROVED locations" });
-      }
+    }
 
+    if (!comment || String(comment).trim().length < 3) {
+      throw new AppError(400, "VALIDATION_ERROR", "comment is required (min 3 chars)", {
+        field: "comment",
+        minLen: 3,
+      });
+    }
+
+    const loc = await prisma.location.findUnique({
+      where: { id: locationId },
+      select: { status: true },
+    });
+
+    if (!loc) {
+      throw new AppError(404, "NOT_FOUND", "Location not found");
+    }
+
+    if (loc.status !== "APPROVED") {
+      throw new AppError(403, "FORBIDDEN", "You can review only APPROVED locations");
+    }
+
+    try {
       const created = await prisma.review.create({
         data: {
           locationId,
@@ -468,19 +465,17 @@ router.post(
       res.status(201).json(created);
     } catch (e) {
       if (e && e.code === "P2002") {
-        return res
-          .status(409)
-          .json({ error: "You already reviewed this location" });
+        throw new AppError(409, "CONFLICT", "You already reviewed this location");
       }
-      console.error(e);
-      res.status(500).json({ error: "Server error" });
+      throw e;
     }
-  },
+  }),
 );
 
 // GET /locations/:id (public details) - only APPROVED
-router.get("/:id", async (req, res) => {
-  try {
+router.get(
+  "/:id",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const location = await prisma.location.findFirst({
@@ -494,16 +489,16 @@ router.get("/:id", async (req, res) => {
       },
     });
 
-    if (!location) return res.status(404).json({ error: "Location not found" });
+    if (!location) {
+      throw new AppError(404, "NOT_FOUND", "Location not found");
+    }
 
     const agg = await prisma.review.aggregate({
       where: { locationId: id },
       _avg: { rating: true },
     });
 
-    const avgRating = agg._avg.rating
-      ? Number(agg._avg.rating.toFixed(2))
-      : null;
+    const avgRating = agg._avg.rating ? Number(agg._avg.rating.toFixed(2)) : null;
 
     const { _count, ...rest } = location;
 
@@ -512,15 +507,14 @@ router.get("/:id", async (req, res) => {
       reviewsCount: _count.reviews,
       avgRating,
     });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 // GET /locations/:id/contact (auth)
-router.get("/:id/contact", authenticateToken, async (req, res) => {
-  try {
+router.get(
+  "/:id/contact",
+  authenticateToken,
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const loc = await prisma.location.findFirst({
@@ -528,13 +522,12 @@ router.get("/:id/contact", authenticateToken, async (req, res) => {
       select: { id: true, contactInfo: true },
     });
 
-    if (!loc) return res.status(404).json({ error: "Location not found" });
+    if (!loc) {
+      throw new AppError(404, "NOT_FOUND", "Location not found");
+    }
 
     res.json({ contactInfo: loc.contactInfo });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 module.exports = router;

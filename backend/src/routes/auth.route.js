@@ -3,6 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const prisma = require("../db/client");
 
+const { asyncHandler } = require("../utils/asyncHandler");
+const { AppError } = require("../utils/AppError");
+
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const USERNAME_RE = /^[a-zA-Z0-9._]{3,30}$/;
 
@@ -10,17 +13,20 @@ function signToken(user) {
   return jwt.sign(
     { id: user.id, role: user.role, email: user.email },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
   );
 }
 
 // POST /auth/register
-router.post("/register", async (req, res) => {
-  try {
+router.post(
+  "/register",
+  asyncHandler(async (req, res) => {
     const { email, password, displayName, role } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: "email and password are required" });
+      throw new AppError(400, "VALIDATION_ERROR", "email and password are required", {
+        fields: ["email", "password"],
+      });
     }
 
     const emailNorm = String(email).trim().toLowerCase();
@@ -28,69 +34,92 @@ router.post("/register", async (req, res) => {
     const nameNorm = displayName == null ? null : String(displayName);
 
     if (!EMAIL_RE.test(emailNorm)) {
-      return res.status(400).json({ error: "Invalid email" });
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid email", { field: "email" });
     }
 
-    if (passNorm.length < 8 ) {
-      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    if (passNorm.length < 8) {
+      throw new AppError(400, "VALIDATION_ERROR", "Password must be at least 8 characters", {
+        field: "password",
+        min: 8,
+      });
     }
 
     if (nameNorm !== null && !USERNAME_RE.test(nameNorm)) {
-      return res.status(400).json({ error: "Invalid display name" });
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid display name", {
+        field: "displayName",
+      });
     }
 
-    // Безпечне правило: реєстрація тільки USER/OWNER. ADMIN руками через БД.
+    // Safe rule: register only USER/OWNER. ADMIN created manually.
     const safeRole = role === "OWNER" ? "OWNER" : "USER";
 
-    const passwordHash = await bcrypt.hash(String(passNorm), 10);
+    const passwordHash = await bcrypt.hash(passNorm, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        email: emailNorm,
-        passwordHash,
-        displayName: nameNorm,
-        role: safeRole,
-      },
-      select: { id: true, email: true, role: true, displayName: true },
-    });
+    try {
+      const user = await prisma.user.create({
+        data: {
+          email: emailNorm,
+          passwordHash,
+          displayName: nameNorm,
+          role: safeRole,
+        },
+        select: { id: true, email: true, role: true, displayName: true },
+      });
 
-    const token = signToken(user);
+      const token = signToken(user);
+      res.status(201).json({ user, token });
+    } catch (e) {
+      // Unique constraint (email/displayName)
+      if (e && e.code === "P2002") {
+        const target = e.meta?.target || [];
 
-    res.status(201).json({ user, token });
-  } catch (e) {
-    if (e.code === "P2002") {
-      const target = e.meta?.target || [];
-      
-      if (target?.includes("email")) {
-        return res.status(409).json({ error: "Email already taken" });
+        if (Array.isArray(target) && target.includes("email")) {
+          throw new AppError(409, "CONFLICT", "Email already taken", { field: "email" });
+        }
+
+        if (Array.isArray(target) && target.includes("displayName")) {
+          throw new AppError(409, "CONFLICT", "Display name already taken", {
+            field: "displayName",
+          });
+        }
+
+        throw new AppError(409, "CONFLICT", "Unique constraint failed", {
+          target,
+        });
       }
 
-      if (target?.includes("displayName")) {
-        return res.status(409).json({ error: "Display name already taken" });
-      }
-
-      return res.status(409).json({ error: "Unique constraint failed" });
-
-    } else {
-      return res.status(500).json({ error: "Server error" });
+      throw e;
     }
-  }
-});
+  }),
+);
 
 // POST /auth/login
-router.post("/login", async (req, res) => {
-  try {
+router.post(
+  "/login",
+  asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "email and password are required" });
+
+    if (!email || !password) {
+      throw new AppError(400, "VALIDATION_ERROR", "email and password are required", {
+        fields: ["email", "password"],
+      });
+    }
+
+    const emailNorm = String(email).toLowerCase().trim();
 
     const user = await prisma.user.findUnique({
-      where: { email: String(email).toLowerCase().trim() },
+      where: { email: emailNorm },
     });
 
-    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    // Security: do not reveal which field is wrong
+    if (!user) {
+      throw new AppError(401, "UNAUTHORIZED", "Invalid credentials");
+    }
 
     const ok = await bcrypt.compare(String(password), user.passwordHash);
-    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+    if (!ok) {
+      throw new AppError(401, "UNAUTHORIZED", "Invalid credentials");
+    }
 
     const token = signToken(user);
 
@@ -98,10 +127,7 @@ router.post("/login", async (req, res) => {
       user: { id: user.id, email: user.email, role: user.role, displayName: user.displayName },
       token,
     });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+  }),
+);
 
 module.exports = router;

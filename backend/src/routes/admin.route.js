@@ -1,17 +1,21 @@
 const router = require("express").Router();
 const prisma = require("../db/client");
 const { authenticateToken, requireRole } = require("../middleware/auth");
+const { asyncHandler } = require("../utils/asyncHandler");
+const { AppError } = require("../utils/AppError");
 
 // All /admin routes require JWT + ADMIN role
 router.use(authenticateToken, requireRole("ADMIN"));
 
 // GET /admin/locations?status=PENDING
-router.get("/locations", async (req, res) => {
-  try {
+router.get(
+  "/locations",
+  asyncHandler(async (req, res) => {
     const { status, page = "1", limit = "20" } = req.query;
 
     const take = Math.min(parseInt(limit, 10) || 20, 100);
-    const skip = (Math.max(parseInt(page, 10) || 1, 1) - 1) * take;
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (pageNum - 1) * take;
 
     const where = {
       ...(status ? { status: String(status) } : {}),
@@ -37,108 +41,131 @@ router.get("/locations", async (req, res) => {
       prisma.location.count({ where }),
     ]);
 
-    res.json({ items, total, page: Number(page), limit: take });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
+    res.json({ items, total, page: pageNum, limit: take });
+  }),
+);
 
-// NEW: PATCH /admin/locations/:id/status  body: { status: "APPROVED"|"REJECTED"|"HIDDEN" }
-router.patch("/locations/:id/status", async (req, res) => {
-  try {
+// PATCH /admin/locations/:id/status  body: { status: "APPROVED"|"REJECTED"|"HIDDEN" }
+router.patch(
+  "/locations/:id/status",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
     const nextStatus = String(req.body?.status || "").toUpperCase();
 
     const allowed = ["APPROVED", "REJECTED", "HIDDEN"];
     if (!allowed.includes(nextStatus)) {
-      return res.status(400).json({
-        error: "Invalid status",
+      throw new AppError(400, "VALIDATION_ERROR", "Invalid status", {
         allowed,
       });
     }
 
-    const updated = await prisma.location.update({
-      where: { id },
-      data: { status: nextStatus },
-    });
+    try {
+      const updated = await prisma.location.update({
+        where: { id },
+        data: { status: nextStatus },
+      });
 
-    return res.json(updated);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+      res.json(updated);
+    } catch (e) {
+      if (e && e.code === "P2025") {
+        throw new AppError(404, "NOT_FOUND", "Location not found");
+      }
+      throw e;
+    }
+  }),
+);
 
 // Keep old endpoints for compatibility (optional)
-router.patch("/locations/:id/approve", async (req, res) => {
-  try {
+router.patch(
+  "/locations/:id/approve",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updated = await prisma.location.update({
-      where: { id },
-      data: { status: "APPROVED" },
-    });
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
-router.patch("/locations/:id/reject", async (req, res) => {
-  try {
+    try {
+      const updated = await prisma.location.update({
+        where: { id },
+        data: { status: "APPROVED" },
+      });
+      res.json(updated);
+    } catch (e) {
+      if (e && e.code === "P2025") {
+        throw new AppError(404, "NOT_FOUND", "Location not found");
+      }
+      throw e;
+    }
+  }),
+);
+
+router.patch(
+  "/locations/:id/reject",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updated = await prisma.location.update({
-      where: { id },
-      data: { status: "REJECTED" },
-    });
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
-router.patch("/locations/:id/hide", async (req, res) => {
-  try {
+    try {
+      const updated = await prisma.location.update({
+        where: { id },
+        data: { status: "REJECTED" },
+      });
+      res.json(updated);
+    } catch (e) {
+      if (e && e.code === "P2025") {
+        throw new AppError(404, "NOT_FOUND", "Location not found");
+      }
+      throw e;
+    }
+  }),
+);
+
+router.patch(
+  "/locations/:id/hide",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const updated = await prisma.location.update({
-      where: { id },
-      data: { status: "HIDDEN" },
-    });
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
-router.get("/locations/:id", async (req, res) => {
-  try {
+    try {
+      const updated = await prisma.location.update({
+        where: { id },
+        data: { status: "HIDDEN" },
+      });
+      res.json(updated);
+    } catch (e) {
+      if (e && e.code === "P2025") {
+        throw new AppError(404, "NOT_FOUND", "Location not found");
+      }
+      throw e;
+    }
+  }),
+);
+
+router.get(
+  "/locations/:id",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const item = await prisma.location.findUnique({
       where: { id },
       include: {
         owner: { select: { id: true, displayName: true, email: true } },
-        photos: { orderBy: { createdAt: "desc" }, select: { id: true, url: true, createdAt: true } },
+        photos: {
+          orderBy: { createdAt: "desc" },
+          select: { id: true, url: true, createdAt: true },
+        },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
       },
     });
 
-    if (!item) return res.status(404).json({ error: "Not found" });
+    if (!item) {
+      throw new AppError(404, "NOT_FOUND", "Location not found");
+    }
 
-    return res.json({ item });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+    res.json({ item });
+  }),
+);
 
 // DELETE only if HIDDEN
-router.delete("/locations/:id", async (req, res) => {
-  try {
+router.delete(
+  "/locations/:id",
+  asyncHandler(async (req, res) => {
     const { id } = req.params;
 
     const loc = await prisma.location.findUnique({
@@ -146,22 +173,20 @@ router.delete("/locations/:id", async (req, res) => {
       select: { id: true, status: true, title: true },
     });
 
-    if (!loc) return res.status(404).json({ error: "Not found" });
+    if (!loc) {
+      throw new AppError(404, "NOT_FOUND", "Location not found");
+    }
 
     if (loc.status !== "HIDDEN") {
-      return res.status(409).json({
-        error: "Delete is allowed only for HIDDEN locations",
+      throw new AppError(409, "CONFLICT", "Delete is allowed only for HIDDEN locations", {
         status: loc.status,
       });
     }
 
     await prisma.location.delete({ where: { id } });
 
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Server error" });
-  }
-});
+    res.json({ ok: true });
+  }),
+);
 
 module.exports = router;

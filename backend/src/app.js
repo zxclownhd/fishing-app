@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const { requestId } = require("./middleware/requestId");
+const { errorHandler } = require("./middleware/errorHandler");
 
 const locationsRouter = require("./routes/locations.route");
 const adminRouter = require("./routes/admin.route");
@@ -11,6 +13,7 @@ const photosRouter = require("./routes/photos.route");
 
 
 const app = express();
+app.use(requestId);
 app.use(cors());
 app.use(express.json());
 app.use("/auth", authRouter);
@@ -18,6 +21,7 @@ app.use("/me", meRouter);
 app.use("/owner", ownerRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/photos", photosRouter);
+app.use(errorHandler);
 
 
 app.get("/health", (req, res) => res.json({ ok: true }));
