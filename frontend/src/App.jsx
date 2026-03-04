@@ -1,5 +1,6 @@
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useI18n } from "./client/i18n/I18nContext";
 
 import HomePage from "./pages/HomePage";
 import LocationDetailsPage from "./pages/LocationDetailsPage";
@@ -16,12 +17,12 @@ export default function App() {
   const nav = useNavigate();
   const [user, setUser] = useState(getStoredUser());
 
+  const { locale, setLocale, t } = useI18n();
+
   const userLabel = user?.displayName?.trim()
     ? user.displayName.trim()
     : user?.email || "";
 
-  // простий спосіб: оновлювати user при зміні localStorage після login/register
-  // (ми зробимо це через custom event)
   useEffect(() => {
     function onAuthChanged() {
       setUser(getStoredUser());
@@ -48,15 +49,15 @@ export default function App() {
         }}
       >
         <Link to="/" style={{ textDecoration: "none" }}>
-          Home
+          {t("nav.home")}
         </Link>
 
-        {user && <Link to="/profile">Profile</Link>}
-        {user?.role === "OWNER" && <Link to="/owner">Owner</Link>}
-        {user?.role === "ADMIN" && <Link to="/admin">Admin</Link>}
+        {user && <Link to="/profile">{t("nav.profile")}</Link>}
+        {user?.role === "OWNER" && <Link to="/owner">{t("nav.owner")}</Link>}
+        {user?.role === "ADMIN" && <Link to="/admin">{t("nav.admin")}</Link>}
 
         {(user?.role === "OWNER" || user?.role === "USER") && (
-          <Link to="/favorites">Favorites</Link>
+          <Link to="/favorites">{t("nav.favorites")}</Link>
         )}
 
         <div
@@ -67,6 +68,20 @@ export default function App() {
             alignItems: "center",
           }}
         >
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+            style={{
+              padding: "6px 10px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+            }}
+            aria-label="Language"
+          >
+            <option value="en">EN</option>
+            <option value="uk">UK</option>
+          </select>
+
           {user ? (
             <>
               <span style={{ opacity: 0.8 }}>
@@ -80,13 +95,13 @@ export default function App() {
                   border: "1px solid #ddd",
                 }}
               >
-                Logout
+                {t("nav.logout")}
               </button>
             </>
           ) : (
             <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
+              <Link to="/login">{t("nav.login")}</Link>
+              <Link to="/register">{t("nav.register")}</Link>
             </>
           )}
         </div>

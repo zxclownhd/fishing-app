@@ -2,9 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
 
 export default function LoginPage() {
   const nav = useNavigate();
+  const { t } = useI18n();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,9 +22,7 @@ export default function LoginPage() {
       nav("/");
     } catch (err) {
       console.error(err);
-
-      // For login, keep a safe fallback
-      const msg = getErrorMessage(err, "Invalid credentials");
+      const msg = getErrorMessage(err, t("auth.errors.invalidCredentials"));
       setError(msg);
     } finally {
       setLoading(false);
@@ -30,17 +31,21 @@ export default function LoginPage() {
 
   return (
     <div style={{ padding: 16, maxWidth: 420 }}>
-      <h1>Login</h1>
+      <h1>{t("auth.loginTitle")}</h1>
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 10, marginTop: 12 }}>
+      <form
+        onSubmit={onSubmit}
+        style={{ display: "grid", gap: 10, marginTop: 12 }}
+      >
         <input
-          placeholder="Email"
+          placeholder={t("auth.emailPlaceholder")}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
         />
+
         <input
-          placeholder="Password"
+          placeholder={t("auth.passwordPlaceholder")}
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -49,16 +54,20 @@ export default function LoginPage() {
 
         <button
           disabled={loading}
-          style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
+          style={{
+            padding: "10px 14px",
+            borderRadius: 8,
+            border: "1px solid #ddd",
+          }}
         >
-          {loading ? "..." : "Login"}
+          {loading ? t("common.loadingShort") : t("nav.login")}
         </button>
 
         {error && <div style={{ color: "crimson" }}>{error}</div>}
       </form>
 
       <div style={{ marginTop: 12 }}>
-        No account? <Link to="/register">Register</Link>
+        {t("auth.noAccount")} <Link to="/register">{t("nav.register")}</Link>
       </div>
     </div>
   );
