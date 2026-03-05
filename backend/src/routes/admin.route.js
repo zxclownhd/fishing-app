@@ -4,6 +4,7 @@ const { authenticateToken, requireRole } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { AppError } = require("../utils/AppError");
 const { ErrorCode } = require("../utils/errorCodes");
+const cloudinary = require("../utils/cloudinary");
 
 // All /admin routes require JWT + ADMIN role
 router.use(authenticateToken, requireRole("ADMIN"));
@@ -169,9 +170,15 @@ router.delete(
   asyncHandler(async (req, res) => {
     const { id } = req.params;
 
+    // 1) забираємо локацію + фото (publicId)
     const loc = await prisma.location.findUnique({
       where: { id },
-      select: { id: true, status: true, title: true },
+      select: {
+        id: true,
+        status: true,
+        title: true,
+        photos: { select: { id: true, publicId: true } },
+      },
     });
 
     if (!loc) {
@@ -179,14 +186,33 @@ router.delete(
     }
 
     if (loc.status !== "HIDDEN") {
-      throw new AppError(409, ErrorCode.CONFLICT, "Delete is allowed only for HIDDEN locations", {
-        status: loc.status,
+      throw new AppError(
+        409,
+        ErrorCode.CONFLICT,
+        "Delete is allowed only for HIDDEN locations",
+        { status: loc.status },
+      );
+    }
+
+    // 2) видаляємо фотки з Cloudinary (тільки якщо є publicId)
+    const publicIds = (loc.photos || [])
+      .map((p) => (p.publicId ? String(p.publicId).trim() : ""))
+      .filter(Boolean);
+
+    if (publicIds.length) {
+      // найкраще батчем, а не циклом destroy
+      await cloudinary.api.delete_resources(publicIds, {
+        resource_type: "image",
+        // type: "upload", // можна не вказувати, дефолт upload
       });
     }
 
+    // 3) видаляємо локацію в БД (Cascade прибере rows Photo)
     await prisma.location.delete({ where: { id } });
 
-    res.json({ ok: true });
+    // я б повертав 204, але якщо тобі зручніше {ok:true} — лишай
+    return res.status(204).send();
+    // або: res.json({ ok: true, deletedPhotos: publicIds.length });
   }),
 );
 
