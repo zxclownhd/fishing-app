@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 const REGION_OPTIONS = [
   "VINNYTSIA","VOLYN","DNIPROPETROVSK","DONETSK","ZHYTOMYR","ZAKARPATTIA","ZAPORIZHZHIA",
@@ -6,27 +7,45 @@ const REGION_OPTIONS = [
   "SUMY","TERNOPIL","KHARKIV","KHERSON","KHMELNYTSKYI","CHERKASY","CHERNIVTSI","CHERNIHIV","CRIMEA",
 ];
 
-export default function RegionPicker({ value, onChange, placeholder = "Region" }) {
+export default function RegionPicker({ value, onChange, placeholder }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
+
+  const ph = placeholder ?? t("regionPicker.placeholder");
 
   const filtered = useMemo(() => {
     const q = String(value || "").trim().toLowerCase();
     if (!q) return REGION_OPTIONS.slice(0, 20);
-    return REGION_OPTIONS.filter((r) => r.toLowerCase().includes(q)).slice(0, 20);
-  }, [value]);
 
-  function selectRegion(r) {
-    onChange(r);
+    return REGION_OPTIONS
+      .filter((code) => {
+        const label = t(`regions.${code}`, code).toLowerCase();
+        return code.toLowerCase().includes(q) || label.includes(q);
+      })
+      .slice(0, 20);
+  }, [value, t]);
+
+  function selectRegion(code) {
+    onChange(code);
     setOpen(false);
+  }
+
+  function displayValue(v) {
+    if (!v) return "";
+    // Якщо юзер набирає “чернетку” (не код), показуємо як є
+    if (!REGION_OPTIONS.includes(v)) return v;
+    return t(`regions.${v}`, v);
   }
 
   return (
     <div style={{ position: "relative" }}>
       <input
-        placeholder={placeholder}
-        value={value || ""}
+        placeholder={ph}
+        value={displayValue(value || "")}
         onChange={(e) => {
-          onChange(e.target.value); // даємо писати, але це буде "чернетка"
+          // Дозволяємо вводити текст (чернетку). Якщо це точний код – ок.
+          // Якщо юзер вводить "Київська", це не код і просто фільтрує список.
+          onChange(e.target.value);
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
@@ -36,13 +55,9 @@ export default function RegionPicker({ value, onChange, placeholder = "Region" }
 
       {open && filtered.length > 0 ? (
         <div style={dropdown}>
-          {filtered.map((r) => (
-            <div
-              key={r}
-              onMouseDown={() => selectRegion(r)}
-              style={dropdownItem}
-            >
-              {r}
+          {filtered.map((code) => (
+            <div key={code} onMouseDown={() => selectRegion(code)} style={dropdownItem}>
+              {t(`regions.${code}`, code)}
             </div>
           ))}
         </div>

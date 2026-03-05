@@ -6,10 +6,12 @@ import PhotoUploader from "./PhotoUploader";
 import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const user = getStoredUser();
   const draftFolder = user ? `drafts/${user.id}` : undefined;
+  const { t } = useI18n();
 
   const [editDescription, setEditDescription] = useState("");
   const [editLat, setEditLat] = useState("");
@@ -35,7 +37,9 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
     setEditDescription(loc.description || "");
     setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
-    setSeasonSelected((loc.seasons || []).map((x) => x.season?.code).filter(Boolean));
+    setSeasonSelected(
+      (loc.seasons || []).map((x) => x.season?.code).filter(Boolean),
+    );
     setEditContactInfo(loc.contactInfo || "");
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
@@ -86,8 +90,14 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .sort()
       .join("|");
 
-    const curFish = (fishSelected || []).map((s) => s.trim()).sort().join("|");
-    const curSeasons = (seasonSelected || []).map((s) => s.trim()).sort().join("|");
+    const curFish = (fishSelected || [])
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
+    const curSeasons = (seasonSelected || [])
+      .map((s) => s.trim())
+      .sort()
+      .join("|");
     const curPhotos = (photos || [])
       .map((p) => String(p.url || "").trim())
       .filter(Boolean)
@@ -236,7 +246,9 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
     // draft photo (no id) remove locally
     if (photo.publicId) {
-      setPhotos((prev) => (prev || []).filter((p) => p.publicId !== photo.publicId));
+      setPhotos((prev) =>
+        (prev || []).filter((p) => p.publicId !== photo.publicId),
+      );
       return;
     }
 
@@ -257,7 +269,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       <input
         value={editTitle}
         onChange={(e) => setEditTitle(e.target.value)}
-        placeholder="Title"
+        placeholder={t("locationForm.titlePlaceholder")}
         style={input}
       />
 
@@ -265,42 +277,54 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         value={editDescription}
         onChange={(e) => setEditDescription(e.target.value)}
         rows={3}
+        placeholder={t("locationForm.descriptionPlaceholder")}
         style={input}
       />
 
       <textarea
         value={editContactInfo}
         onChange={(e) => setEditContactInfo(e.target.value)}
-        placeholder="Contacts (optional)"
+        placeholder={t("locationForm.contactsPlaceholder")}
         rows={2}
         style={input}
       />
 
-      <RegionPicker value={editRegionSelected} onChange={setEditRegionSelected} />
+      <RegionPicker
+        value={editRegionSelected}
+        onChange={setEditRegionSelected}
+      />
 
       <select
         value={editWaterType}
         onChange={(e) => setEditWaterType(e.target.value)}
         style={input}
       >
-        <option value="LAKE">LAKE</option>
-        <option value="RIVER">RIVER</option>
-        <option value="POND">POND</option>
-        <option value="SEA">SEA</option>
-        <option value="OTHER">OTHER</option>
+        <option value="LAKE">
+          {t("locationForm.waterTypes.LAKE", "LAKE")}
+        </option>
+        <option value="RIVER">
+          {t("locationForm.waterTypes.RIVER", "RIVER")}
+        </option>
+        <option value="POND">
+          {t("locationForm.waterTypes.POND", "POND")}
+        </option>
+        <option value="SEA">{t("locationForm.waterTypes.SEA", "SEA")}</option>
+        <option value="OTHER">
+          {t("locationForm.waterTypes.OTHER", "OTHER")}
+        </option>
       </select>
 
       <div style={{ display: "flex", gap: 10 }}>
         <input
           value={editLat}
           onChange={(e) => setEditLat(e.target.value)}
-          placeholder="Lat (e.g. 50.45)"
+          placeholder={t("locationForm.latPlaceholder")}
           style={{ ...input, flex: 1 }}
         />
         <input
           value={editLng}
           onChange={(e) => setEditLng(e.target.value)}
-          placeholder="Lng (e.g. 30.52)"
+          placeholder={t("locationForm.lngPlaceholder")}
           style={{ ...input, flex: 1 }}
         />
       </div>
@@ -319,17 +343,17 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button disabled={saving || !isDirty} style={btn}>
-          {saving ? "Saving..." : "Save (will stay PENDING)"}
+          {saving ? t("locationForm.saving") : t("locationForm.savePending")}
         </button>
 
         <button type="button" onClick={cancel} style={btn} disabled={saving}>
-          Cancel
+          {t("locationForm.cancel")}
         </button>
       </div>
 
       {!saving && !isDirty ? (
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          No changes to save
+          {t("locationForm.noChanges")}
         </div>
       ) : null}
 

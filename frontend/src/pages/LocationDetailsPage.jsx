@@ -5,9 +5,12 @@ import { getStoredUser } from "../auth/auth";
 import { useFavorites } from "../client/hooks/useFavorites";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
+import { displayFishName } from "../client/i18n/displayName";
 
 export default function LocationDetailsPage() {
   const { id } = useParams();
+  const { t, locale } = useI18n();
 
   const [user, setUser] = useState(getStoredUser());
   const [contactInfo, setContactInfo] = useState(null);
@@ -52,7 +55,8 @@ export default function LocationDetailsPage() {
         await loadAll();
       } catch (err) {
         console.error(err);
-        if (!cancelled) setError(getErrorMessage(err, "Failed to load location details"));
+        if (!cancelled)
+          setError(getErrorMessage(err, "Failed to load location details"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,8 +81,10 @@ export default function LocationDetailsPage() {
         const res = await http.get(`/locations/${id}/contact`);
         if (!cancelled) setContactInfo(res.data.contactInfo || null);
       } catch (e) {
-        // it's OK to be silent here, but logging helps in dev
-        console.error("Failed to load contacts:", getErrorMessage(e, "Failed to load contacts"));
+        console.error(
+          "Failed to load contacts:",
+          getErrorMessage(e, "Failed to load contacts"),
+        );
         if (!cancelled) setContactInfo(null);
       }
     }
@@ -114,9 +120,11 @@ export default function LocationDetailsPage() {
     }
   }
 
-  if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
-  if (error) return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
-  if (!location) return <div style={{ padding: 16 }}>Not found</div>;
+  if (loading) return <div style={{ padding: 16 }}>{t("common.loading")}</div>;
+  if (error)
+    return <div style={{ padding: 16, color: "crimson" }}>{error}</div>;
+  if (!location)
+    return <div style={{ padding: 16 }}>{t("common.notFound")}</div>;
 
   const latNum = Number(location.lat);
   const lngNum = Number(location.lng);
@@ -140,12 +148,14 @@ export default function LocationDetailsPage() {
   return (
     <div style={{ padding: 16 }}>
       <div style={{ marginBottom: 12 }}>
-        <Link to="/">← Back</Link>
+        <Link to="/">{t("locationDetails.back")}</Link>
       </div>
 
       <h1 style={{ marginBottom: 4 }}>{location.title}</h1>
+
       <div style={{ opacity: 0.8 }}>
-        {location.region} • {location.waterType}
+        {t(`regions.${location.region}`, location.region)} •{" "}
+        {t(`locationForm.waterTypes.${location.waterType}`, location.waterType)}
       </div>
 
       {canUseFavorites ? (
@@ -153,28 +163,36 @@ export default function LocationDetailsPage() {
           type="button"
           onClick={() => toggleFavorite(location.id)}
           style={{ fontSize: 20, lineHeight: 1 }}
-          title={isFavorite(location.id) ? "Remove from favorites" : "Add to favorites"}
+          title={
+            isFavorite(location.id)
+              ? t("locationDetails.favRemove")
+              : t("locationDetails.favAdd")
+          }
         >
           {isFavorite(location.id) ? "★" : "☆"}
         </button>
       ) : null}
 
       <div style={{ opacity: 0.75, marginTop: 6 }}>
-        Posted by: <strong>{location.owner?.displayName || "Unknown"}</strong>
+        {t("locationDetails.postedBy")}{" "}
+        <strong>
+          {location.owner?.displayName || t("locationDetails.unknown")}
+        </strong>
       </div>
 
       <div style={{ marginTop: 8 }}>
-        Rating: {location.avgRating ?? "—"} ({location.reviewsCount ?? 0})
+        {t("locationDetails.ratingLabel")} {location.avgRating ?? "—"} (
+        {location.reviewsCount ?? 0})
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <h3>Description</h3>
+        <h3>{t("locationDetails.description")}</h3>
         <div>{location.description}</div>
       </div>
 
       {(location.photos || []).length > 0 && (
         <div style={{ marginTop: 12 }}>
-          <h3>Photos</h3>
+          <h3>{t("locationDetails.photos")}</h3>
           <div style={{ display: "grid", gap: 10 }}>
             {location.photos.map((p) => {
               const bigUrl = getCloudinaryVariant(p.url, {
@@ -201,39 +219,48 @@ export default function LocationDetailsPage() {
       {user ? (
         contactInfo ? (
           <div style={{ marginTop: 12 }}>
-            <h3>Contacts</h3>
+            <h3>{t("locationDetails.contacts")}</h3>
             <div style={{ whiteSpace: "pre-wrap" }}>{contactInfo}</div>
           </div>
         ) : null
       ) : (
         <div style={{ marginTop: 12, opacity: 0.8 }}>
-          <strong>Contacts:</strong> Login to see owner contacts.
+          <strong>{t("locationDetails.contacts")}:</strong>{" "}
+          {t("locationDetails.contactsLoginHint")}
         </div>
       )}
 
       <div style={{ marginTop: 12 }}>
-        <h3>Fish</h3>
+        <h3>{t("locationDetails.fish")}</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(location.fish || []).map((f) => (
             <span
               key={f.fishId}
-              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 999,
+                padding: "4px 10px",
+              }}
             >
-              {f.fish?.name}
+              {displayFishName(f.fish?.name, locale)}
             </span>
           ))}
         </div>
       </div>
 
       <div style={{ marginTop: 12 }}>
-        <h3>Seasons</h3>
+        <h3>{t("locationDetails.seasons")}</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {(location.seasons || []).map((s) => (
             <span
               key={s.seasonId}
-              style={{ border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px" }}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 999,
+                padding: "4px 10px",
+              }}
             >
-              {s.season?.code}
+              {t(`seasons.${s.season?.code}`, s.season?.code || "—")}
             </span>
           ))}
         </div>
@@ -241,11 +268,17 @@ export default function LocationDetailsPage() {
 
       {hasCoords && (
         <div style={{ marginTop: 12 }}>
-          <h3>Map</h3>
+          <h3>{t("locationDetails.map")}</h3>
 
-          <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #ddd" }}>
+          <div
+            style={{
+              borderRadius: 10,
+              overflow: "hidden",
+              border: "1px solid #ddd",
+            }}
+          >
             <iframe
-              title="Map preview"
+              title={t("locationDetails.mapPreviewTitle")}
               src={osmEmbedUrl}
               width="100%"
               height="320"
@@ -257,7 +290,7 @@ export default function LocationDetailsPage() {
           {googleMapsUrl && (
             <div style={{ marginTop: 8 }}>
               <a href={googleMapsUrl} target="_blank" rel="noreferrer">
-                Open in Google Maps →
+                {t("locationDetails.openGoogleMaps")}
               </a>
             </div>
           )}
@@ -265,18 +298,27 @@ export default function LocationDetailsPage() {
       )}
 
       <div style={{ marginTop: 18 }}>
-        <h2>Leave a review</h2>
+        <h2>{t("locationDetails.leaveReview")}</h2>
 
         {!user ? (
-          <div style={{ opacity: 0.8 }}>Please login to leave a review.</div>
+          <div style={{ opacity: 0.8 }}>
+            {t("locationDetails.loginToReview")}
+          </div>
         ) : (
-          <form onSubmit={submitReview} style={{ display: "grid", gap: 10, maxWidth: 520 }}>
+          <form
+            onSubmit={submitReview}
+            style={{ display: "grid", gap: 10, maxWidth: 520 }}
+          >
             <label style={{ display: "grid", gap: 6 }}>
-              <span>Rating</span>
+              <span>{t("locationDetails.form.rating")}</span>
               <select
                 value={rating}
                 onChange={(e) => setRating(Number(e.target.value))}
-                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid #ddd",
+                }}
               >
                 <option value={1}>1</option>
                 <option value={2}>2</option>
@@ -287,21 +329,31 @@ export default function LocationDetailsPage() {
             </label>
 
             <label style={{ display: "grid", gap: 6 }}>
-              <span>Comment</span>
+              <span>{t("locationDetails.form.comment")}</span>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={3}
-                placeholder="Write your review..."
-                style={{ padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
+                placeholder={t("locationDetails.form.commentPlaceholder")}
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: "1px solid #ddd",
+                }}
               />
             </label>
 
             <button
               disabled={submitting}
-              style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: "1px solid #ddd",
+              }}
             >
-              {submitting ? "Submitting..." : "Submit review"}
+              {submitting
+                ? t("locationDetails.form.submitting")
+                : t("locationDetails.form.submit")}
             </button>
 
             {formError && <div style={{ color: "crimson" }}>{formError}</div>}
@@ -310,15 +362,21 @@ export default function LocationDetailsPage() {
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <h2>Reviews</h2>
+        <h2>{t("locationDetails.reviewsTitle")}</h2>
 
-        {reviews.length === 0 && <div style={{ opacity: 0.7 }}>No reviews yet.</div>}
+        {reviews.length === 0 && (
+          <div style={{ opacity: 0.7 }}>{t("locationDetails.noReviews")}</div>
+        )}
 
         <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
           {reviews.map((r) => (
-            <div key={r.id} style={{ border: "1px solid #eee", borderRadius: 8, padding: 10 }}>
+            <div
+              key={r.id}
+              style={{ border: "1px solid #eee", borderRadius: 8, padding: 10 }}
+            >
               <div style={{ fontWeight: 700 }}>
-                {r.user?.displayName ?? "Anonymous"} • {r.rating}/5
+                {r.user?.displayName ?? t("locationDetails.anonymous")} •{" "}
+                {r.rating}/5
               </div>
               <div style={{ marginTop: 6 }}>{r.comment}</div>
               <div style={{ marginTop: 6, opacity: 0.6, fontSize: 12 }}>

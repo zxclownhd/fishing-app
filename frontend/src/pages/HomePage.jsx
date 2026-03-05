@@ -8,10 +8,14 @@ import FishPicker from "../components/pickers/FishPicker";
 import SeasonPicker from "../components/pickers/SeasonPicker";
 import SortPicker from "../components/pickers/SortPicker";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
+import { displayFishName } from "../client/i18n/displayName";
 
 const LIMIT = 10;
 
 export default function HomePage() {
+  const { t, locale } = useI18n();
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -58,7 +62,6 @@ export default function HomePage() {
       params.seasons = activeFilters.seasons.join(",");
     }
 
-    // sort
     const sv = activeFilters.sortValue || "createdAt:desc";
     const [sort, order] = sv.split(":");
     params.sort = sort || "createdAt";
@@ -72,7 +75,7 @@ export default function HomePage() {
       setTotal(res.data.total || 0);
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, "Failed to load locations"));
+      setError(getErrorMessage(err, t("home.errors.loadFailed")));
     } finally {
       setLoading(false);
     }
@@ -116,8 +119,10 @@ export default function HomePage() {
   function removeFilter(kind, value) {
     if (kind === "region") setRegionSelected("");
     if (kind === "waterType") setWaterType("");
-    if (kind === "fish") setFishSelected((prev) => prev.filter((x) => x !== value));
-    if (kind === "season") setSeasonsSelected((prev) => prev.filter((x) => x !== value));
+    if (kind === "fish")
+      setFishSelected((prev) => prev.filter((x) => x !== value));
+    if (kind === "season")
+      setSeasonsSelected((prev) => prev.filter((x) => x !== value));
 
     setPage(1);
 
@@ -126,8 +131,10 @@ export default function HomePage() {
 
       if (kind === "region") next.region = "";
       if (kind === "waterType") next.waterType = "";
-      if (kind === "fish") next.fish = (prev.fish || []).filter((x) => x !== value);
-      if (kind === "season") next.seasons = (prev.seasons || []).filter((x) => x !== value);
+      if (kind === "fish")
+        next.fish = (prev.fish || []).filter((x) => x !== value);
+      if (kind === "season")
+        next.seasons = (prev.seasons || []).filter((x) => x !== value);
 
       return next;
     });
@@ -137,7 +144,6 @@ export default function HomePage() {
     setSortValue(nextSortValue);
     setPage(1);
 
-    // apply immediately
     setFilters((prev) => ({
       ...prev,
       sortValue: nextSortValue,
@@ -152,7 +158,7 @@ export default function HomePage() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h1>Fishing Locations</h1>
+      <h1>{t("home.title")}</h1>
 
       <form
         onSubmit={onSearch}
@@ -161,7 +167,7 @@ export default function HomePage() {
         <RegionPicker
           value={regionSelected}
           onChange={setRegionSelected}
-          placeholder="Region"
+          placeholder={t("home.regionPlaceholder")}
         />
 
         <select
@@ -169,12 +175,12 @@ export default function HomePage() {
           onChange={(e) => setWaterType(e.target.value)}
           style={input}
         >
-          <option value="">All water types</option>
-          <option value="LAKE">Lake</option>
-          <option value="RIVER">River</option>
-          <option value="POND">Pond</option>
-          <option value="SEA">Sea</option>
-          <option value="OTHER">Other</option>
+          <option value="">{t("home.waterTypeAll")}</option>
+          <option value="LAKE">{t("home.waterTypes.LAKE")}</option>
+          <option value="RIVER">{t("home.waterTypes.RIVER")}</option>
+          <option value="POND">{t("home.waterTypes.POND")}</option>
+          <option value="SEA">{t("home.waterTypes.SEA")}</option>
+          <option value="OTHER">{t("home.waterTypes.OTHER")}</option>
         </select>
 
         <FishPicker value={fishSelected} onChange={setFishSelected} />
@@ -183,10 +189,10 @@ export default function HomePage() {
 
         <div style={{ display: "flex", gap: 8 }}>
           <button type="submit" disabled={loading}>
-            Search
+            {t("home.search")}
           </button>
           <button type="button" onClick={onReset} disabled={loading}>
-            Reset
+            {t("home.reset")}
           </button>
         </div>
 
@@ -196,41 +202,60 @@ export default function HomePage() {
       {hasActiveFilters ? (
         <div style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 13, opacity: 0.75, marginBottom: 6 }}>
-            Active filters
+            {t("home.activeFilters")}
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {filters.region ? (
-              <Chip label={`Region: ${filters.region}`} onRemove={() => removeFilter("region")} />
+              <Chip
+                label={`${t("home.filterLabels.region")} ${t(
+                  `regions.${filters.region}`,
+                  filters.region,
+                )}`}
+                onRemove={() => removeFilter("region")}
+                removeTitle={t("home.removeFilterTitle")}
+              />
             ) : null}
 
             {filters.waterType ? (
               <Chip
-                label={`Water: ${filters.waterType}`}
+                label={`${t("home.filterLabels.water")} ${t(
+                  `home.waterTypes.${filters.waterType}`,
+                  filters.waterType,
+                )}`}
                 onRemove={() => removeFilter("waterType")}
+                removeTitle={t("home.removeFilterTitle")}
               />
             ) : null}
 
             {(filters.fish || []).map((name) => (
               <Chip
                 key={`fish-${name}`}
-                label={`Fish: ${name}`}
+                label={`${t("home.filterLabels.fish")} ${displayFishName(
+                  name,
+                  locale,
+                )}`}
                 onRemove={() => removeFilter("fish", name)}
+                removeTitle={t("home.removeFilterTitle")}
               />
             ))}
 
             {(filters.seasons || []).map((code) => (
               <Chip
                 key={`season-${code}`}
-                label={`Season: ${code}`}
+                label={`${t("home.filterLabels.season")} ${t(
+                  `seasons.${code}`,
+                  code,
+                )}`}
                 onRemove={() => removeFilter("season", code)}
+                removeTitle={t("home.removeFilterTitle")}
               />
             ))}
           </div>
         </div>
       ) : null}
 
-      {loading ? <div>Loading...</div> : null}
+      {loading ? <div>{t("common.loading")}</div> : null}
       {error ? <div style={{ color: "crimson" }}>{error}</div> : null}
 
       <div
@@ -250,7 +275,11 @@ export default function HomePage() {
               canUseFavorites ? (
                 <button
                   type="button"
-                  title={isFavorite(loc.id) ? "Remove from favorites" : "Add to favorites"}
+                  title={
+                    isFavorite(loc.id)
+                      ? t("favorites.remove")
+                      : t("favorites.add")
+                  }
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -266,24 +295,32 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
-        <button disabled={!canPrev || loading} onClick={() => setPage((p) => p - 1)}>
-          Prev
+      <div
+        style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}
+      >
+        <button
+          disabled={!canPrev || loading}
+          onClick={() => setPage((p) => p - 1)}
+        >
+          {t("common.prev")}
         </button>
 
         <div style={{ opacity: 0.8 }}>
-          Page {page} of {totalPages}
+          {t("home.pageLabel")} {page} {t("home.ofLabel")} {totalPages}
         </div>
 
-        <button disabled={!canNext || loading} onClick={() => setPage((p) => p + 1)}>
-          Next
+        <button
+          disabled={!canNext || loading}
+          onClick={() => setPage((p) => p + 1)}
+        >
+          {t("common.next")}
         </button>
       </div>
     </div>
   );
 }
 
-function Chip({ label, onRemove }) {
+function Chip({ label, onRemove, removeTitle }) {
   return (
     <button
       type="button"
@@ -295,7 +332,7 @@ function Chip({ label, onRemove }) {
         background: "#fff",
         cursor: "pointer",
       }}
-      title="Remove filter"
+      title={removeTitle}
     >
       {label} ✕
     </button>

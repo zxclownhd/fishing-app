@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../../api/http";
 import { getErrorMessage } from "../../api/getErrorMessage";
+import { useI18n } from "../../client/i18n/I18nContext";
+import { displayFishName } from "../../client/i18n/displayName";
 
 export default function FishPicker({ value, onChange }) {
+  const { t, locale } = useI18n();
+
   const [options, setOptions] = useState([]);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -16,7 +20,10 @@ export default function FishPicker({ value, onChange }) {
         const names = (res.data.items || []).map((x) => x.name).filter(Boolean);
         if (!cancelled) setOptions(names);
       } catch (e) {
-        console.error("Failed to load fish:", getErrorMessage(e, "Failed to load fish"));
+        console.error(
+          "Failed to load fish:",
+          getErrorMessage(e, t("fishPicker.loadFailed")),
+        );
         if (!cancelled) setOptions([]);
       }
     }
@@ -25,18 +32,25 @@ export default function FishPicker({ value, onChange }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return options
       .filter((name) => !(value || []).includes(name))
-      .filter((name) => name.toLowerCase().includes(q))
-      .slice(0, 10);
-  }, [options, query, value]);
+      .filter((name) => {
+        if (!q) return true;
+        const en = name.toLowerCase();
+        const uk = displayFishName(name, locale).toLowerCase();
+        return en.includes(q) || uk.includes(q);
+      })
+      .slice(0, 50);
+  }, [options, query, value, locale]);
 
   function add(name) {
-    const next = (value || []).includes(name) ? (value || []) : [...(value || []), name];
+    const next = (value || []).includes(name)
+      ? value || []
+      : [...(value || []), name];
     onChange(next);
   }
 
@@ -48,14 +62,19 @@ export default function FishPicker({ value, onChange }) {
     <div style={{ position: "relative", display: "grid", gap: 6 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {(value || []).map((name) => (
-          <button key={name} type="button" onClick={() => remove(name)} style={chipBtn}>
-            {name} ✕
+          <button
+            key={name}
+            type="button"
+            onClick={() => remove(name)}
+            style={chipBtn}
+          >
+            {displayFishName(name, locale)} ✕
           </button>
         ))}
       </div>
 
       <input
-        placeholder="Fish (type to search)"
+        placeholder={t("fishPicker.placeholder")}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -78,7 +97,7 @@ export default function FishPicker({ value, onChange }) {
               }}
               style={dropdownItem}
             >
-              {name}
+              {displayFishName(name, locale)}
             </div>
           ))}
         </div>
@@ -87,7 +106,12 @@ export default function FishPicker({ value, onChange }) {
   );
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd", width: "100%" };
+const input = {
+  padding: 10,
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  width: "100%",
+};
 const chipBtn = {
   border: "1px solid #ddd",
   borderRadius: 999,

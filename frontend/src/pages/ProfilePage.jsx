@@ -3,9 +3,11 @@ import { http } from "../api/http";
 import { Navigate, Link } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
 
 export default function ProfilePage() {
   const storedUser = getStoredUser();
+  const { t } = useI18n();
 
   const [profile, setProfile] = useState(null);
 
@@ -153,20 +155,21 @@ export default function ProfilePage() {
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
       <div style={{ marginBottom: 10 }}>
-        <Link to="/">← Back</Link>
+        <Link to="/">{t("profile.back")}</Link>
       </div>
 
       <div style={styles.header}>
         <div>
-          <h2 style={{ margin: 0 }}>Profile</h2>
+          <h2 style={{ margin: 0 }}>{t("profile.title")}</h2>
           <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {profile?.email || storedUser.email} | {profile?.role || storedUser.role}
+            {profile?.email || storedUser.email} |{" "}
+            {profile?.role || storedUser.role}
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button onClick={loadProfile} disabled={loading}>
-            Refresh
+            {t("profile.refresh")}
           </button>
         </div>
       </div>
@@ -174,68 +177,92 @@ export default function ProfilePage() {
       <div style={styles.tabs}>
         <button
           onClick={() => setActiveTab("PROFILE")}
-          style={{ ...styles.tabBtn, ...(activeTab === "PROFILE" ? styles.tabBtnActive : null) }}
+          style={{
+            ...styles.tabBtn,
+            ...(activeTab === "PROFILE" ? styles.tabBtnActive : null),
+          }}
         >
-          Profile
+          {t("profile.tabProfile")}
         </button>
 
         <button
           onClick={() => setActiveTab("SECURITY")}
-          style={{ ...styles.tabBtn, ...(activeTab === "SECURITY" ? styles.tabBtnActive : null) }}
+          style={{
+            ...styles.tabBtn,
+            ...(activeTab === "SECURITY" ? styles.tabBtnActive : null),
+          }}
         >
-          Security
+          {t("profile.tabSecurity")}
         </button>
       </div>
 
       {errorText ? <div style={styles.error}>{errorText}</div> : null}
       {infoText ? <div style={styles.info}>{infoText}</div> : null}
-      {loading ? <div style={{ padding: 12 }}>Loading...</div> : null}
+      {loading ? (
+        <div style={{ padding: 12 }}>{t("common.loading")}</div>
+      ) : null}
 
       {!loading && profile ? (
         <div style={{ marginTop: 12 }}>
           {activeTab === "PROFILE" ? (
             <div style={styles.card}>
-              <h3 style={{ marginTop: 0 }}>Basic info</h3>
+              <h3 style={{ marginTop: 0 }}>{t("profile.basicInfo")}</h3>
 
               <div style={styles.row}>
-                <div style={styles.label}>Email</div>
+                <div style={styles.label}>{t("profile.email")}</div>
                 <div>{profile.email}</div>
               </div>
 
               <div style={styles.row}>
-                <div style={styles.label}>Role</div>
+                <div style={styles.label}>{t("profile.role")}</div>
                 <div>{profile.role}</div>
               </div>
 
               <div style={{ marginTop: 12 }}>
-                <div style={styles.label}>Display name</div>
-                <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} style={styles.input} />
-                <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button onClick={saveProfile} disabled={!canSaveName || loading}>
-                    Save
+                <div style={styles.label}>{t("profile.displayName")}</div>
+                <input
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  style={styles.input}
+                />
+                <div
+                  style={{
+                    marginTop: 10,
+                    display: "flex",
+                    gap: 8,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    onClick={saveProfile}
+                    disabled={!canSaveName || loading}
+                  >
+                    {t("profile.save")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setDisplayName(profile.displayName || "")}
                     disabled={loading}
                   >
-                    Reset name
+                    {t("profile.resetName")}
                   </button>
                 </div>
                 <div style={{ marginTop: 8, fontSize: 13, opacity: 0.75 }}>
-                  Min length 3 characters
+                  {t("profile.minLen3")}
                 </div>
               </div>
             </div>
           ) : (
             <div style={styles.card}>
-              <h3 style={{ marginTop: 0 }}>Change password</h3>
+              <h3 style={{ marginTop: 0 }}>
+                {t("profile.changePasswordTitle")}
+              </h3>
 
               <input
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Current password"
+                placeholder={t("profile.currentPassword")}
                 style={styles.input}
               />
 
@@ -243,7 +270,7 @@ export default function ProfilePage() {
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password (min 8 chars)"
+                placeholder={t("profile.newPasswordMin8")}
                 style={styles.input}
               />
 
@@ -251,13 +278,23 @@ export default function ProfilePage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t("profile.confirmNewPassword")}
                 style={styles.input}
               />
 
-              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button onClick={changePassword} disabled={!canChangePassword || loading}>
-                  Change password
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  onClick={changePassword}
+                  disabled={!canChangePassword || loading}
+                >
+                  {t("profile.changePasswordBtn")}
                 </button>
                 <button
                   type="button"
@@ -270,7 +307,7 @@ export default function ProfilePage() {
                   }}
                   disabled={loading}
                 >
-                  Clear
+                  {t("profile.clear")}
                 </button>
               </div>
             </div>

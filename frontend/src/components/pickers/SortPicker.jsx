@@ -1,10 +1,13 @@
 import React from "react";
 import { SORT_OPTIONS } from "./sortOptions";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 export default function SortPicker({ value, onChange }) {
+  const { t } = useI18n();
+
   return (
     <div style={{ display: "grid", gap: 6 }}>
-      <div style={{ fontWeight: 600, opacity: 0.85 }}>Sort by</div>
+      <div style={{ fontWeight: 600, opacity: 0.85 }}>{t("sort.title")}</div>
 
       <select
         value={value}
@@ -18,7 +21,7 @@ export default function SortPicker({ value, onChange }) {
       >
         {SORT_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>
-            {opt.label}
+            {t(`sort.options.${opt.i18nKey}`, opt.value)}
           </option>
         ))}
       </select>

@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { useI18n } from "../client/i18n/I18nContext";
 
 export default function LocationCard({
   loc,
@@ -11,6 +12,8 @@ export default function LocationCard({
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
 }) {
+  const { t } = useI18n();
+
   const photoUrl = loc?.photos?.[0]?.url || null;
 
   const thumbUrl = photoUrl
@@ -26,9 +29,9 @@ export default function LocationCard({
     if (variant !== "public") return null;
     const avg = Number(loc?.avgRating ?? 0);
     const cnt = Number(loc?.reviewsCount ?? 0);
-    if (!cnt) return "No reviews yet";
+    if (!cnt) return t("card.noReviews");
     return `${avg.toFixed(1)} / 5 (${cnt})`;
-  }, [variant, loc]);
+  }, [variant, loc, t]);
 
   const status = loc?.status;
   const owner = loc?.owner;
@@ -50,47 +53,45 @@ export default function LocationCard({
       <div style={styles.media}>
         {photoUrl ? (
           <img
-            alt={loc?.title || "Location"}
+            alt={loc?.title || t("card.photoAlt")}
             src={thumbUrl}
             loading="lazy"
             decoding="async"
             style={styles.img}
           />
         ) : (
-          <div style={styles.noImg}>No photo</div>
+          <div style={styles.noImg}>{t("card.noPhoto")}</div>
         )}
       </div>
 
       <div style={styles.body}>
         <div style={styles.topRow}>
-          <div style={styles.title}>{loc?.title || "(no title)"}</div>
+          <div style={styles.title}>{loc?.title || t("card.noTitle")}</div>
 
           {variant === "admin" && status ? (
             <span style={{ ...styles.badge, ...badgeForStatus(status) }}>
-              {status}
+              {t(`card.statuses.${String(status).toUpperCase()}`, status)}
             </span>
           ) : null}
         </div>
 
         <div style={styles.meta}>
-          <span style={styles.metaItem}>{loc?.region || "Unknown region"}</span>
+          <span style={styles.metaItem}>{loc?.region || t("card.unknownRegion")}</span>
           <span style={styles.dot}>•</span>
-          <span style={styles.metaItem}>
-            {loc?.waterType || "Unknown type"}
-          </span>
+          <span style={styles.metaItem}>{loc?.waterType || t("card.unknownType")}</span>
         </div>
 
         {variant === "admin" ? (
           <div style={styles.adminMeta}>
             {owner ? (
               <div style={styles.adminLine}>
-                Owner: {owner.displayName || "—"}
+                {t("card.ownerLabel")} {owner.displayName || "—"}
                 {owner.email ? ` (${owner.email})` : ""}
               </div>
             ) : null}
             {loc?.createdAt ? (
               <div style={styles.adminLine}>
-                Created: {new Date(loc.createdAt).toLocaleString()}
+                {t("card.createdLabel")} {new Date(loc.createdAt).toLocaleString()}
               </div>
             ) : null}
           </div>
@@ -101,7 +102,7 @@ export default function LocationCard({
         {loc?.description ? (
           <div style={styles.desc}>{loc.description}</div>
         ) : (
-          <div style={styles.descEmpty}>No description</div>
+          <div style={styles.descEmpty}>{t("card.noDescription")}</div>
         )}
 
         {footer ? <div style={styles.footer}>{footer}</div> : null}
@@ -129,10 +130,8 @@ export default function LocationCard({
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
   if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED")
-    return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED")
-    return { background: "#FFE1E1", borderColor: "#F09A9A" };
+  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
+  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
   if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
   return { background: "#EEEEEE", borderColor: "#CFCFCF" };
 }

@@ -5,11 +5,14 @@ import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
+import { displayFishName } from "../client/i18n/displayName";
 
 const LIMIT = 20;
 
 export default function AdminDashboardPage() {
   const user = getStoredUser();
+  const { t, locale } = useI18n();
 
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("PENDING");
@@ -128,14 +131,16 @@ export default function AdminDashboardPage() {
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
       <div style={styles.header}>
         <div>
-          <h2 style={{ margin: 0 }}>Moderation</h2>
+          <h2 style={{ margin: 0 }}>{t("admin.title")}</h2>
           <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            Total: {total} | Page {page} of {totalPages}
+            {t("admin.summary.totalLabel")} {total} |{" "}
+            {t("admin.summary.pageLabel")} {page} {t("admin.summary.ofLabel")}{" "}
+            {totalPages}
           </div>
         </div>
 
         <button onClick={() => loadLocations(page, status)} disabled={loading}>
-          Refresh
+          {t("admin.refresh")}
         </button>
       </div>
 
@@ -150,7 +155,7 @@ export default function AdminDashboardPage() {
             }}
             disabled={loading && status === s}
           >
-            {s}
+            {t(`admin.tabs.${s}`, s)}
           </button>
         ))}
       </div>
@@ -163,15 +168,17 @@ export default function AdminDashboardPage() {
             disabled={loading}
             style={{ marginTop: 8 }}
           >
-            Retry
+            {t("admin.retry")}
           </button>
         </div>
       ) : null}
 
-      {loading ? <div style={{ padding: 12 }}>Loading...</div> : null}
+      {loading ? <div style={{ padding: 12 }}>{t("admin.loading")}</div> : null}
 
       {!loading && !errorText && items.length === 0 ? (
-        <div style={styles.empty}>No items in {status}</div>
+        <div style={styles.empty}>
+          {t("admin.empty")} {t(`admin.tabs.${status}`, status)}
+        </div>
       ) : null}
 
       <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
@@ -186,7 +193,9 @@ export default function AdminDashboardPage() {
           const lngNum = Number(it.lng);
           const coordsOk = Number.isFinite(latNum) && Number.isFinite(lngNum);
 
-          const photos = isExpanded ? (full?.photos ?? it.photos ?? []) : (it.photos ?? []);
+          const photos = isExpanded
+            ? (full?.photos ?? it.photos ?? [])
+            : (it.photos ?? []);
 
           return (
             <LocationCard
@@ -196,14 +205,21 @@ export default function AdminDashboardPage() {
               footer={
                 <div style={{ display: "grid", gap: 10 }}>
                   <div style={styles.group}>
-                    <div style={styles.groupLabel}>Fish</div>
+                    <div style={styles.groupLabel}>
+                      {t("admin.groups.fish")}
+                    </div>
                     <div style={styles.groupChips}>
                       {(it.fish || []).slice(0, 8).map((x, idx) => (
                         <span
-                          key={x.fishId ? `${it.id}-fish-${x.fishId}` : `${it.id}-fish-${idx}`}
+                          key={
+                            x.fishId
+                              ? `${it.id}-fish-${x.fishId}`
+                              : `${it.id}-fish-${idx}`
+                          }
                           style={styles.chip}
                         >
-                          {x.fish?.name || "fish"}
+                          {displayFishName(x.fish?.name, locale) ||
+                            t("admin.unknown")}
                         </span>
                       ))}
                       {!it.fish || it.fish.length === 0 ? (
@@ -213,16 +229,25 @@ export default function AdminDashboardPage() {
                   </div>
 
                   <div style={styles.group}>
-                    <div style={styles.groupLabel}>Seasons</div>
+                    <div style={styles.groupLabel}>
+                      {t("admin.groups.seasons")}
+                    </div>
                     <div style={styles.groupChips}>
                       {(it.seasons || []).slice(0, 8).map((x, idx) => (
                         <span
                           key={
-                            x.seasonId ? `${it.id}-season-${x.seasonId}` : `${it.id}-season-${idx}`
+                            x.seasonId
+                              ? `${it.id}-season-${x.seasonId}`
+                              : `${it.id}-season-${idx}`
                           }
                           style={styles.chip}
                         >
-                          {x.season?.name || x.season?.code || "season"}
+                          {(() => {
+                            const code = x.season?.code || x.season?.name || "";
+                            return code
+                              ? t(`seasons.${code}`, code)
+                              : t("admin.unknown");
+                          })()}
                         </span>
                       ))}
                       {!it.seasons || it.seasons.length === 0 ? (
@@ -233,18 +258,24 @@ export default function AdminDashboardPage() {
 
                   {expandedId === it.id ? (
                     <div style={styles.detailsBox}>
-                      <div style={styles.detailsLabel}>Description</div>
+                      <div style={styles.detailsLabel}>
+                        {t("admin.details.description")}
+                      </div>
                       <div style={styles.detailsText}>{desc || "—"}</div>
 
                       {contacts ? (
                         <div style={{ marginTop: 10 }}>
-                          <div style={styles.detailsLabel}>Contacts</div>
+                          <div style={styles.detailsLabel}>
+                            {t("admin.details.contacts")}
+                          </div>
                           <div style={styles.detailsText}>{contacts}</div>
                         </div>
                       ) : null}
 
                       <div style={{ marginTop: 10 }}>
-                        <div style={styles.detailsLabel}>Coordinates</div>
+                        <div style={styles.detailsLabel}>
+                          {t("admin.details.coordinates")}
+                        </div>
 
                         {coordsOk ? (
                           <div
@@ -269,18 +300,24 @@ export default function AdminDashboardPage() {
                                 )
                               }
                             >
-                              Open in Google Maps
+                              {t("admin.details.openGoogleMaps")}
                             </button>
                           </div>
                         ) : (
-                          <div style={{ opacity: 0.75 }}>Invalid coords</div>
+                          <div style={{ opacity: 0.75 }}>
+                            {t("admin.details.invalidCoords")}
+                          </div>
                         )}
                       </div>
 
                       <div style={{ marginTop: 10 }}>
-                        <div style={styles.detailsLabel}>Photos</div>
+                        <div style={styles.detailsLabel}>
+                          {t("admin.details.photos")}
+                        </div>
                         {detailsLoadingId === it.id ? (
-                          <div style={{ opacity: 0.75 }}>Loading photos...</div>
+                          <div style={{ opacity: 0.75 }}>
+                            {t("admin.details.loadingPhotos")}
+                          </div>
                         ) : photos && photos.length ? (
                           <div style={{ display: "grid", gap: 8 }}>
                             {photos.map((p, idx) => {
@@ -303,7 +340,9 @@ export default function AdminDashboardPage() {
                             })}
                           </div>
                         ) : (
-                          <div style={{ opacity: 0.75 }}>No photos</div>
+                          <div style={{ opacity: 0.75 }}>
+                            {t("admin.details.noPhotos")}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -312,38 +351,48 @@ export default function AdminDashboardPage() {
               }
               actions={
                 <>
-                  <button type="button" onClick={() => toggleDetails(it.id)} disabled={loading}>
-                    {isExpanded ? "Close" : "Details"}
+                  <button
+                    type="button"
+                    onClick={() => toggleDetails(it.id)}
+                    disabled={loading}
+                  >
+                    {isExpanded
+                      ? t("admin.actions.close")
+                      : t("admin.actions.details")}
                   </button>
 
                   <button
                     onClick={() => setStatusForLocation(it.id, "APPROVED")}
                     disabled={loading || it.status === "APPROVED"}
                   >
-                    Approve
+                    {t("admin.actions.approve")}
                   </button>
 
                   <button
                     onClick={() => setStatusForLocation(it.id, "REJECTED")}
                     disabled={loading || it.status === "REJECTED"}
                   >
-                    Reject
+                    {t("admin.actions.reject")}
                   </button>
 
                   <button
                     onClick={() => setStatusForLocation(it.id, "HIDDEN")}
                     disabled={loading || it.status === "HIDDEN"}
                   >
-                    Hide
+                    {t("admin.actions.hide")}
                   </button>
 
                   <button
                     onClick={() => deleteLocation(it)}
                     disabled={loading || !canDelete(it)}
-                    title={!canDelete(it) ? "Delete is allowed only for HIDDEN" : "Delete permanently"}
+                    title={
+                      !canDelete(it)
+                        ? t("admin.delete.onlyHidden")
+                        : t("admin.delete.permanent")
+                    }
                     style={canDelete(it) ? styles.dangerBtn : null}
                   >
-                    Delete
+                    {t("admin.actions.delete")}
                   </button>
                 </>
               }
@@ -354,15 +403,15 @@ export default function AdminDashboardPage() {
 
       <div style={styles.pagination}>
         <button onClick={goPrev} disabled={loading || page === 1}>
-          Prev
+          {t("common.prev")}
         </button>
 
         <div style={{ opacity: 0.8 }}>
-          Page {page} / {totalPages}
+          {t("admin.summary.pageLabel")} {page} / {totalPages}
         </div>
 
         <button onClick={goNext} disabled={loading || page >= totalPages}>
-          Next
+          {t("common.next")}
         </button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
@@ -11,6 +12,7 @@ import PhotoUploader from "./PhotoUploader";
 export default function CreateLocationForm({ onCreate, onCancel }) {
   const user = getStoredUser();
   const draftFolder = user ? `drafts/${user.id}` : undefined;
+  const { t } = useI18n();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -150,18 +152,18 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
   return (
     <div style={box}>
-      <h2 style={{ marginTop: 0 }}>Create location</h2>
+      <h2 style={{ marginTop: 0 }}>{t("createLocation.title")}</h2>
 
       <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
         <input
-          placeholder="Title"
+          placeholder={t("locationForm.titlePlaceholder")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           style={input}
         />
 
         <textarea
-          placeholder="Description"
+          placeholder={t("locationForm.descriptionPlaceholder")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
@@ -169,7 +171,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         />
 
         <textarea
-          placeholder="Contacts (optional) phone, email, Telegram"
+          placeholder={t("locationForm.contactsPlaceholderFull")}
           value={contactInfo}
           onChange={(e) => setContactInfo(e.target.value)}
           rows={2}
@@ -183,22 +185,30 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           onChange={(e) => setWaterType(e.target.value)}
           style={input}
         >
-          <option value="LAKE">LAKE</option>
-          <option value="RIVER">RIVER</option>
-          <option value="POND">POND</option>
-          <option value="SEA">SEA</option>
-          <option value="OTHER">OTHER</option>
+          <option value="LAKE">
+            {t("locationForm.waterTypes.LAKE", "LAKE")}
+          </option>
+          <option value="RIVER">
+            {t("locationForm.waterTypes.RIVER", "RIVER")}
+          </option>
+          <option value="POND">
+            {t("locationForm.waterTypes.POND", "POND")}
+          </option>
+          <option value="SEA">{t("locationForm.waterTypes.SEA", "SEA")}</option>
+          <option value="OTHER">
+            {t("locationForm.waterTypes.OTHER", "OTHER")}
+          </option>
         </select>
 
         <div style={{ display: "flex", gap: 10 }}>
           <input
-            placeholder="Lat (e.g. 50.45)"
+            placeholder={t("locationForm.latPlaceholder")}
             value={lat}
             onChange={(e) => setLat(e.target.value)}
             style={{ ...input, flex: 1 }}
           />
           <input
-            placeholder="Lng (e.g. 30.52)"
+            placeholder={t("locationForm.lngPlaceholder")}
             value={lng}
             onChange={(e) => setLng(e.target.value)}
             style={{ ...input, flex: 1 }}
@@ -218,15 +228,24 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button disabled={creating} style={btn}>
-            {creating ? "Creating..." : "Create (PENDING)"}
+            {creating
+              ? t("createLocation.creating")
+              : t("createLocation.createPending")}
           </button>
 
-          <button type="button" onClick={cancel} disabled={creating} style={btn}>
-            Cancel
+          <button
+            type="button"
+            onClick={cancel}
+            disabled={creating}
+            style={btn}
+          >
+            {t("locationForm.cancel")}
           </button>
         </div>
 
-        {createError ? <div style={{ color: "crimson" }}>{createError}</div> : null}
+        {createError ? (
+          <div style={{ color: "crimson" }}>{createError}</div>
+        ) : null}
       </form>
     </div>
   );

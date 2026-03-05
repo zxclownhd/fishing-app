@@ -1,5 +1,7 @@
 import LocationCard from "../LocationCard";
 import EditLocationForm from "./EditLocationForm";
+import { useI18n } from "../../client/i18n/I18nContext";
+import { displayFishName } from "../../client/i18n/displayName";
 
 export default function MyLocationsList({
   items,
@@ -17,6 +19,8 @@ export default function MyLocationsList({
   onSaveEdit,
   onToggleHidden,
 }) {
+  const { t, locale } = useI18n();
+
   return (
     <div style={{ marginTop: 12 }}>
       {error ? (
@@ -27,15 +31,17 @@ export default function MyLocationsList({
             disabled={loading}
             style={{ marginTop: 8 }}
           >
-            Retry
+            {t("ownerList.retry")}
           </button>
         </div>
       ) : null}
 
-      {loading ? <div style={{ padding: 12 }}>Loading...</div> : null}
+      {loading ? (
+        <div style={{ padding: 12 }}>{t("ownerList.loading")}</div>
+      ) : null}
 
       {!loading && !error && items.length === 0 ? (
-        <div style={styles.empty}>No locations yet</div>
+        <div style={styles.empty}>{t("ownerList.empty")}</div>
       ) : null}
 
       <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
@@ -51,22 +57,25 @@ export default function MyLocationsList({
               }
               style={styles.chip}
             >
-              {x.fish?.name || "fish"}
+              {displayFishName(x.fish?.name, locale) || t("admin.unknown")}
             </span>
           ));
 
-          const seasonChips = (loc.seasons || []).slice(0, 8).map((x, idx) => (
-            <span
-              key={
-                x.seasonId
-                  ? `${loc.id}-season-${x.seasonId}`
-                  : `${loc.id}-season-${idx}`
-              }
-              style={styles.chip}
-            >
-              {x.season?.code || x.season?.name || "season"}
-            </span>
-          ));
+          const seasonChips = (loc.seasons || []).slice(0, 8).map((x, idx) => {
+            const code = x.season?.code || x.season?.name || "";
+            return (
+              <span
+                key={
+                  x.seasonId
+                    ? `${loc.id}-season-${x.seasonId}`
+                    : `${loc.id}-season-${idx}`
+                }
+                style={styles.chip}
+              >
+                {code ? t(`seasons.${code}`, code) : t("admin.unknown")}
+              </span>
+            );
+          });
 
           return (
             <LocationCard
@@ -95,11 +104,11 @@ export default function MyLocationsList({
                 <>
                   {isEditing ? (
                     <button type="button" disabled>
-                      Editing
+                      {t("ownerList.editing")}
                     </button>
                   ) : (
                     <button onClick={() => onStartEdit(loc)} disabled={loading}>
-                      Edit
+                      {t("ownerList.edit")}
                     </button>
                   )}
 
@@ -107,7 +116,9 @@ export default function MyLocationsList({
                     onClick={() => onToggleHidden(loc)}
                     disabled={loading}
                   >
-                    {loc.status === "HIDDEN" ? "Unhide" : "Hide"}
+                    {loc.status === "HIDDEN"
+                      ? t("ownerList.unhide")
+                      : t("ownerList.hide")}
                   </button>
                 </>
               }
@@ -118,15 +129,16 @@ export default function MyLocationsList({
 
       <div style={styles.pagination}>
         <button onClick={onPrev} disabled={loading || page === 1}>
-          Prev
+          {t("common.prev")}
         </button>
 
         <div style={{ opacity: 0.8 }}>
-          Page {page} / {totalPages} | Total {total}
+          {t("ownerList.pageLabel")} {page} / {totalPages} |{" "}
+          {t("ownerList.totalLabel")} {total}
         </div>
 
         <button onClick={onNext} disabled={loading || page >= totalPages}>
-          Next
+          {t("common.next")}
         </button>
       </div>
     </div>

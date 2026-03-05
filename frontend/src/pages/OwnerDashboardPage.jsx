@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
 import { Link } from "react-router-dom";
+import { useI18n } from "../client/i18n/I18nContext";
 
 import CreateLocationForm from "../components/owner/CreateLocationForm";
 import MyLocationsList from "../components/owner/MyLocationsList";
@@ -11,6 +12,7 @@ const LIMIT = 12;
 
 export default function OwnerDashboardPage() {
   const user = getStoredUser();
+  const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState("LIST"); // LIST | CREATE
 
@@ -20,7 +22,10 @@ export default function OwnerDashboardPage() {
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / LIMIT)), [total]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / LIMIT)),
+    [total],
+  );
 
   const [editingId, setEditingId] = useState(null);
 
@@ -52,7 +57,8 @@ export default function OwnerDashboardPage() {
         await loadMyLocations(1);
       } catch (err) {
         console.error(err);
-        if (!cancelled) setError(getErrorMessage(err, "Failed to load owner locations"));
+        if (!cancelled)
+          setError(getErrorMessage(err, "Failed to load owner locations"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -162,29 +168,40 @@ export default function OwnerDashboardPage() {
   }
 
   if (!user) return <div style={{ padding: 16 }}>Please login.</div>;
-  if (user.role !== "OWNER") return <div style={{ padding: 16 }}>Owner only.</div>;
+  if (user.role !== "OWNER")
+    return <div style={{ padding: 16 }}>Owner only.</div>;
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
       <div style={{ marginBottom: 10 }}>
-        <Link to="/">← Back</Link>
+        <Link to="/">{t("owner.back")}</Link>
       </div>
 
       <div style={styles.header}>
         <div>
-          <h2 style={{ margin: 0 }}>Owner Dashboard</h2>
+          <h2 style={{ margin: 0 }}>{t("owner.title")}</h2>
           <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            Total: {total} | Page {page} of {totalPages}
+            {t("owner.summary.totalLabel")} {total} |{" "}
+            {t("owner.summary.pageLabel")} {page} {t("owner.summary.ofLabel")}{" "}
+            {totalPages}
           </div>
         </div>
 
         <button onClick={refresh} disabled={loading}>
-          Refresh
+          {t("owner.refresh")}
         </button>
       </div>
 
       {error ? (
-        <div style={{ marginTop: 12, padding: 12, border: "1px solid #f2b5b5", background: "#fff0f0", borderRadius: 12 }}>
+        <div
+          style={{
+            marginTop: 12,
+            padding: 12,
+            border: "1px solid #f2b5b5",
+            background: "#fff0f0",
+            borderRadius: 12,
+          }}
+        >
           {error}
         </div>
       ) : null}
@@ -192,21 +209,30 @@ export default function OwnerDashboardPage() {
       <div style={styles.tabs}>
         <button
           onClick={() => setActiveTab("LIST")}
-          style={{ ...styles.tabBtn, ...(activeTab === "LIST" ? styles.tabBtnActive : null) }}
+          style={{
+            ...styles.tabBtn,
+            ...(activeTab === "LIST" ? styles.tabBtnActive : null),
+          }}
         >
-          My locations
+          {t("owner.tabs.list")}
         </button>
 
         <button
           onClick={() => setActiveTab("CREATE")}
-          style={{ ...styles.tabBtn, ...(activeTab === "CREATE" ? styles.tabBtnActive : null) }}
+          style={{
+            ...styles.tabBtn,
+            ...(activeTab === "CREATE" ? styles.tabBtnActive : null),
+          }}
         >
-          Create
+          {t("owner.tabs.create")}
         </button>
       </div>
 
       {activeTab === "CREATE" ? (
-        <CreateLocationForm onCreate={onCreate} onCancel={() => setActiveTab("LIST")} />
+        <CreateLocationForm
+          onCreate={onCreate}
+          onCancel={() => setActiveTab("LIST")}
+        />
       ) : (
         <MyLocationsList
           items={items}

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 /**
  * Photos format:
@@ -21,6 +22,8 @@ export default function PhotoUploader({
   onRemove,
   draftFolder,
 }) {
+  const { t } = useI18n();
+
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -61,7 +64,7 @@ export default function PhotoUploader({
 
     const nonImages = arr.filter((f) => !f.type?.startsWith("image/"));
     const tooBig = arr.filter(
-      (f) => f.type?.startsWith("image/") && f.size > MAX_BYTES
+      (f) => f.type?.startsWith("image/") && f.size > MAX_BYTES,
     );
 
     const picked = arr
@@ -105,7 +108,7 @@ export default function PhotoUploader({
 
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body: form }
+          { method: "POST", body: form },
         );
 
         if (!res.ok) throw new Error("Upload failed");
@@ -188,11 +191,13 @@ export default function PhotoUploader({
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
         >
-          {uploading ? "Uploading..." : "Add photos"}
+          {uploading ? t("photos.uploading") : t("photos.addPhotos")}
         </button>
 
         <div style={{ opacity: 0.75, fontSize: 13 }}>
-          Drag and drop images here. Max {max}. Up to 10MB each.
+          {t("photos.hint").includes("{max}")
+            ? t("photos.hint").replace("{max}", String(max))
+            : `${t("photos.hint")} ${max}`}
         </div>
 
         {errorText ? <div style={{ color: "crimson" }}>{errorText}</div> : null}
@@ -242,7 +247,7 @@ export default function PhotoUploader({
                   {p.url}
                 </div>
                 <div style={{ fontSize: 12, opacity: 0.65 }}>
-                  {p.id ? "Saved" : "Not saved yet"}
+                  {p.id ? t("photos.saved") : t("photos.notSaved")}
                 </div>
               </div>
 
@@ -252,17 +257,17 @@ export default function PhotoUploader({
                 disabled={uploading}
                 title={
                   p.id
-                    ? "Deletes from DB and Cloudinary (via API)"
-                    : "Removes only locally"
+                    ? t("photos.removeTitleSaved")
+                    : t("photos.removeTitleLocal")
                 }
               >
-                Remove
+                {t("photos.remove")}
               </button>
             </div>
           ))}
         </div>
       ) : (
-        <div style={{ marginTop: 10, opacity: 0.75 }}>No photos yet</div>
+        <div style={{ marginTop: 10, opacity: 0.75 }}>{t("photos.empty")}</div>
       )}
     </div>
   );

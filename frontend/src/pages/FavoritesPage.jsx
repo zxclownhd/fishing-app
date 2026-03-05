@@ -4,12 +4,14 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getErrorMessage } from "../api/getErrorMessage";
+import { useI18n } from "../client/i18n/I18nContext";
 
 const LIMIT = 20;
 
 export default function FavoritesPage() {
   const user = getStoredUser();
   const nav = useNavigate();
+  const { t } = useI18n();
 
   const [items, setItems] = useState([]);
   const [page, setPage] = useState(1);
@@ -79,14 +81,16 @@ export default function FavoritesPage() {
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
       <div style={styles.header}>
         <div>
-          <h2 style={{ margin: 0 }}>Favorites</h2>
+          <h2 style={{ margin: 0 }}>{t("favoritesPage.title")}</h2>
           <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            Total: {total} | Page {page} of {totalPages}
+            {t("favoritesPage.summary.totalLabel")} {total} |{" "}
+            {t("favoritesPage.summary.pageLabel")} {page}{" "}
+            {t("favoritesPage.summary.ofLabel")} {totalPages}
           </div>
         </div>
 
         <button onClick={() => load(page)} disabled={loading}>
-          Refresh
+          {t("favoritesPage.refresh")}
         </button>
       </div>
 
@@ -98,15 +102,17 @@ export default function FavoritesPage() {
             disabled={loading}
             style={{ marginTop: 8 }}
           >
-            Retry
+            {t("favoritesPage.retry")}
           </button>
         </div>
       ) : null}
 
-      {loading ? <div style={{ padding: 12 }}>Loading...</div> : null}
+      {loading ? (
+        <div style={{ padding: 12 }}>{t("common.loading")}</div>
+      ) : null}
 
       {!loading && !errorText && items.length === 0 ? (
-        <div style={styles.empty}>No favorites yet</div>
+        <div style={styles.empty}>{t("favoritesPage.empty")}</div>
       ) : null}
 
       <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
@@ -121,7 +127,7 @@ export default function FavoritesPage() {
                   type="button"
                   onClick={() => nav(`/locations/${it.id}`)}
                 >
-                  Details
+                  {t("favoritesPage.details")}
                 </button>
 
                 <button
@@ -129,7 +135,7 @@ export default function FavoritesPage() {
                   onClick={() => removeFavorite(it.id)}
                   disabled={loading}
                 >
-                  Remove
+                  {t("favoritesPage.remove")}
                 </button>
               </>
             }
@@ -139,15 +145,15 @@ export default function FavoritesPage() {
 
       <div style={styles.pagination}>
         <button onClick={goPrev} disabled={loading || page === 1}>
-          Prev
+          {t("common.prev")}
         </button>
 
         <div style={{ opacity: 0.8 }}>
-          Page {page} / {totalPages}
+          {t("favoritesPage.summary.pageLabel")} {page} / {totalPages}
         </div>
 
         <button onClick={goNext} disabled={loading || page >= totalPages}>
-          Next
+          {t("common.next")}
         </button>
       </div>
     </div>

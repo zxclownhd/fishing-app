@@ -1,18 +1,26 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../../client/i18n/I18nContext";
 
 const OPTIONS = ["SPRING", "SUMMER", "AUTUMN", "WINTER"];
 
 export default function SeasonPicker({ value, onChange }) {
+  const { t } = useI18n();
+
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     return OPTIONS
       .filter((x) => !(value || []).includes(x))
-      .filter((x) => x.toLowerCase().includes(q))
+      .filter((x) => {
+        // search by code OR localized label
+        const label = t(`seasons.${x}`, x).toLowerCase();
+        return x.toLowerCase().includes(q) || label.includes(q);
+      })
       .slice(0, 10);
-  }, [query, value]);
+  }, [query, value, t]);
 
   function add(code) {
     const next = (value || []).includes(code) ? (value || []) : [...(value || []), code];
@@ -28,13 +36,13 @@ export default function SeasonPicker({ value, onChange }) {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
         {(value || []).map((code) => (
           <button key={code} type="button" onClick={() => remove(code)} style={chipBtn}>
-            {code} ✕
+            {t(`seasons.${code}`, code)} ✕
           </button>
         ))}
       </div>
 
       <input
-        placeholder="Seasons (type to search)"
+        placeholder={t("seasonPicker.placeholder")}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -57,7 +65,7 @@ export default function SeasonPicker({ value, onChange }) {
               }}
               style={dropdownItem}
             >
-              {code}
+              {t(`seasons.${code}`, code)}
             </div>
           ))}
         </div>

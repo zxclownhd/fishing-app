@@ -30,6 +30,32 @@ async function main() {
       { name: "Roach" },
       { name: "Trout" },
       { name: "Salmon" },
+
+      { name: "Asp" },
+      { name: "Chub" },
+      { name: "Ide" },
+      { name: "Rudd" },
+      { name: "Tench" },
+      { name: "Gudgeon" },
+      { name: "Bleak" },
+      { name: "Dace" },
+
+      { name: "European eel" },
+      { name: "Burbot" },
+
+      { name: "Common barbel" },
+      { name: "Nase" },
+
+      { name: "White bream" },
+      { name: "Silver bream" },
+
+      { name: "Grass carp" },
+      { name: "Bighead carp" },
+
+      { name: "Rainbow trout" },
+
+      { name: "European grayling" },
+      { name: "Taimen" },
     ],
     skipDuplicates: true,
   });
