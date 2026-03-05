@@ -84,9 +84,30 @@ export default function MyLocationsList({
               variant="admin"
               footer={
                 <div style={{ display: "grid", gap: 10 }}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {fishChips}
-                    {seasonChips}
+                  <div style={styles.group}>
+                    <div style={styles.groupLabel}>
+                      {t("admin.groups.fish")}
+                    </div>
+                    <div style={styles.groupChips}>
+                      {fishChips.length ? (
+                        fishChips
+                      ) : (
+                        <span style={styles.emptyDash}>—</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={styles.group}>
+                    <div style={styles.groupLabel}>
+                      {t("admin.groups.seasons")}
+                    </div>
+                    <div style={styles.groupChips}>
+                      {seasonChips.length ? (
+                        seasonChips
+                      ) : (
+                        <span style={styles.emptyDash}>—</span>
+                      )}
+                    </div>
                   </div>
 
                   {isEditing ? (
@@ -175,4 +196,19 @@ const styles = {
     background: "#fff0f0",
     borderRadius: 12,
   },
+
+  group: { display: "grid", gap: 6 },
+  groupLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  groupChips: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  emptyDash: { opacity: 0.6, fontSize: 13 },
 };
