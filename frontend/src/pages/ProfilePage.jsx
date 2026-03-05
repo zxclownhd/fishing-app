@@ -63,7 +63,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(getErrorMessage(err, "Failed to load profile"));
+      setErrorText(getErrorMessage(err, "profile.errors.loadFailed", t));
     } finally {
       setLoading(false);
     }
@@ -104,7 +104,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(getErrorMessage(err, "Failed to save"));
+      setErrorText(getErrorMessage(err, "common.errors.saveFailed", t));
       setInfoText("");
     }
   }
@@ -144,7 +144,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(getErrorMessage(err, "Failed to change password"));
+      setErrorText(getErrorMessage(err, "profile.errors.changePasswordFailed", t));
       setInfoText("");
     }
   }

@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
       setItems(res.data.items || []);
       setTotal(res.data.total || 0);
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Failed to load locations"));
+      setErrorText(getErrorMessage(e, t("home.errors.loadFailed"), t));
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
       await http.patch(`/admin/locations/${id}/status`, { status: nextStatus });
       await loadLocations(page, status);
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Failed to update status"));
+      setErrorText(getErrorMessage(e, t("errors.locations.updateStatusFailed"), t));
     }
   }
 
@@ -93,7 +93,7 @@ export default function AdminDashboardPage() {
       const item = res.data.item;
       setDetailsById((prev) => ({ ...prev, [id]: item }));
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Failed to load details"));
+      setErrorText(getErrorMessage(e, t("errors.locations.loadDetailsFailed"), t));
     } finally {
       setDetailsLoadingId(null);
     }
@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
       setExpandedId(null);
       await loadLocations(newPage, status);
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Delete failed"));
+      setErrorText(getErrorMessage(e, t("errors.locations.deleteFailed"), t));
     }
   }
 

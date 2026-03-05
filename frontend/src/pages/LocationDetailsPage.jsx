@@ -56,7 +56,7 @@ export default function LocationDetailsPage() {
       } catch (err) {
         console.error(err);
         if (!cancelled)
-          setError(getErrorMessage(err, "Failed to load location details"));
+          setError(getErrorMessage(err, "Failed to load location details", t));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -66,7 +66,7 @@ export default function LocationDetailsPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadAll]);
+  }, [loadAll, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,7 +83,7 @@ export default function LocationDetailsPage() {
       } catch (e) {
         console.error(
           "Failed to load contacts:",
-          getErrorMessage(e, "Failed to load contacts"),
+          getErrorMessage(e, "locationDetails.errors.loadContactsFailed", t)
         );
         if (!cancelled) setContactInfo(null);
       }
@@ -93,7 +93,7 @@ export default function LocationDetailsPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, user]);
+  }, [id, user, t]);
 
   async function submitReview(e) {
     e.preventDefault();
@@ -114,7 +114,7 @@ export default function LocationDetailsPage() {
       await loadAll();
     } catch (err) {
       console.error(err);
-      setFormError(getErrorMessage(err, "Failed to submit review"));
+      setFormError(getErrorMessage(err, "locationDetails.errors.submitReviewFailed", t));
     } finally {
       setSubmitting(false);
     }

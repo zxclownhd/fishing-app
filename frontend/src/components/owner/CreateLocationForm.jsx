@@ -137,7 +137,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       setContactInfo("");
       setPhotos([]);
     } catch (err) {
-      setCreateError(getErrorMessage(err, "Failed to create location"));
+      setCreateError(getErrorMessage(err, t("ownerCreate.errors.createFailed"), t));
     } finally {
       setCreating(false);
     }

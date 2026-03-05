@@ -21,6 +21,17 @@ export const translations = {
       loading: "Loading...",
       prev: "Prev",
       next: "Next",
+      saveFailed: "Failed to save",
+    },
+    ownerCreate: {
+      errors: {
+        createFailed: "Failed to create location",
+      },
+    },
+    ownerEdit: {
+      errors: {
+        updateFailed: "Failed to update location",
+      },
     },
     sort: {
       title: "Sort by",
@@ -124,6 +135,10 @@ export const translations = {
       confirmNewPassword: "Confirm new password",
       changePasswordBtn: "Change password",
       clear: "Clear",
+      errors: {
+        loadFailed: "Failed to load profile",
+        changePasswordFailed: "Failed to change password",
+      },
     },
     owner: {
       back: "← Back",
@@ -137,6 +152,12 @@ export const translations = {
         totalLabel: "Total:",
         pageLabel: "Page",
         ofLabel: "of",
+      },
+      errors: {
+        loadLocationsFailed: "Failed to load owner locations",
+        createLocationFailed: "Failed to create location",
+        updateLocationFailed: "Failed to update location",
+        updateStatusFailed: "Failed to update status",
       },
     },
     locationDetails: {
@@ -167,6 +188,11 @@ export const translations = {
       reviewsTitle: "Reviews",
       noReviews: "No reviews yet.",
       anonymous: "Anonymous",
+      errors: {
+        loadFailed: "Failed to load location details",
+        loadContactsFailed: "Failed to load contacts",
+        submitReviewFailed: "Failed to submit review",
+      },
     },
     home: {
       title: "Fishing Locations",
@@ -241,6 +267,9 @@ export const translations = {
       removeTitleSaved: "Deletes from DB and Cloudinary (via API)",
       removeTitleLocal: "Removes only locally",
       empty: "No photos yet",
+      errors: {
+        deleteFailed: "Failed to delete photo",
+      },
     },
     ownerList: {
       retry: "Retry",
@@ -319,7 +348,23 @@ export const translations = {
       },
       unknown: "Unknown",
     },
-    errors: {},
+    errors: {
+      VALIDATION_ERROR: "Please check your input",
+      UNAUTHORIZED: "Invalid email or password",
+      FORBIDDEN: "Not enough permissions",
+      NOT_FOUND: "Not found",
+      RATE_LIMIT: "Too many requests. Try again later",
+      INTERNAL_ERROR: "Server error. Please try again later",
+      locations: {
+        updateStatusFailed: "Failed to update status",
+        loadDetailsFailed: "Failed to load details",
+        deleteFailed: "Delete failed",
+      },
+      favorites: {
+        loadFailed: "Failed to load favorites",
+        removeFailed: "Failed to remove favorite",
+      },
+    },
   },
   uk: {
     nav: {
@@ -343,6 +388,17 @@ export const translations = {
       loading: "Завантаження...",
       prev: "Назад",
       next: "Далі",
+      saveFailed: "Не вдалося зберегти",
+    },
+    ownerCreate: {
+      errors: {
+        createFailed: "Не вдалося створити локацію",
+      },
+    },
+    ownerEdit: {
+      errors: {
+        updateFailed: "Не вдалося оновити локацію",
+      },
     },
     sort: {
       title: "Сортувати за",
@@ -444,6 +500,10 @@ export const translations = {
       confirmNewPassword: "Підтвердіть новий пароль",
       changePasswordBtn: "Змінити пароль",
       clear: "Очистити",
+      errors: {
+        loadFailed: "Не вдалося завантажити профіль",
+        changePasswordFailed: "Не вдалося змінити пароль",
+      },
     },
     owner: {
       back: "← Назад",
@@ -457,6 +517,12 @@ export const translations = {
         totalLabel: "Всього:",
         pageLabel: "Сторінка",
         ofLabel: "з",
+      },
+      errors: {
+        loadLocationsFailed: "Не вдалося завантажити локації власника",
+        createLocationFailed: "Не вдалося створити локацію",
+        updateLocationFailed: "Не вдалося оновити локацію",
+        updateStatusFailed: "Не вдалося оновити статус",
       },
     },
     locationDetails: {
@@ -487,6 +553,11 @@ export const translations = {
       reviewsTitle: "Відгуки",
       noReviews: "Поки що немає відгуків.",
       anonymous: "Анонім",
+      errors: {
+        loadFailed: "Не вдалося завантажити деталі локації",
+        loadContactsFailed: "Не вдалося завантажити контакти",
+        submitReviewFailed: "Не вдалося надіслати відгук",
+      },
     },
     home: {
       title: "Локації для риболовлі",
@@ -561,6 +632,9 @@ export const translations = {
       removeTitleSaved: "Видаляє з БД і Cloudinary (через API)",
       removeTitleLocal: "Прибирає лише локально",
       empty: "Поки що немає фото",
+      errors: {
+        deleteFailed: "Не вдалося видалити фото",
+      },
     },
     ownerList: {
       retry: "Повторити",
@@ -640,7 +714,23 @@ export const translations = {
       },
       unknown: "Невідомо",
     },
-    errors: {},
+    errors: {
+      VALIDATION_ERROR: "Перевірте введені дані",
+      UNAUTHORIZED: "Невірна пошта або пароль",
+      FORBIDDEN: "Недостатньо прав",
+      NOT_FOUND: "Не знайдено",
+      RATE_LIMIT: "Забагато запитів. Спробуйте пізніше",
+      INTERNAL_ERROR: "Помилка сервера. Спробуйте пізніше",
+      locations: {
+        updateStatusFailed: "Не вдалося оновити статус",
+        loadDetailsFailed: "Не вдалося завантажити деталі",
+        deleteFailed: "Не вдалося видалити",
+      },
+      favorites: {
+        loadFailed: "Не вдалося завантажити обрані",
+        removeFailed: "Не вдалося видалити з обраного",
+      },
+    },
   },
 };
 

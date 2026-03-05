@@ -22,7 +22,7 @@ export default function FishPicker({ value, onChange }) {
       } catch (e) {
         console.error(
           "Failed to load fish:",
-          getErrorMessage(e, t("fishPicker.loadFailed")),
+          getErrorMessage(e, t("fishPicker.loadFailed"), t),
         );
         if (!cancelled) setOptions([]);
       }

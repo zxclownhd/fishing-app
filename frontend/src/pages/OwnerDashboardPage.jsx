@@ -58,7 +58,7 @@ export default function OwnerDashboardPage() {
       } catch (err) {
         console.error(err);
         if (!cancelled)
-          setError(getErrorMessage(err, "Failed to load owner locations"));
+          setError(getErrorMessage(err, "owner.errors.loadLocationsFailed", t));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,7 +77,7 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(page);
     } catch (e) {
-      setError(getErrorMessage(e, "Failed to load owner locations"));
+      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export default function OwnerDashboardPage() {
       await refresh();
     } catch (e) {
       // keep user on CREATE, show error
-      setError(getErrorMessage(e, "Failed to create location"));
+      setError(getErrorMessage(e, "owner.errors.createLocationFailed", t));
       throw e; // let CreateLocationForm show it too if it wants
     }
   }
@@ -114,7 +114,7 @@ export default function OwnerDashboardPage() {
       await refresh();
       setEditingId(null);
     } catch (e) {
-      setError(getErrorMessage(e, "Failed to update location"));
+      setError(getErrorMessage(e, "owner.errors.updateLocationFailed", t));
       throw e; // let EditLocationForm show it too
     }
   }
@@ -131,7 +131,7 @@ export default function OwnerDashboardPage() {
       await refresh();
     } catch (e) {
       console.error(e);
-      setError(getErrorMessage(e, "Failed to update status"));
+      setError(getErrorMessage(e, "owner.errors.updateStatusFailed", t));
     }
   }
 
@@ -145,7 +145,7 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(next);
     } catch (e) {
-      setError(getErrorMessage(e, "Failed to load owner locations"));
+      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
     } finally {
       setLoading(false);
     }
@@ -161,7 +161,7 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(prev);
     } catch (e) {
-      setError(getErrorMessage(e, "Failed to load owner locations"));
+      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
     } finally {
       setLoading(false);
     }

@@ -75,7 +75,7 @@ export default function HomePage() {
       setTotal(res.data.total || 0);
     } catch (err) {
       console.error(err);
-      setError(getErrorMessage(err, t("home.errors.loadFailed")));
+      setError(getErrorMessage(err, t("home.errors.loadFailed"), t));
     } finally {
       setLoading(false);
     }

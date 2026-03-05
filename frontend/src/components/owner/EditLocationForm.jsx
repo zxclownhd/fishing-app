@@ -222,7 +222,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       savedRef.current = true;
       onCancel();
     } catch (err) {
-      setEditError(getErrorMessage(err, "Failed to update location"));
+      setEditError(getErrorMessage(err, t("ownerEdit.errors.updateFailed"), t));
     } finally {
       setSaving(false);
     }
@@ -239,7 +239,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         await http.delete(`/photos/${photo.id}`);
         setPhotos((prev) => (prev || []).filter((p) => p.id !== photo.id));
       } catch (e) {
-        setEditError(getErrorMessage(e, "Failed to delete photo"));
+        setEditError(getErrorMessage(e, t("photos.errors.deleteFailed"), t));
       }
       return;
     }

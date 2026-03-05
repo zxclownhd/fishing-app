@@ -35,7 +35,7 @@ export default function FavoritesPage() {
       setItems(res.data.items || []);
       setTotal(res.data.total || 0);
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Failed to load favorites"));
+      setErrorText(getErrorMessage(e, t("errors.favorites.loadFailed"), t));
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ export default function FavoritesPage() {
         setTotal((prev) => Math.max(0, prev - 1));
       }
     } catch (e) {
-      setErrorText(getErrorMessage(e, "Failed to remove favorite"));
+      setErrorText(getErrorMessage(e, t("errors.favorites.removeFailed"), t));
     }
   }
 

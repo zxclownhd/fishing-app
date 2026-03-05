@@ -58,7 +58,7 @@ export default function LoginPage() {
       await login(email.trim(), password);
       nav("/");
     } catch (err) {
-      const msg = getErrorMessage(err, t("auth.errors.invalidCredentials"));
+      const msg = getErrorMessage(err, "auth.errors.invalidCredentials", t);
       setErrors((p) => ({ ...p, form: msg }));
     } finally {
       setLoading(false);
