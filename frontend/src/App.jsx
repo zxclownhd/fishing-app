@@ -23,6 +23,8 @@ export default function App() {
     ? user.displayName.trim()
     : user?.email || "";
 
+  const roleLabel = user?.role ? t(`roles.${user.role}`, user.role) : "";
+
   useEffect(() => {
     function onAuthChanged() {
       setUser(getStoredUser());
@@ -76,7 +78,8 @@ export default function App() {
               borderRadius: 8,
               border: "1px solid #ddd",
             }}
-            aria-label="Language"
+            aria-label={t("nav.language", "Language")}
+            title={t("nav.language", "Language")}
           >
             <option value="en">EN</option>
             <option value="uk">UK</option>
@@ -85,7 +88,7 @@ export default function App() {
           {user ? (
             <>
               <span style={{ opacity: 0.8 }}>
-                {userLabel} ({user.role})
+                {userLabel} ({roleLabel})
               </span>
               <button
                 onClick={logout}

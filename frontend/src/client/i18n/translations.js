@@ -1,6 +1,7 @@
 export const translations = {
   en: {
     nav: {
+      language: "Language",
       home: "Home",
       profile: "Profile",
       owner: "Owner",
@@ -9,6 +10,11 @@ export const translations = {
       logout: "Logout",
       login: "Login",
       register: "Register",
+    },
+    roles: {
+      USER: "User",
+      OWNER: "Owner",
+      ADMIN: "Admin",
     },
     common: {
       loadingShort: "...",
@@ -69,15 +75,21 @@ export const translations = {
     },
     favorites: { add: "Add to favorites", remove: "Remove from favorites" },
     auth: {
-      registerTitle: "Register",
+      loginTitle: "Login",
+      loginBtn: "Login",
+
       emailPlaceholder: "Email",
-      displayNamePlaceholder: "Display name",
       passwordPlaceholder: "Password",
+
+      noAccount: "No account?",
+      registerTitle: "Register",
+
+      displayNamePlaceholder: "Display name",
+
       confirmPasswordPlaceholder: "Confirm password",
       createAccount: "Create account",
       haveAccount: "Have an account?",
-      loginTitle: "Login",
-      noAccount: "No account?",
+
       errors: {
         invalidEmail: "Invalid email",
         invalidDisplayName:
@@ -86,6 +98,11 @@ export const translations = {
         passwordMismatch: "Password does not match",
         registrationFailed: "Registration failed",
         invalidCredentials: "Invalid credentials",
+        emailRequired: "Email is required",
+        emailInvalid: "Invalid email",
+        passwordRequired: "Password is required",
+        displayNameRequired: "Display name is required",
+        confirmPasswordRequired: "Confirm password is required",
       },
     },
     profile: {
@@ -210,10 +227,10 @@ export const translations = {
       },
     },
     createLocation: {
-  title: "Create location",
-  creating: "Creating...",
-  createPending: "Create (PENDING)",
-},
+      title: "Create location",
+      creating: "Creating...",
+      createPending: "Create (PENDING)",
+    },
     photos: {
       uploading: "Uploading...",
       addPhotos: "Add photos",
@@ -306,6 +323,7 @@ export const translations = {
   },
   uk: {
     nav: {
+      language: "Мова",
       home: "Головна",
       profile: "Профіль",
       owner: "Власник",
@@ -314,6 +332,11 @@ export const translations = {
       logout: "Вийти",
       login: "Увійти",
       register: "Реєстрація",
+    },
+    roles: {
+      USER: "Користувач",
+      OWNER: "Власник",
+      ADMIN: "Адмін",
     },
     common: {
       loadingShort: "...",
@@ -374,15 +397,19 @@ export const translations = {
     },
     favorites: { add: "Додати в обране", remove: "Прибрати з обраного" },
     auth: {
-      registerTitle: "Реєстрація",
+      loginTitle: "Вхід",
+      loginBtn: "Увійти",
+
       emailPlaceholder: "Ел. пошта",
-      displayNamePlaceholder: "Ім’я для відображення",
       passwordPlaceholder: "Пароль",
+
+      noAccount: "Немає акаунта?",
+      registerTitle: "Реєстрація",
+      displayNamePlaceholder: "Ім’я для відображення",
       confirmPasswordPlaceholder: "Підтвердіть пароль",
       createAccount: "Створити акаунт",
       haveAccount: "Вже є акаунт?",
-      loginTitle: "Вхід",
-      noAccount: "Немає акаунта?",
+
       errors: {
         invalidEmail: "Некоректна ел. пошта",
         invalidDisplayName:
@@ -391,6 +418,11 @@ export const translations = {
         passwordMismatch: "Паролі не збігаються",
         registrationFailed: "Не вдалося зареєструватися",
         invalidCredentials: "Невірна пошта або пароль",
+        emailRequired: "Ел. пошта обовʼязкова",
+        emailInvalid: "Некоректна ел. пошта",
+        passwordRequired: "Пароль обовʼязковий",
+        displayNameRequired: "Нікнейм обовʼязковий",
+        confirmPasswordRequired: "Підтвердження пароля обовʼязкове",
       },
     },
     profile: {
@@ -515,10 +547,10 @@ export const translations = {
       },
     },
     createLocation: {
-  title: "Створити локацію",
-  creating: "Створення...",
-  createPending: "Створити (PENDING)",
-},
+      title: "Створити локацію",
+      creating: "Створення...",
+      createPending: "Створити (PENDING)",
+    },
     photos: {
       uploading: "Завантаження...",
       addPhotos: "Додати фото",
@@ -542,7 +574,8 @@ export const translations = {
       totalLabel: "Всього",
     },
     locationForm: {
-      contactsPlaceholderFull: "Контакти (необовʼязково): телефон, email, Telegram",
+      contactsPlaceholderFull:
+        "Контакти (необовʼязково): телефон, email, Telegram",
       titlePlaceholder: "Назва",
       descriptionPlaceholder: "Опис",
       contactsPlaceholder: "Контакти (необовʼязково)",
