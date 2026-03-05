@@ -168,12 +168,12 @@ export default function ProfilePage() {
       </div>
 
       <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>{t("profile.title")}</h2>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {profile?.email || storedUser.email} |{" "}
-            {profile?.role || storedUser.role}
-          </div>
+        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
+          {profile?.email || storedUser.email} |{" "}
+          {t(
+            `roles.${profile?.role || storedUser.role}`,
+            profile?.role || storedUser.role,
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -224,7 +224,7 @@ export default function ProfilePage() {
 
               <div style={styles.row}>
                 <div style={styles.label}>{t("profile.role")}</div>
-                <div>{profile.role}</div>
+                <div>{profile?.role ? t(`roles.${profile.role}`, profile.role) : "—"}</div>
               </div>
 
               <div style={{ marginTop: 12 }}>
