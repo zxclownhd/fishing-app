@@ -36,6 +36,14 @@ export default function LocationCard({
   const status = loc?.status;
   const owner = loc?.owner;
 
+  const regionLabel = loc?.region
+    ? t(`regions.${String(loc.region).toUpperCase()}`, loc.region)
+    : t("card.unknownRegion");
+
+  const waterTypeLabel = loc?.waterType
+    ? t(`home.waterTypes.${String(loc.waterType).toUpperCase()}`, loc.waterType)
+    : t("card.unknownType");
+
   const card = (
     <div
       style={styles.card}
@@ -76,9 +84,9 @@ export default function LocationCard({
         </div>
 
         <div style={styles.meta}>
-          <span style={styles.metaItem}>{loc?.region || t("card.unknownRegion")}</span>
+          <span style={styles.metaItem}>{regionLabel}</span>
           <span style={styles.dot}>•</span>
-          <span style={styles.metaItem}>{loc?.waterType || t("card.unknownType")}</span>
+          <span style={styles.metaItem}>{waterTypeLabel}</span>
         </div>
 
         {variant === "admin" ? (
@@ -91,7 +99,8 @@ export default function LocationCard({
             ) : null}
             {loc?.createdAt ? (
               <div style={styles.adminLine}>
-                {t("card.createdLabel")} {new Date(loc.createdAt).toLocaleString()}
+                {t("card.createdLabel")}{" "}
+                {new Date(loc.createdAt).toLocaleString()}
               </div>
             ) : null}
           </div>
@@ -130,8 +139,10 @@ export default function LocationCard({
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
   if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
+  if (s === "APPROVED")
+    return { background: "#DFF7E6", borderColor: "#7FD39A" };
+  if (s === "REJECTED")
+    return { background: "#FFE1E1", borderColor: "#F09A9A" };
   if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
   return { background: "#EEEEEE", borderColor: "#CFCFCF" };
 }

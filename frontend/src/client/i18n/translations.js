@@ -316,10 +316,10 @@ export const translations = {
       loading: "Loading...",
       empty: "No items in",
       tabs: {
-        PENDING: "PENDING",
-        APPROVED: "APPROVED",
-        REJECTED: "REJECTED",
-        HIDDEN: "HIDDEN",
+        PENDING: "Pending",
+        APPROVED: "Approved",
+        REJECTED: "Rejected",
+        HIDDEN: "Hidden",
       },
       groups: {
         fish: "Fish",
