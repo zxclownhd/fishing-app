@@ -138,6 +138,7 @@ export const translations = {
       errors: {
         loadFailed: "Failed to load profile",
         changePasswordFailed: "Failed to change password",
+        invalidCurrentPassword: "Incorrect current password",
       },
     },
     owner: {
@@ -503,6 +504,7 @@ export const translations = {
       errors: {
         loadFailed: "Не вдалося завантажити профіль",
         changePasswordFailed: "Не вдалося змінити пароль",
+        invalidCurrentPassword: "Неправильний поточний пароль",
       },
     },
     owner: {

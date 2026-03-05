@@ -139,12 +139,21 @@ export default function ProfilePage() {
       setInfoText("Password changed");
     } catch (err) {
       const status = err?.response?.status;
+
+      // wrong current password часто приходить як 401 на бекенді
+      // тут НЕ ламаємо сесію, просто показуємо повідомлення
       if (status === 401) {
-        clearAuth();
-        setRedirectToLogin(true);
+        setErrorText(
+          t("profile.errors.invalidCurrentPassword") ||
+            "Incorrect current password",
+        );
+        setInfoText("");
         return;
       }
-      setErrorText(getErrorMessage(err, "profile.errors.changePasswordFailed", t));
+
+      setErrorText(
+        getErrorMessage(err, "profile.errors.changePasswordFailed", t),
+      );
       setInfoText("");
     }
   }
