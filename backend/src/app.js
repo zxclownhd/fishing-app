@@ -21,12 +21,14 @@ app.use("/me", meRouter);
 app.use("/owner", ownerRouter);
 app.use("/favorites", favoritesRouter);
 app.use("/photos", photosRouter);
-app.use(errorHandler);
+
 
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
 app.use("/locations", locationsRouter);
 app.use("/admin", adminRouter);
+
+app.use(errorHandler);
 
 module.exports = app;

@@ -6,6 +6,23 @@ const { AppError } = require("../utils/AppError");
 const { ErrorCode } = require("../utils/errorCodes");
 const cloudinary = require("../utils/cloudinary");
 
+//DB seed
+router.post(
+  "/seed",
+  asyncHandler(async (req, res) => {
+    const key = req.header("x-seed-key");
+
+    if (!process.env.SEED_KEY || key !== process.env.SEED_KEY) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const mod = await import("../../prisma/seed.mjs");
+    await mod.runSeed();
+
+    res.json({ ok: true });
+  })
+);
+
 // All /admin routes require JWT + ADMIN role
 router.use(authenticateToken, requireRole("ADMIN"));
 

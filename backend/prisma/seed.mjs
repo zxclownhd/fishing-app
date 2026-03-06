@@ -321,11 +321,17 @@ async function main() {
   console.log("user2@test.com / Password123!");
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+export async function runSeed() {
+  await main();
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runSeed()
+    .catch((e) => {
+      console.error(e);
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
