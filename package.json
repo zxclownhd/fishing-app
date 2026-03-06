@@ -1,0 +1,30 @@
+{
+  "name": "fishing-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:up": "cd backend && docker compose up -d",
+    "db:down": "cd backend && docker compose down",
+    "db:logs": "cd backend && docker compose logs -f",
+
+    "db:reset": "npm --prefix backend run db:reset",
+    "db:seed": "npm --prefix backend run db:seed",
+    "db:studio": "npm --prefix backend run db:studio",
+
+    "backend:dev": "npm --prefix backend run dev",
+    "frontend:dev": "npm --prefix frontend run dev",
+
+    "dev": "concurrently -n DB,BE,FE \"npm run db:up\" \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "fresh": "npm run db:up && npm run db:reset && npm run db:seed"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
