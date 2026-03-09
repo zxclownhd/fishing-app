@@ -173,7 +173,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       const latStr = String(editLat).trim();
       const lngStr = String(editLng).trim();
       if (!latStr || !lngStr) {
-        setEditError("Lat and Lng are required");
+        setEditError(t("locationForm.errors.coordsRequired"));
         return;
       }
 
@@ -181,20 +181,20 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       const lngNum = Number(lngStr);
 
       if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-        setEditError("Lat and Lng must be valid numbers");
+        setEditError(t("locationForm.errors.coordsInvalid"));
         return;
       }
       if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-        setEditError("Lat/Lng out of range");
+        setEditError(t("locationForm.errors.coordsRange"));
         return;
       }
 
       if (!photos || photos.length < 1) {
-        setEditError("At least 1 photo is required");
+        setEditError(t("locationForm.errors.minPhotos"));
         return;
       }
       if (photos.length > 5) {
-        setEditError("Max 5 photos");
+        setEditError(t("locationForm.errors.maxPhotos"));
         return;
       }
 

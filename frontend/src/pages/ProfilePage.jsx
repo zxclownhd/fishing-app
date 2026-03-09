@@ -41,6 +41,23 @@ export default function ProfilePage() {
     return true;
   }, [currentPassword, newPassword, confirmPassword]);
 
+  function isWrongCurrentPasswordError(err) {
+    const status = err?.response?.status;
+    if (status !== 401) return false;
+
+    const payload = err?.response?.data;
+    const code = payload?.error?.code || payload?.code;
+    const message = String(
+      payload?.error?.message || payload?.message || payload?.error || "",
+    ).toLowerCase();
+
+    if (code === "UNAUTHORIZED" && message.includes("wrong password")) {
+      return true;
+    }
+
+    return message.includes("wrong password");
+  }
+
   async function loadProfile() {
     setLoading(true);
     setErrorText("");
@@ -63,7 +80,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(getErrorMessage(err, "profile.errors.loadFailed", t));
+      setErrorText(getErrorMessage(err, t("profile.errors.loadFailed"), t));
     } finally {
       setLoading(false);
     }
@@ -79,12 +96,12 @@ export default function ProfilePage() {
     setInfoText("");
 
     if (displayNameTrim.length < 3) {
-      setErrorText("Display name must be at least 3 characters");
+      setErrorText(t("profile.errors.displayNameMin"));
       return;
     }
 
     try {
-      setInfoText("Saving...");
+      setInfoText(t("profile.info.saving"));
       const res = await http.patch("/me", { displayName: displayNameTrim });
       const user = res.data.user;
 
@@ -96,7 +113,7 @@ export default function ProfilePage() {
         window.dispatchEvent(new Event("authChanged"));
       }
 
-      setInfoText("Saved");
+      setInfoText(t("profile.info.saved"));
     } catch (err) {
       const status = err?.response?.status;
       if (status === 401) {
@@ -104,7 +121,7 @@ export default function ProfilePage() {
         setRedirectToLogin(true);
         return;
       }
-      setErrorText(getErrorMessage(err, "common.errors.saveFailed", t));
+      setErrorText(getErrorMessage(err, t("common.saveFailed"), t));
       setInfoText("");
     }
   }
@@ -116,33 +133,31 @@ export default function ProfilePage() {
     const next = newPassword.trim();
 
     if (!currentPassword) {
-      setErrorText("Enter current password");
+      setErrorText(t("profile.errors.currentPasswordRequired"));
       return;
     }
     if (next.length < 8) {
-      setErrorText("New password must be at least 8 characters");
+      setErrorText(t("profile.errors.newPasswordMin"));
       return;
     }
     if (next !== confirmPassword) {
-      setErrorText("Passwords do not match");
+      setErrorText(t("profile.errors.passwordMismatch"));
       return;
     }
 
     try {
-      setInfoText("Changing password...");
+      setInfoText(t("profile.info.changingPassword"));
       await http.patch("/me/password", { currentPassword, newPassword: next });
 
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
 
-      setInfoText("Password changed");
+      setInfoText(t("profile.info.passwordChanged"));
     } catch (err) {
       const status = err?.response?.status;
 
-      // wrong current password часто приходить як 401 на бекенді
-      // тут НЕ ламаємо сесію, просто показуємо повідомлення
-      if (status === 401) {
+      if (isWrongCurrentPasswordError(err)) {
         setErrorText(
           t("profile.errors.invalidCurrentPassword") ||
             "Incorrect current password",
@@ -151,8 +166,14 @@ export default function ProfilePage() {
         return;
       }
 
+      if (status === 401) {
+        clearAuth();
+        setRedirectToLogin(true);
+        return;
+      }
+
       setErrorText(
-        getErrorMessage(err, "profile.errors.changePasswordFailed", t),
+        getErrorMessage(err, t("profile.errors.changePasswordFailed"), t),
       );
       setInfoText("");
     }
@@ -224,7 +245,9 @@ export default function ProfilePage() {
 
               <div style={styles.row}>
                 <div style={styles.label}>{t("profile.role")}</div>
-                <div>{profile?.role ? t(`roles.${profile.role}`, profile.role) : "—"}</div>
+                <div>
+                  {profile?.role ? t(`roles.${profile.role}`, profile.role) : "-"}
+                </div>
               </div>
 
               <div style={{ marginTop: 12 }}>
@@ -263,9 +286,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <div style={styles.card}>
-              <h3 style={{ marginTop: 0 }}>
-                {t("profile.changePasswordTitle")}
-              </h3>
+              <h3 style={{ marginTop: 0 }}>{t("profile.changePasswordTitle")}</h3>
 
               <input
                 type="password"

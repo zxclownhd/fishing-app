@@ -56,7 +56,7 @@ export default function LocationDetailsPage() {
       } catch (err) {
         console.error(err);
         if (!cancelled)
-          setError(getErrorMessage(err, "Failed to load location details", t));
+          setError(getErrorMessage(err, t("locationDetails.errors.loadFailed"), t));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -82,8 +82,8 @@ export default function LocationDetailsPage() {
         if (!cancelled) setContactInfo(res.data.contactInfo || null);
       } catch (e) {
         console.error(
-          "Failed to load contacts:",
-          getErrorMessage(e, "locationDetails.errors.loadContactsFailed", t)
+          t("locationDetails.errors.loadContactsFailed"),
+          getErrorMessage(e, t("locationDetails.errors.loadContactsFailed"), t),
         );
         if (!cancelled) setContactInfo(null);
       }
@@ -114,7 +114,9 @@ export default function LocationDetailsPage() {
       await loadAll();
     } catch (err) {
       console.error(err);
-      setFormError(getErrorMessage(err, "locationDetails.errors.submitReviewFailed", t));
+      setFormError(
+        getErrorMessage(err, t("locationDetails.errors.submitReviewFailed"), t),
+      );
     } finally {
       setSubmitting(false);
     }

@@ -58,7 +58,9 @@ export default function OwnerDashboardPage() {
       } catch (err) {
         console.error(err);
         if (!cancelled)
-          setError(getErrorMessage(err, "owner.errors.loadLocationsFailed", t));
+          setError(
+            getErrorMessage(err, t("owner.errors.loadLocationsFailed"), t),
+          );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,7 +79,7 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(page);
     } catch (e) {
-      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.loadLocationsFailed"), t));
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ export default function OwnerDashboardPage() {
       await refresh();
     } catch (e) {
       // keep user on CREATE, show error
-      setError(getErrorMessage(e, "owner.errors.createLocationFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.createLocationFailed"), t));
       throw e; // let CreateLocationForm show it too if it wants
     }
   }
@@ -114,7 +116,7 @@ export default function OwnerDashboardPage() {
       await refresh();
       setEditingId(null);
     } catch (e) {
-      setError(getErrorMessage(e, "owner.errors.updateLocationFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.updateLocationFailed"), t));
       throw e; // let EditLocationForm show it too
     }
   }
@@ -131,7 +133,7 @@ export default function OwnerDashboardPage() {
       await refresh();
     } catch (e) {
       console.error(e);
-      setError(getErrorMessage(e, "owner.errors.updateStatusFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.updateStatusFailed"), t));
     }
   }
 
@@ -145,7 +147,7 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(next);
     } catch (e) {
-      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.loadLocationsFailed"), t));
     } finally {
       setLoading(false);
     }
@@ -161,15 +163,15 @@ export default function OwnerDashboardPage() {
     try {
       await loadMyLocations(prev);
     } catch (e) {
-      setError(getErrorMessage(e, "owner.errors.loadLocationsFailed", t));
+      setError(getErrorMessage(e, t("owner.errors.loadLocationsFailed"), t));
     } finally {
       setLoading(false);
     }
   }
 
-  if (!user) return <div style={{ padding: 16 }}>Please login.</div>;
+  if (!user) return <div style={{ padding: 16 }}>{t("owner.authRequired")}</div>;
   if (user.role !== "OWNER")
-    return <div style={{ padding: 16 }}>Owner only.</div>;
+    return <div style={{ padding: 16 }}>{t("owner.ownerOnly")}</div>;
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>

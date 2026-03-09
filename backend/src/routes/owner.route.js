@@ -9,6 +9,36 @@ const { ErrorCode } = require("../utils/errorCodes");
 // Everything in /owner is OWNER only
 router.use(authenticateToken, requireRole("OWNER"));
 
+const REGION_CODES = new Set([
+  "VINNYTSIA",
+  "VOLYN",
+  "DNIPROPETROVSK",
+  "DONETSK",
+  "ZHYTOMYR",
+  "ZAKARPATTIA",
+  "ZAPORIZHZHIA",
+  "IVANO_FRANKIVSK",
+  "KYIV",
+  "KIROVOHRAD",
+  "LUHANSK",
+  "LVIV",
+  "MYKOLAIV",
+  "ODESA",
+  "POLTAVA",
+  "RIVNE",
+  "SUMY",
+  "TERNOPIL",
+  "KHARKIV",
+  "KHERSON",
+  "KHMELNYTSKYI",
+  "CHERKASY",
+  "CHERNIVTSI",
+  "CHERNIHIV",
+  "CRIMEA",
+]);
+
+const WATER_TYPES = new Set(["LAKE", "RIVER", "POND", "SEA", "OTHER"]);
+
 function normalizePhotoInputs(photos, max = 5) {
   if (!Array.isArray(photos)) return [];
 
@@ -109,15 +139,83 @@ router.patch(
 
     const data = {};
 
-    if (title !== undefined) data.title = String(title);
-    if (description !== undefined) data.description = String(description);
-    if (region !== undefined) data.region = String(region);
-    if (waterType !== undefined) data.waterType = String(waterType);
-    if (lat !== undefined) data.lat = String(lat);
-    if (lng !== undefined) data.lng = String(lng);
+    if (title !== undefined) data.title = String(title).trim();
+    if (description !== undefined) data.description = String(description).trim();
+
+    if (region !== undefined) {
+      const regionCode = String(region).trim().toUpperCase();
+      if (!REGION_CODES.has(regionCode)) {
+        throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid region", {
+          field: "region",
+        });
+      }
+      data.region = regionCode;
+    }
+
+    if (waterType !== undefined) {
+      const waterTypeCode = String(waterType).trim().toUpperCase();
+      if (!WATER_TYPES.has(waterTypeCode)) {
+        throw new AppError(400, ErrorCode.VALIDATION_ERROR, "Invalid waterType", {
+          field: "waterType",
+          allowed: Array.from(WATER_TYPES),
+        });
+      }
+      data.waterType = waterTypeCode;
+    }
+
+    const hasLat = lat !== undefined;
+    const hasLng = lng !== undefined;
+
+    if (hasLat !== hasLng) {
+      throw new AppError(
+        400,
+        ErrorCode.VALIDATION_ERROR,
+        "lat and lng must be provided together",
+        { fields: ["lat", "lng"] },
+      );
+    }
+
+    if (hasLat && hasLng) {
+      if (String(lat).trim() === "" || String(lng).trim() === "") {
+        throw new AppError(400, ErrorCode.VALIDATION_ERROR, "lat and lng are required", {
+          fields: ["lat", "lng"],
+        });
+      }
+
+      const latNum = Number(lat);
+      const lngNum = Number(lng);
+
+      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+        throw new AppError(
+          400,
+          ErrorCode.VALIDATION_ERROR,
+          "lat and lng must be valid numbers",
+          { fields: ["lat", "lng"] },
+        );
+      }
+
+      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+        throw new AppError(400, ErrorCode.VALIDATION_ERROR, "lat/lng out of range", {
+          latRange: [-90, 90],
+          lngRange: [-180, 180],
+        });
+      }
+
+      data.lat = String(latNum);
+      data.lng = String(lngNum);
+    }
 
     if ("contactInfo" in req.body) {
-      data.contactInfo = contactInfo ? String(contactInfo).trim() : null;
+      const contact = contactInfo ? String(contactInfo).trim() : null;
+      if (contact && contact.length > 255) {
+        throw new AppError(
+          400,
+          ErrorCode.VALIDATION_ERROR,
+          "contactInfo is too long (max 255 chars)",
+          { field: "contactInfo", max: 255 },
+        );
+      }
+      data.contactInfo = contact;
     }
 
     const normalizedNewPhotos = Array.isArray(photos)
