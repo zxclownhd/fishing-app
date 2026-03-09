@@ -3,6 +3,7 @@ import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
+import LocationPickerMap from "./LocationPickerMap";
 import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
@@ -314,16 +315,25 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         </option>
       </select>
 
+      <LocationPickerMap
+        lat={editLat}
+        lng={editLng}
+        onSelect={(nextLat, nextLng) => {
+          setEditLat(String(nextLat));
+          setEditLng(String(nextLng));
+        }}
+      />
+
       <div style={{ display: "flex", gap: 10 }}>
         <input
           value={editLat}
-          onChange={(e) => setEditLat(e.target.value)}
+          readOnly
           placeholder={t("locationForm.latPlaceholder")}
           style={{ ...input, flex: 1 }}
         />
         <input
           value={editLng}
-          onChange={(e) => setEditLng(e.target.value)}
+          readOnly
           placeholder={t("locationForm.lngPlaceholder")}
           style={{ ...input, flex: 1 }}
         />
