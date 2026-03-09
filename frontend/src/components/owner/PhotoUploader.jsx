@@ -48,7 +48,7 @@ export default function PhotoUploader({
 
   async function upload(files) {
     if (!cloudName || !uploadPreset) {
-      setErrorText("Cloudinary env is missing");
+      setErrorText(t("photos.errors.envMissing"));
       return;
     }
 
@@ -56,7 +56,7 @@ export default function PhotoUploader({
     const left = Math.max(0, max - current);
 
     if (left === 0) {
-      setErrorText(`Max ${max} photos reached`);
+      setErrorText(t("photos.errors.maxReached").replace("{max}", String(max)));
       return;
     }
 
@@ -74,19 +74,23 @@ export default function PhotoUploader({
 
     if (!picked.length) {
       if (nonImages.length) {
-        setErrorText("Only images are allowed");
+        setErrorText(t("photos.errors.onlyImages"));
         return;
       }
       if (tooBig.length) {
-        setErrorText("Some images are too large (max 10MB)");
+        setErrorText(t("photos.errors.tooLarge"));
         return;
       }
-      setErrorText("Nothing to upload");
+      setErrorText(t("photos.errors.nothingToUpload"));
       return;
     }
 
     if (arr.length > left) {
-      setErrorText(`Only ${left} more photo(s) can be added (max ${max})`);
+      setErrorText(
+        t("photos.errors.limitReached")
+          .replace("{left}", String(left))
+          .replace("{max}", String(max)),
+      );
     } else {
       setErrorText("");
     }
@@ -129,7 +133,7 @@ export default function PhotoUploader({
       setErrorText("");
     } catch (e) {
       console.error(e);
-      setErrorText("Upload failed");
+      setErrorText(t("photos.errors.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -160,7 +164,7 @@ export default function PhotoUploader({
       setErrorText("");
     } catch (e) {
       console.error(e);
-      setErrorText("Failed to remove photo");
+      setErrorText(t("photos.errors.removeFailed"));
     }
   }
 

@@ -76,7 +76,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       const latStr = String(lat).trim();
       const lngStr = String(lng).trim();
       if (!latStr || !lngStr) {
-        setCreateError("Lat and Lng are required");
+        setCreateError(t("locationForm.errors.coordsRequired"));
         return;
       }
 
@@ -84,11 +84,11 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       const lngNum = Number(lngStr);
 
       if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-        setCreateError("Lat and Lng must be valid numbers");
+        setCreateError(t("locationForm.errors.coordsInvalid"));
         return;
       }
       if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-        setCreateError("Lat/Lng out of range");
+        setCreateError(t("locationForm.errors.coordsRange"));
         return;
       }
 
@@ -102,11 +102,11 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         : [];
 
       if (normalizedPhotos.length < 1) {
-        setCreateError("At least 1 photo is required");
+        setCreateError(t("locationForm.errors.minPhotos"));
         return;
       }
       if (normalizedPhotos.length > 5) {
-        setCreateError("Max 5 photos");
+        setCreateError(t("locationForm.errors.maxPhotos"));
         return;
       }
 

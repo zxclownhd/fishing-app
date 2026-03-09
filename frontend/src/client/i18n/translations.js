@@ -135,10 +135,20 @@ export const translations = {
       confirmNewPassword: "Confirm new password",
       changePasswordBtn: "Change password",
       clear: "Clear",
+      info: {
+        saving: "Saving...",
+        saved: "Saved",
+        changingPassword: "Changing password...",
+        passwordChanged: "Password changed",
+      },
       errors: {
         loadFailed: "Failed to load profile",
         changePasswordFailed: "Failed to change password",
         invalidCurrentPassword: "Incorrect current password",
+        displayNameMin: "Display name must be at least 3 characters",
+        currentPasswordRequired: "Enter current password",
+        newPasswordMin: "New password must be at least 8 characters",
+        passwordMismatch: "Passwords do not match",
       },
     },
     owner: {
@@ -160,6 +170,8 @@ export const translations = {
         updateLocationFailed: "Failed to update location",
         updateStatusFailed: "Failed to update status",
       },
+      authRequired: "Please login.",
+      ownerOnly: "Owner only.",
     },
     locationDetails: {
       back: "← Back",
@@ -270,6 +282,14 @@ export const translations = {
       empty: "No photos yet",
       errors: {
         deleteFailed: "Failed to delete photo",
+        envMissing: "Cloudinary env is missing",
+        maxReached: "Max {max} photos reached",
+        onlyImages: "Only images are allowed",
+        tooLarge: "Some images are too large (max 10MB)",
+        nothingToUpload: "Nothing to upload",
+        limitReached: "Only {left} more photo(s) can be added (max {max})",
+        uploadFailed: "Upload failed",
+        removeFailed: "Failed to remove photo",
       },
     },
     ownerList: {
@@ -301,6 +321,13 @@ export const translations = {
         POND: "Pond",
         SEA: "Sea",
         OTHER: "Other",
+      },
+      errors: {
+        coordsRequired: "Lat and Lng are required",
+        coordsInvalid: "Lat and Lng must be valid numbers",
+        coordsRange: "Lat/Lng out of range",
+        minPhotos: "At least 1 photo is required",
+        maxPhotos: "Max 5 photos",
       },
     },
     pages: {},
