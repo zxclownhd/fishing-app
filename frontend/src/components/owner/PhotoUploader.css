@@ -1,0 +1,19 @@
+.photo-uploader {
+  --photo-row-columns: 80px 1fr auto;
+  --photo-row-button-column: auto;
+}
+
+.photo-uploader__photo-row button {
+  grid-column: var(--photo-row-button-column, auto);
+}
+
+@media (max-width: 640px) {
+  .photo-uploader {
+    --photo-row-columns: 80px 1fr;
+    --photo-row-button-column: 1 / -1;
+  }
+
+  .photo-uploader__photo-row button {
+    justify-self: flex-start;
+  }
+}

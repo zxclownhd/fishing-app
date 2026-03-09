@@ -391,6 +391,7 @@ export const translations = {
       favorites: {
         loadFailed: "Failed to load favorites",
         removeFailed: "Failed to remove favorite",
+        toggleFailed: "Failed to update favorites",
       },
     },
   },
@@ -758,6 +759,7 @@ export const translations = {
       favorites: {
         loadFailed: "Не вдалося завантажити обрані",
         removeFailed: "Не вдалося видалити з обраного",
+        toggleFailed: "Не вдалося оновити обране",
       },
     },
   },

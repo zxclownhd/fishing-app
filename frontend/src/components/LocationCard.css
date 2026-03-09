@@ -1,0 +1,26 @@
+.location-card {
+  --location-card-direction: row;
+  --location-card-gap: 12px;
+  --location-card-media-width: 140px;
+  --location-card-media-min-width: 140px;
+  --location-card-meta-white-space: nowrap;
+  --location-card-actions-gap: 8px;
+}
+
+.location-card__actions {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .location-card {
+    --location-card-direction: column;
+    --location-card-gap: 10px;
+    --location-card-media-width: 100%;
+    --location-card-media-min-width: 0;
+    --location-card-meta-white-space: normal;
+  }
+
+  .location-card__actions {
+    justify-content: flex-start;
+  }
+}
