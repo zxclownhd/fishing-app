@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 import { useI18n } from "../client/i18n/I18nContext";
+import "./LocationCard.css";
 
 export default function LocationCard({
   loc,
@@ -46,6 +47,7 @@ export default function LocationCard({
 
   const card = (
     <div
+      className="location-card"
       style={styles.card}
       role={!to && onClick ? "button" : undefined}
       tabIndex={!to && onClick ? 0 : undefined}
@@ -117,7 +119,11 @@ export default function LocationCard({
         {footer ? <div style={styles.footer}>{footer}</div> : null}
 
         {actions ? (
-          <div style={styles.actions} onClick={(e) => e.stopPropagation()}>
+          <div
+            className="location-card__actions"
+            style={styles.actions}
+            onClick={(e) => e.stopPropagation()}
+          >
             {actions}
           </div>
         ) : null}
@@ -150,7 +156,9 @@ function badgeForStatus(status) {
 const styles = {
   card: {
     display: "flex",
-    gap: 12,
+    flexDirection: "var(--location-card-direction, row)",
+    gap: "var(--location-card-gap, 12px)",
+    flexWrap: "wrap",
     padding: 12,
     border: "1px solid #e6e6e6",
     borderRadius: 12,
@@ -158,8 +166,8 @@ const styles = {
     cursor: "pointer",
   },
   media: {
-    width: 140,
-    minWidth: 140,
+    width: "var(--location-card-media-width, 140px)",
+    minWidth: "var(--location-card-media-min-width, 140px)",
     height: 100,
     borderRadius: 10,
     overflow: "hidden",
@@ -199,11 +207,12 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: 6,
+    flexWrap: "wrap",
   },
   metaItem: {
     overflow: "hidden",
     textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
+    whiteSpace: "var(--location-card-meta-white-space, nowrap)",
   },
   dot: { opacity: 0.6 },
   rating: { marginTop: 6, fontSize: 13, opacity: 0.8 },
@@ -227,5 +236,10 @@ const styles = {
   },
   descEmpty: { marginTop: 8, fontSize: 13, opacity: 0.55 },
   footer: { marginTop: 10 },
-  actions: { marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" },
+  actions: {
+    marginTop: 10,
+    display: "flex",
+    gap: "var(--location-card-actions-gap, 8px)",
+    flexWrap: "wrap",
+  },
 };

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useI18n } from "../../client/i18n/I18nContext";
+import "./PhotoUploader.css";
 
 /**
  * Photos format:
@@ -170,6 +171,7 @@ export default function PhotoUploader({
 
   return (
     <div
+      className="photo-uploader"
       style={{
         border: "1px dashed #bbb",
         borderRadius: 12,
@@ -221,9 +223,10 @@ export default function PhotoUploader({
           {(photos || []).map((p, idx) => (
             <div
               key={`${p?.id || p?.publicId || p?.url}-${idx}`}
+              className="photo-uploader__photo-row"
               style={{
                 display: "grid",
-                gridTemplateColumns: "80px 1fr auto",
+                gridTemplateColumns: "var(--photo-row-columns, 80px 1fr auto)",
                 gap: 10,
                 alignItems: "center",
               }}
@@ -264,6 +267,7 @@ export default function PhotoUploader({
                     ? t("photos.removeTitleSaved")
                     : t("photos.removeTitleLocal")
                 }
+                style={{ gridColumn: "var(--photo-row-button-column, auto)" }}
               >
                 {t("photos.remove")}
               </button>

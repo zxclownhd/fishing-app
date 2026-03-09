@@ -19,6 +19,7 @@ export default function LocationDetailsPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [favoriteError, setFavoriteError] = useState("");
 
   const { canUseFavorites, isFavorite, toggleFavorite } = useFavorites();
 
@@ -161,18 +162,36 @@ export default function LocationDetailsPage() {
       </div>
 
       {canUseFavorites ? (
-        <button
-          type="button"
-          onClick={() => toggleFavorite(location.id)}
-          style={{ fontSize: 20, lineHeight: 1 }}
-          title={
-            isFavorite(location.id)
-              ? t("locationDetails.favRemove")
-              : t("locationDetails.favAdd")
-          }
+        <div
+          style={{
+            display: "inline-flex",
+            flexDirection: "column",
+            gap: 4,
+            marginTop: 6,
+          }}
         >
-          {isFavorite(location.id) ? "★" : "☆"}
-        </button>
+          <button
+            type="button"
+            onClick={async () => {
+              setFavoriteError("");
+              const result = await toggleFavorite(location.id);
+              if (!result.ok) {
+                setFavoriteError(t("errors.favorites.toggleFailed"));
+              }
+            }}
+            style={{ fontSize: 20, lineHeight: 1 }}
+            title={
+              isFavorite(location.id)
+                ? t("locationDetails.favRemove")
+                : t("locationDetails.favAdd")
+            }
+          >
+            {isFavorite(location.id) ? "★" : "☆"}
+          </button>
+          {favoriteError ? (
+            <div style={{ color: "crimson", fontSize: 13 }}>{favoriteError}</div>
+          ) : null}
+        </div>
       ) : null}
 
       <div style={{ opacity: 0.75, marginTop: 6 }}>

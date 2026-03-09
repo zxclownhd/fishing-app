@@ -19,6 +19,7 @@ export default function HomePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [favoriteError, setFavoriteError] = useState("");
 
   // UI controls
   const [regionSelected, setRegionSelected] = useState("");
@@ -257,6 +258,11 @@ export default function HomePage() {
 
       {loading ? <div>{t("common.loading")}</div> : null}
       {error ? <div style={{ color: "crimson" }}>{error}</div> : null}
+      {favoriteError ? (
+        <div style={{ color: "crimson", fontSize: 13, marginBottom: 8 }}>
+          {favoriteError}
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -273,22 +279,26 @@ export default function HomePage() {
             variant="public"
             actions={
               canUseFavorites ? (
-                <button
-                  type="button"
-                  title={
-                    isFavorite(loc.id)
-                      ? t("favorites.remove")
-                      : t("favorites.add")
+              <button
+                type="button"
+                title={
+                  isFavorite(loc.id)
+                    ? t("favorites.remove")
+                    : t("favorites.add")
+                }
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setFavoriteError("");
+                  const result = await toggleFavorite(loc.id);
+                  if (!result.ok) {
+                    setFavoriteError(t("errors.favorites.toggleFailed"));
                   }
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleFavorite(loc.id);
-                  }}
-                  style={{ fontSize: 18, lineHeight: 1 }}
-                >
-                  {isFavorite(loc.id) ? "★" : "☆"}
-                </button>
+                }}
+                style={{ fontSize: 18, lineHeight: 1 }}
+              >
+                {isFavorite(loc.id) ? "★" : "☆"}
+              </button>
               ) : null
             }
           />
