@@ -8,6 +8,7 @@ import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
+import LocationPickerMap from "./LocationPickerMap";
 
 export default function CreateLocationForm({ onCreate, onCancel }) {
   const user = getStoredUser();
@@ -200,17 +201,26 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           </option>
         </select>
 
+        <LocationPickerMap
+          lat={lat}
+          lng={lng}
+          onSelect={(nextLat, nextLng) => {
+            setLat(String(nextLat));
+            setLng(String(nextLng));
+          }}
+        />
+
         <div style={{ display: "flex", gap: 10 }}>
           <input
             placeholder={t("locationForm.latPlaceholder")}
             value={lat}
-            onChange={(e) => setLat(e.target.value)}
+            readOnly
             style={{ ...input, flex: 1 }}
           />
           <input
             placeholder={t("locationForm.lngPlaceholder")}
             value={lng}
-            onChange={(e) => setLng(e.target.value)}
+            readOnly
             style={{ ...input, flex: 1 }}
           />
         </div>
