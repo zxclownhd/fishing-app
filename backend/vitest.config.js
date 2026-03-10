@@ -5,5 +5,6 @@ module.exports = defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["./tests/env.setup.js", "./tests/setup.js"],
+    fileParallelism: false,
   },
 });
