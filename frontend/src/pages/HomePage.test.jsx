@@ -88,7 +88,7 @@ describe("HomePage", () => {
       expect(http.get).toHaveBeenCalledWith("/locations", {
         params: {
           page: 1,
-          limit: 10,
+          limit: 6,
           sort: "createdAt",
           order: "desc",
         },
@@ -156,7 +156,7 @@ describe("HomePage", () => {
       expect(http.get).toHaveBeenNthCalledWith(1, "/locations", {
         params: {
           page: 1,
-          limit: 10,
+          limit: 6,
           sort: "createdAt",
           order: "desc",
         },
@@ -171,7 +171,7 @@ describe("HomePage", () => {
       expect(http.get).toHaveBeenNthCalledWith(2, "/locations", {
         params: {
           page: 1,
-          limit: 10,
+          limit: 6,
           sort: "avgRating",
           order: "desc",
         },

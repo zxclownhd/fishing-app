@@ -12,7 +12,7 @@ import { useI18n } from "../client/i18n/I18nContext";
 import { displayFishName } from "../client/i18n/displayName";
 import "./HomePage.css";
 
-const LIMIT = 10;
+const LIMIT = 6;
 
 export default function HomePage() {
   const { t, locale } = useI18n();

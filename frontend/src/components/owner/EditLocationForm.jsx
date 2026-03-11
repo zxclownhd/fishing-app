@@ -8,6 +8,11 @@ import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
 import { useI18n } from "../../client/i18n/I18nContext";
+import {
+  LOCATION_LIMITS,
+  validateLocationTextFields,
+  hasLocationTextFieldErrors,
+} from "./locationFormValidation";
 
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const user = getStoredUser();
@@ -29,6 +34,11 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({
+    title: "",
+    description: "",
+    contactInfo: "",
+  });
 
   // so unmount cleanup won't run after successful save
   const savedRef = useRef(false);
@@ -55,7 +65,17 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     );
 
     setEditError("");
-  }, [loc]);
+    setFieldErrors(
+      validateLocationTextFields(
+        {
+          title: loc.title || "",
+          description: loc.description || "",
+          contactInfo: loc.contactInfo || "",
+        },
+        t,
+      ),
+    );
+  }, [loc, t]);
 
   const isDirty = useMemo(() => {
     const norm = (v) => String(v ?? "").trim();
@@ -170,6 +190,19 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     setEditError("");
 
     try {
+      const nextFieldErrors = validateLocationTextFields(
+        {
+          title: editTitle,
+          description: editDescription,
+          contactInfo: editContactInfo,
+        },
+        t,
+      );
+      setFieldErrors(nextFieldErrors);
+      if (hasLocationTextFieldErrors(nextFieldErrors)) {
+        return;
+      }
+
       const latStr = String(editLat).trim();
       const lngStr = String(editLng).trim();
       if (!latStr || !lngStr) {
@@ -269,26 +302,86 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
       <input
         value={editTitle}
-        onChange={(e) => setEditTitle(e.target.value)}
+        maxLength={LOCATION_LIMITS.title}
+        onChange={(e) => {
+          const next = e.target.value;
+          setEditTitle(next);
+          setFieldErrors(
+            validateLocationTextFields(
+              {
+                title: next,
+                description: editDescription,
+                contactInfo: editContactInfo,
+              },
+              t,
+            ),
+          );
+        }}
         placeholder={t("locationForm.titlePlaceholder")}
         style={input}
       />
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
+        <div style={fieldCounterText}>
+          {editTitle.length}/{LOCATION_LIMITS.title}
+        </div>
+      </div>
 
       <textarea
         value={editDescription}
-        onChange={(e) => setEditDescription(e.target.value)}
+        maxLength={LOCATION_LIMITS.description}
+        onChange={(e) => {
+          const next = e.target.value;
+          setEditDescription(next);
+          setFieldErrors(
+            validateLocationTextFields(
+              {
+                title: editTitle,
+                description: next,
+                contactInfo: editContactInfo,
+              },
+              t,
+            ),
+          );
+        }}
         rows={3}
         placeholder={t("locationForm.descriptionPlaceholder")}
         style={input}
       />
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
+        <div style={fieldCounterText}>
+          {editDescription.length}/{LOCATION_LIMITS.description}
+        </div>
+      </div>
 
       <textarea
         value={editContactInfo}
-        onChange={(e) => setEditContactInfo(e.target.value)}
+        maxLength={LOCATION_LIMITS.contactInfo}
+        onChange={(e) => {
+          const next = e.target.value;
+          setEditContactInfo(next);
+          setFieldErrors(
+            validateLocationTextFields(
+              {
+                title: editTitle,
+                description: editDescription,
+                contactInfo: next,
+              },
+              t,
+            ),
+          );
+        }}
         placeholder={t("locationForm.contactsPlaceholder")}
         rows={2}
         style={input}
       />
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
+        <div style={fieldCounterText}>
+          {editContactInfo.length}/{LOCATION_LIMITS.contactInfo}
+        </div>
+      </div>
 
       <RegionPicker
         value={editRegionSelected}
@@ -374,3 +467,13 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
 const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
 const btn = { padding: "8px 12px", borderRadius: 8, border: "1px solid #ddd" };
+const fieldMetaRow = {
+  marginTop: -6,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+  minHeight: 16,
+};
+const fieldErrorText = { color: "crimson", fontSize: 12, lineHeight: 1.2 };
+const fieldCounterText = { fontSize: 12, opacity: 0.7 };

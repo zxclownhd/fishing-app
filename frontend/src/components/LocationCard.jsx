@@ -1,8 +1,8 @@
-// src/client/components/LocationCard.jsx
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 import { useI18n } from "../client/i18n/I18nContext";
+import { displayFishName } from "../client/i18n/displayName";
 import "./LocationCard.css";
 
 export default function LocationCard({
@@ -13,14 +13,14 @@ export default function LocationCard({
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const photoUrl = loc?.photos?.[0]?.url || null;
 
   const thumbUrl = photoUrl
     ? getCloudinaryVariant(photoUrl, {
-        w: 400,
-        h: 280,
+        w: 640,
+        h: 400,
         crop: "fill",
         gravity: "auto",
       })
@@ -45,10 +45,30 @@ export default function LocationCard({
     ? t(`home.waterTypes.${String(loc.waterType).toUpperCase()}`, loc.waterType)
     : t("card.unknownType");
 
+  const fishNames = useMemo(
+    () => extractFishNames(loc?.fish).map((name) => displayFishName(name, locale)),
+    [loc?.fish, locale],
+  );
+
+  const seasonLabels = useMemo(
+    () =>
+      extractSeasonCodes(loc?.seasons).map((code) =>
+        t(`seasons.${String(code).toUpperCase()}`, code),
+      ),
+    [loc?.seasons, t],
+  );
+
+  const visibleFish = fishNames.slice(0, 3);
+  const hiddenFishCount = Math.max(0, fishNames.length - visibleFish.length);
+  const visibleSeasons = seasonLabels.slice(0, 2);
+  const hiddenSeasonsCount = Math.max(0, seasonLabels.length - visibleSeasons.length);
+  const isInteractive = Boolean(to || onClick);
+
   const card = (
     <div
-      className="location-card"
-      style={styles.card}
+      className={`location-card ${
+        variant === "public" ? "location-card--public" : "location-card--admin"
+      } ${isInteractive ? "location-card--interactive" : ""}`}
       role={!to && onClick ? "button" : undefined}
       tabIndex={!to && onClick ? 0 : undefined}
       onClick={!to ? onClick : undefined}
@@ -60,68 +80,96 @@ export default function LocationCard({
           : undefined
       }
     >
-      <div style={styles.media}>
+      <div className="location-card__media">
         {photoUrl ? (
           <img
             alt={loc?.title || t("card.photoAlt")}
             src={thumbUrl}
             loading="lazy"
             decoding="async"
-            style={styles.img}
+            className="location-card__img"
           />
         ) : (
-          <div style={styles.noImg}>{t("card.noPhoto")}</div>
+          <div className="location-card__no-img">{t("card.noPhoto")}</div>
         )}
       </div>
 
-      <div style={styles.body}>
-        <div style={styles.topRow}>
-          <div style={styles.title}>{loc?.title || t("card.noTitle")}</div>
+      <div className="location-card__body">
+        {variant === "public" ? (
+          <div className="location-card__utility-row">
+            <div className="location-card__rating" title={ratingText}>
+              {ratingText}
+            </div>
+
+            {actions ? (
+              <div
+                className="location-card__utility-actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {actions}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="location-card__top-row">
+          <div className="location-card__title">{loc?.title || t("card.noTitle")}</div>
 
           {variant === "admin" && status ? (
-            <span style={{ ...styles.badge, ...badgeForStatus(status) }}>
+            <span className="location-card__badge" style={badgeForStatus(status)}>
               {t(`card.statuses.${String(status).toUpperCase()}`, status)}
             </span>
           ) : null}
         </div>
 
-        <div style={styles.meta}>
-          <span style={styles.metaItem}>{regionLabel}</span>
-          <span style={styles.dot}>•</span>
-          <span style={styles.metaItem}>{waterTypeLabel}</span>
+        <div className="location-card__meta">
+          <span className="location-card__meta-item">{regionLabel}</span>
+          <span className="location-card__dot">{"\u2022"}</span>
+          <span className="location-card__meta-item">{waterTypeLabel}</span>
         </div>
 
         {variant === "admin" ? (
-          <div style={styles.adminMeta}>
+          <div className="location-card__admin-meta">
             {owner ? (
-              <div style={styles.adminLine}>
-                {t("card.ownerLabel")} {owner.displayName || "—"}
+              <div className="location-card__admin-line">
+                {t("card.ownerLabel")} {owner.displayName || "\u2014"}
                 {owner.email ? ` (${owner.email})` : ""}
               </div>
             ) : null}
             {loc?.createdAt ? (
-              <div style={styles.adminLine}>
-                {t("card.createdLabel")}{" "}
-                {new Date(loc.createdAt).toLocaleString()}
+              <div className="location-card__admin-line">
+                {t("card.createdLabel")} {new Date(loc.createdAt).toLocaleString()}
               </div>
             ) : null}
           </div>
         ) : (
-          <div style={styles.rating}>{ratingText}</div>
+          <>
+            <div className="location-card__info-block">
+              <CompactRow
+                label={t("home.filterLabels.fish", "Fish")}
+                items={visibleFish}
+                hiddenCount={hiddenFishCount}
+              />
+              <CompactRow
+                label={t("home.filterLabels.season", "Season")}
+                items={visibleSeasons}
+                hiddenCount={hiddenSeasonsCount}
+              />
+            </div>
+          </>
         )}
 
         {loc?.description ? (
-          <div style={styles.desc}>{loc.description}</div>
+          <div className="location-card__desc">{loc.description}</div>
         ) : (
-          <div style={styles.descEmpty}>{t("card.noDescription")}</div>
+          <div className="location-card__desc-empty">{t("card.noDescription")}</div>
         )}
 
-        {footer ? <div style={styles.footer}>{footer}</div> : null}
+        {footer ? <div className="location-card__footer">{footer}</div> : null}
 
-        {actions ? (
+        {actions && variant !== "public" ? (
           <div
             className="location-card__actions"
-            style={styles.actions}
             onClick={(e) => e.stopPropagation()}
           >
             {actions}
@@ -133,7 +181,7 @@ export default function LocationCard({
 
   if (to) {
     return (
-      <Link to={to} style={{ textDecoration: "none", color: "inherit" }}>
+      <Link to={to} className="location-card__link">
         {card}
       </Link>
     );
@@ -145,101 +193,58 @@ export default function LocationCard({
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
   if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED")
-    return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED")
-    return { background: "#FFE1E1", borderColor: "#F09A9A" };
+  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
+  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
   if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
   return { background: "#EEEEEE", borderColor: "#CFCFCF" };
 }
 
-const styles = {
-  card: {
-    display: "flex",
-    flexDirection: "var(--location-card-direction, row)",
-    gap: "var(--location-card-gap, 12px)",
-    flexWrap: "wrap",
-    padding: 12,
-    border: "1px solid #e6e6e6",
-    borderRadius: 12,
-    background: "#fff",
-    cursor: "pointer",
-  },
-  media: {
-    width: "var(--location-card-media-width, 140px)",
-    minWidth: "var(--location-card-media-min-width, 140px)",
-    height: 100,
-    borderRadius: 10,
-    overflow: "hidden",
-    border: "1px solid #eee",
-    background: "#fafafa",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  img: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
-  noImg: { fontSize: 12, opacity: 0.6 },
-  body: { flex: 1, minWidth: 0 },
-  topRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 700,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  badge: {
-    fontSize: 12,
-    padding: "2px 8px",
-    borderRadius: 999,
-    border: "1px solid #ddd",
-    whiteSpace: "nowrap",
-  },
-  meta: {
-    marginTop: 4,
-    fontSize: 13,
-    opacity: 0.8,
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-    flexWrap: "wrap",
-  },
-  metaItem: {
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "var(--location-card-meta-white-space, nowrap)",
-  },
-  dot: { opacity: 0.6 },
-  rating: { marginTop: 6, fontSize: 13, opacity: 0.8 },
-  adminMeta: {
-    marginTop: 6,
-    fontSize: 12,
-    opacity: 0.8,
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-  },
-  adminLine: { whiteSpace: "nowrap" },
-  desc: {
-    marginTop: 8,
-    fontSize: 13,
-    opacity: 0.9,
-    display: "-webkit-box",
-    WebkitLineClamp: 2,
-    WebkitBoxOrient: "vertical",
-    overflow: "hidden",
-  },
-  descEmpty: { marginTop: 8, fontSize: 13, opacity: 0.55 },
-  footer: { marginTop: 10 },
-  actions: {
-    marginTop: 10,
-    display: "flex",
-    gap: "var(--location-card-actions-gap, 8px)",
-    flexWrap: "wrap",
-  },
-};
+function CompactRow({ label, items, hiddenCount }) {
+  return (
+    <div className="location-card__compact-row">
+      <div className="location-card__compact-label">{label}</div>
+      <div className="location-card__compact-items">
+        {items.length ? (
+          <>
+            {items.map((item) => (
+              <span key={item} className="location-card__compact-chip">
+                {item}
+              </span>
+            ))}
+            {hiddenCount > 0 ? (
+              <span className="location-card__compact-chip location-card__compact-chip--more">
+                +{hiddenCount}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <span className="location-card__compact-empty">{"\u2014"}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function extractFishNames(fish) {
+  if (!Array.isArray(fish)) return [];
+  const names = fish
+    .map((x) => {
+      if (typeof x === "string") return x;
+      return x?.fish?.name || x?.name || "";
+    })
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+  return [...new Set(names)];
+}
+
+function extractSeasonCodes(seasons) {
+  if (!Array.isArray(seasons)) return [];
+  const codes = seasons
+    .map((x) => {
+      if (typeof x === "string") return x;
+      return x?.season?.code || x?.code || x?.season?.name || x?.name || "";
+    })
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+  return [...new Set(codes)];
+}
