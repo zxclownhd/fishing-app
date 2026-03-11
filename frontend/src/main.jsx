@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import I18nProvider from "./client/i18n/I18nProvider";
 import "leaflet/dist/leaflet.css";
+import "./ui.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
