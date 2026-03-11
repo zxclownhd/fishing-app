@@ -152,7 +152,7 @@ export const translations = {
       clear: "Clear",
       info: {
         saving: "Saving...",
-        saved: "Saved",
+        nameChanged: "Name changed",
         changingPassword: "Changing password...",
         passwordChanged: "Password changed",
       },
@@ -569,6 +569,14 @@ export const translations = {
       confirmNewPassword: "Підтвердіть новий пароль",
       changePasswordBtn: "Змінити пароль",
       clear: "Очистити",
+      info: {
+        saving: "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043d\u044f...",
+        nameChanged: "\u0406\u043c\u2019\u044f \u0437\u043c\u0456\u043d\u0435\u043d\u043e",
+        changingPassword:
+          "\u0417\u043c\u0456\u043d\u0430 \u043f\u0430\u0440\u043e\u043b\u044f...",
+        passwordChanged:
+          "\u041f\u0430\u0440\u043e\u043b\u044c \u0437\u043c\u0456\u043d\u0435\u043d\u043e",
+      },
       errors: {
         loadFailed: "Не вдалося завантажити профіль",
         changePasswordFailed: "Не вдалося змінити пароль",
