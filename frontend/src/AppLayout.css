@@ -36,6 +36,10 @@
   flex: 0 0 auto;
 }
 
+.app-nav__actions a {
+  text-decoration: none;
+}
+
 .app-nav__link {
   text-decoration: none;
   color: #334155;
@@ -119,6 +123,35 @@
 .app-nav__logout:hover {
   background-color: #f8fafc;
   color: #1f2937;
+}
+
+.app-nav__auth-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.app-nav__auth-link:hover {
+  background: #eef2f7;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.app-nav__auth-link--active {
+  background: #ffffff;
+  border-color: #94a3b8;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .app-content {

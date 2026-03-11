@@ -3,20 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { login } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
-
-const inputBase = {
-  padding: 10,
-  borderRadius: 8,
-  border: "1px solid #ddd",
-};
-
-function inputStyle(hasError) {
-  return hasError ? { ...inputBase, borderColor: "crimson" } : inputBase;
-}
+import "./RegisterPage.css";
 
 function FieldError({ msg }) {
   if (!msg) return null;
-  return <div style={{ color: "crimson", fontSize: 13 }}>{msg}</div>;
+  return <div className="error-text register-page__field-error">{msg}</div>;
 }
 
 export default function LoginPage() {
@@ -66,49 +57,55 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ padding: 16, maxWidth: 420 }}>
-      <h1>{t("auth.loginTitle")}</h1>
+    <div className="page register-page">
+      <div className="container register-page__container">
+        <section className="register-page__brand">
+          <h1 className="register-page__brand-title">fishing-app</h1>
+          <p className="register-page__brand-subtitle">{t("auth.registerBrandSubtitle")}</p>
+        </section>
 
-      <form onSubmit={onSubmit} style={{ display: "grid", gap: 10, marginTop: 12 }}>
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.emailPlaceholder")}
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors((p) => ({ ...p, email: "" }));
-            }}
-            style={inputStyle(!!errors.email)}
-          />
-          <FieldError msg={errors.email} />
-        </div>
+        <section className="card register-page__card">
+          <h2 className="section-title register-page__form-title">{t("auth.loginTitle")}</h2>
 
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.passwordPlaceholder")}
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors((p) => ({ ...p, password: "" }));
-            }}
-            style={inputStyle(!!errors.password)}
-          />
-          <FieldError msg={errors.password} />
-        </div>
+          <form onSubmit={onSubmit} className="register-page__form">
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.emailPlaceholder")}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((p) => ({ ...p, email: "" }));
+                }}
+                className={`input${errors.email ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.email} />
+            </div>
 
-        <button
-          disabled={loading}
-          style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
-        >
-          {loading ? t("common.loadingShort") : t("auth.loginBtn")}
-        </button>
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.passwordPlaceholder")}
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((p) => ({ ...p, password: "" }));
+                }}
+                className={`input${errors.password ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.password} />
+            </div>
 
-        {errors.form ? <div style={{ color: "crimson" }}>{errors.form}</div> : null}
-      </form>
+            <button disabled={loading} className="btn btn-primary register-page__submit">
+              {loading ? t("common.loadingShort") : t("auth.loginBtn")}
+            </button>
 
-      <div style={{ marginTop: 12 }}>
-        {t("auth.noAccount")} <Link to="/register">{t("nav.register")}</Link>
+            {errors.form ? <div className="error-text">{errors.form}</div> : null}
+          </form>
+
+          <div className="register-page__footer-text">
+            {t("auth.noAccount")} <Link to="/register">{t("nav.register")}</Link>
+          </div>
+        </section>
       </div>
     </div>
   );

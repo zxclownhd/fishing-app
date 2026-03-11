@@ -135,8 +135,22 @@ export default function App() {
             </>
           ) : (
             <>
-              <Link to="/login">{t("nav.login")}</Link>
-              <Link to="/register">{t("nav.register")}</Link>
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `app-nav__auth-link${isActive ? " app-nav__auth-link--active" : ""}`
+                }
+              >
+                {t("nav.login")}
+              </NavLink>
+              <NavLink
+                to="/register"
+                className={({ isActive }) =>
+                  `app-nav__auth-link${isActive ? " app-nav__auth-link--active" : ""}`
+                }
+              >
+                {t("nav.register")}
+              </NavLink>
             </>
           )}
         </div>
