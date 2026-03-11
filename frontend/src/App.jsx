@@ -1,6 +1,7 @@
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useI18n } from "./client/i18n/I18nContext";
+import "./AppLayout.css";
 
 import HomePage from "./pages/HomePage";
 import LocationDetailsPage from "./pages/LocationDetailsPage";
@@ -40,7 +41,7 @@ export default function App() {
   }
 
   return (
-    <div>
+    <div className="app-layout">
       <nav
         style={{
           padding: 12,
@@ -110,16 +111,20 @@ export default function App() {
         </div>
       </nav>
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/locations/:id" element={<LocationDetailsPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/owner" element={<OwnerDashboardPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
-      </Routes>
+      <main className="app-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/locations/:id" element={<LocationDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/owner" element={<OwnerDashboardPage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+        </Routes>
+      </main>
+
+      <footer className="app-footer">{t("footer.rights")}</footer>
     </div>
   );
 }

@@ -44,6 +44,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("USER");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsError, setTermsError] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({
@@ -80,9 +83,16 @@ export default function RegisterPage() {
     else if (password !== confirmPassword)
       next.confirmPassword = t("auth.errors.passwordMismatch");
 
+    const nextTermsError = acceptedTerms ? "" : t("auth.terms.validationError");
+
     setErrors(next);
+    setTermsError(nextTermsError);
     return (
-      !next.email && !next.displayName && !next.password && !next.confirmPassword
+      !next.email &&
+      !next.displayName &&
+      !next.password &&
+      !next.confirmPassword &&
+      !nextTermsError
     );
   }
 
@@ -113,6 +123,15 @@ export default function RegisterPage() {
       setLoading(false);
     }
   }
+
+  const termsLabel = t("auth.terms.checkboxLabel");
+  const termsLinkText = t("auth.terms.linkText");
+  const termsTitle = t("auth.terms.title");
+  const termsParagraphsValue = t("auth.terms.paragraphs", []);
+  const termsParagraphs = Array.isArray(termsParagraphsValue) ? termsParagraphsValue : [];
+  const [termsPrefix, termsSuffix = ""] = termsLabel.includes(termsLinkText)
+    ? termsLabel.split(termsLinkText)
+    : [termsLabel, ""];
 
   return (
     <div style={{ padding: 16, maxWidth: 420 }}>
@@ -186,8 +205,98 @@ export default function RegisterPage() {
           <option value="OWNER">{t("roles.OWNER", "OWNER")}</option>
         </select>
 
+        <div className="terms-consent" style={{ display: "grid", gap: 6 }}>
+          <label className="terms-consent-label" style={{ display: "flex", gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => {
+                const nextAccepted = e.target.checked;
+                setAcceptedTerms(nextAccepted);
+                if (nextAccepted && termsError) setTermsError("");
+              }}
+            />
+            <span className="terms-consent-text">
+              {termsPrefix}
+              <button
+                type="button"
+                className="terms-link"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setTermsOpen((prev) => !prev);
+                }}
+                style={{
+                  border: "none",
+                  padding: 0,
+                  background: "none",
+                  color: "inherit",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  font: "inherit",
+                }}
+              >
+                {termsLinkText}
+              </button>
+              {termsSuffix}
+            </span>
+          </label>
+
+          <FieldError msg={termsError} />
+
+          {termsOpen ? (
+            <div
+              className="terms-modal-overlay"
+              onClick={() => setTermsOpen(false)}
+              role="presentation"
+              style={{
+                position: "fixed",
+                inset: 0,
+                backgroundColor: "rgba(0, 0, 0, 0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 16,
+              }}
+            >
+              <div
+                className="terms-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-label={termsTitle}
+                onClick={(event) => event.stopPropagation()}
+                style={{
+                  width: "100%",
+                  maxWidth: 500,
+                  background: "#fff",
+                  borderRadius: 8,
+                  padding: 16,
+                  border: "1px solid #ddd",
+                }}
+              >
+                <div className="terms-modal-title" style={{ fontWeight: 600 }}>
+                  {termsTitle}
+                </div>
+                {termsParagraphs.map((paragraph, index) => (
+                  <p key={`terms-paragraph-${index}`} className="terms-modal-content">
+                    {paragraph}
+                  </p>
+                ))}
+                <button
+                  type="button"
+                  className="terms-modal-close"
+                  onClick={() => setTermsOpen(false)}
+                  style={inputBase}
+                >
+                  {t("auth.terms.close")}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <button
-          disabled={loading}
+          disabled={loading || !acceptedTerms}
           style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
         >
           {loading ? t("common.loadingShort") : t("auth.createAccount")}
