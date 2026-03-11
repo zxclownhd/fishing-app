@@ -97,6 +97,8 @@ export const translations = {
 
       noAccount: "No account?",
       registerTitle: "Register",
+      registerBrandSubtitle:
+        "Plan better fishing trips with trusted spots and practical details.",
 
       displayNamePlaceholder: "Display name",
 
@@ -513,6 +515,8 @@ export const translations = {
 
       noAccount: "Немає акаунта?",
       registerTitle: "Реєстрація",
+      registerBrandSubtitle:
+        "Плануйте риболовлю краще з перевіреними місцями та практичною інформацією.",
       displayNamePlaceholder: "Ім’я для відображення",
       confirmPasswordPlaceholder: "Підтвердіть пароль",
       createAccount: "Створити акаунт",
