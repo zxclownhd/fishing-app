@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { register } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
+import "./RegisterPage.css";
 
 function isValidEmail(emailValue) {
   const e = String(emailValue || "").trim();
@@ -20,19 +21,9 @@ function isValidDisplayName(displayNameValue) {
   return regexForDisplayName.test(displayNameValue);
 }
 
-const inputBase = {
-  padding: 10,
-  borderRadius: 8,
-  border: "1px solid #ddd",
-};
-
-function inputStyle(hasError) {
-  return hasError ? { ...inputBase, borderColor: "crimson" } : inputBase;
-}
-
 function FieldError({ msg }) {
   if (!msg) return null;
-  return <div style={{ color: "crimson", fontSize: 13 }}>{msg}</div>;
+  return <div className="error-text register-page__field-error">{msg}</div>;
 }
 
 export default function RegisterPage() {
@@ -44,6 +35,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("USER");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsError, setTermsError] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({
@@ -80,9 +74,16 @@ export default function RegisterPage() {
     else if (password !== confirmPassword)
       next.confirmPassword = t("auth.errors.passwordMismatch");
 
+    const nextTermsError = acceptedTerms ? "" : t("auth.terms.validationError");
+
     setErrors(next);
+    setTermsError(nextTermsError);
     return (
-      !next.email && !next.displayName && !next.password && !next.confirmPassword
+      !next.email &&
+      !next.displayName &&
+      !next.password &&
+      !next.confirmPassword &&
+      !nextTermsError
     );
   }
 
@@ -114,90 +115,164 @@ export default function RegisterPage() {
     }
   }
 
+  const termsLabel = t("auth.terms.checkboxLabel");
+  const termsLinkText = t("auth.terms.linkText");
+  const termsTitle = t("auth.terms.title");
+  const termsParagraphsValue = t("auth.terms.paragraphs", []);
+  const termsParagraphs = Array.isArray(termsParagraphsValue) ? termsParagraphsValue : [];
+  const [termsPrefix, termsSuffix = ""] = termsLabel.includes(termsLinkText)
+    ? termsLabel.split(termsLinkText)
+    : [termsLabel, ""];
+
   return (
-    <div style={{ padding: 16, maxWidth: 420 }}>
-      <h1>{t("auth.registerTitle")}</h1>
+    <div className="page register-page">
+      <div className="container register-page__container">
+        <section className="register-page__brand">
+          <h1 className="register-page__brand-title">fishing-app</h1>
+          <p className="register-page__brand-subtitle">{t("auth.registerBrandSubtitle")}</p>
+        </section>
 
-      <form
-        onSubmit={onSubmit}
-        style={{ display: "grid", gap: 10, marginTop: 12 }}
-      >
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.emailPlaceholder")}
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors((p) => ({ ...p, email: "" }));
-            }}
-            style={inputStyle(!!errors.email)}
-          />
-          <FieldError msg={errors.email} />
-        </div>
+        <section className="card register-page__card">
+          <h2 className="section-title register-page__form-title">{t("auth.registerTitle")}</h2>
 
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.displayNamePlaceholder")}
-            value={displayName}
-            onChange={(e) => {
-              setDisplayName(e.target.value);
-              if (errors.displayName) setErrors((p) => ({ ...p, displayName: "" }));
-            }}
-            style={inputStyle(!!errors.displayName)}
-          />
-          <FieldError msg={errors.displayName} />
-        </div>
+          <form onSubmit={onSubmit} className="register-page__form">
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.emailPlaceholder")}
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((p) => ({ ...p, email: "" }));
+                }}
+                className={`input${errors.email ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.email} />
+            </div>
 
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.passwordPlaceholder")}
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors((p) => ({ ...p, password: "" }));
-            }}
-            style={inputStyle(!!errors.password)}
-          />
-          <FieldError msg={errors.password} />
-        </div>
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.displayNamePlaceholder")}
+                value={displayName}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  if (errors.displayName) setErrors((p) => ({ ...p, displayName: "" }));
+                }}
+                className={`input${errors.displayName ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.displayName} />
+            </div>
 
-        <div style={{ display: "grid", gap: 6 }}>
-          <input
-            placeholder={t("auth.confirmPasswordPlaceholder")}
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              if (errors.confirmPassword)
-                setErrors((p) => ({ ...p, confirmPassword: "" }));
-            }}
-            style={inputStyle(!!errors.confirmPassword)}
-          />
-          <FieldError msg={errors.confirmPassword} />
-        </div>
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.passwordPlaceholder")}
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((p) => ({ ...p, password: "" }));
+                }}
+                className={`input${errors.password ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.password} />
+            </div>
 
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          style={inputBase}
-        >
-          <option value="USER">{t("roles.USER", "USER")}</option>
-          <option value="OWNER">{t("roles.OWNER", "OWNER")}</option>
-        </select>
+            <div className="register-page__field">
+              <input
+                placeholder={t("auth.confirmPasswordPlaceholder")}
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword)
+                    setErrors((p) => ({ ...p, confirmPassword: "" }));
+                }}
+                className={`input${errors.confirmPassword ? " register-page__input--error" : ""}`}
+              />
+              <FieldError msg={errors.confirmPassword} />
+            </div>
 
-        <button
-          disabled={loading}
-          style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}
-        >
-          {loading ? t("common.loadingShort") : t("auth.createAccount")}
-        </button>
+            <select value={role} onChange={(e) => setRole(e.target.value)} className="select">
+              <option value="USER">{t("roles.USER", "USER")}</option>
+              <option value="OWNER">{t("roles.OWNER", "OWNER")}</option>
+            </select>
 
-        {errors.form ? <div style={{ color: "crimson" }}>{errors.form}</div> : null}
-      </form>
+            <div className="terms-consent register-page__terms">
+              <label className="terms-consent-label register-page__terms-label">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    const nextAccepted = e.target.checked;
+                    setAcceptedTerms(nextAccepted);
+                    if (nextAccepted && termsError) setTermsError("");
+                  }}
+                />
+                <span className="terms-consent-text">
+                  {termsPrefix}
+                  <button
+                    type="button"
+                    className="terms-link register-page__terms-link"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setTermsOpen((prev) => !prev);
+                    }}
+                  >
+                    {termsLinkText}
+                  </button>
+                  {termsSuffix}
+                </span>
+              </label>
 
-      <div style={{ marginTop: 12 }}>
-        {t("auth.haveAccount")} <Link to="/login">{t("nav.login")}</Link>
+              <FieldError msg={termsError} />
+
+              {termsOpen ? (
+                <div
+                  className="terms-modal-overlay register-page__terms-modal-overlay"
+                  onClick={() => setTermsOpen(false)}
+                  role="presentation"
+                >
+                  <div
+                    className="terms-modal register-page__terms-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={termsTitle}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <div className="terms-modal-title register-page__terms-modal-title">
+                      {termsTitle}
+                    </div>
+                    {termsParagraphs.map((paragraph, index) => (
+                      <p key={`terms-paragraph-${index}`} className="terms-modal-content">
+                        {paragraph}
+                      </p>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn btn-secondary terms-modal-close"
+                      onClick={() => setTermsOpen(false)}
+                    >
+                      {t("auth.terms.close")}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              disabled={loading || !acceptedTerms}
+              className="btn btn-primary register-page__submit"
+            >
+              {loading ? t("common.loadingShort") : t("auth.createAccount")}
+            </button>
+
+            {errors.form ? <div className="error-text">{errors.form}</div> : null}
+          </form>
+
+          <div className="register-page__footer-text">
+            {t("auth.haveAccount")} <Link to="/login">{t("nav.login")}</Link>
+          </div>
+        </section>
       </div>
     </div>
   );

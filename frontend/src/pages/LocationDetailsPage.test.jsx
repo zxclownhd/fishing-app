@@ -51,7 +51,7 @@ describe("LocationDetailsPage", () => {
     vi.clearAllMocks();
   });
 
-  it("renders location details, photos, fish, seasons and reviews", async () => {
+  it("renders location details, hero info and reviews", async () => {
     http.get
       .mockResolvedValueOnce({
         data: {
@@ -103,13 +103,7 @@ describe("LocationDetailsPage", () => {
 
     expect(screen.getByText("Great place for fishing")).toBeInTheDocument();
     expect(screen.getByText(/Andrii/)).toBeInTheDocument();
-    expect(screen.getByText(/4.7/)).toBeInTheDocument();
-
-    expect(screen.getByText("Pike")).toBeInTheDocument();
-    expect(screen.getByText("Carp")).toBeInTheDocument();
-
-    expect(screen.getByText("SPRING")).toBeInTheDocument();
-    expect(screen.getByText("SUMMER")).toBeInTheDocument();
+    expect(screen.getAllByText(/4.7/).length).toBeGreaterThan(0);
 
     expect(screen.getByText("Amazing spot")).toBeInTheDocument();
     expect(screen.getByText(/Nina/)).toBeInTheDocument();

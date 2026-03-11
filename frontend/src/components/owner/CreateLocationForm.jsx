@@ -9,6 +9,11 @@ import FishPicker from "../pickers/FishPicker";
 import SeasonPicker from "../pickers/SeasonPicker";
 import PhotoUploader from "./PhotoUploader";
 import LocationPickerMap from "./LocationPickerMap";
+import {
+  LOCATION_LIMITS,
+  validateLocationTextFields,
+  hasLocationTextFieldErrors,
+} from "./locationFormValidation";
 
 export default function CreateLocationForm({ onCreate, onCancel }) {
   const user = getStoredUser();
@@ -32,6 +37,11 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({
+    title: "",
+    description: "",
+    contactInfo: "",
+  });
 
   const createdRef = useRef(false);
 
@@ -73,6 +83,15 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     setCreateError("");
 
     try {
+      const nextFieldErrors = validateLocationTextFields(
+        { title, description, contactInfo },
+        t,
+      );
+      setFieldErrors(nextFieldErrors);
+      if (hasLocationTextFieldErrors(nextFieldErrors)) {
+        return;
+      }
+
       const latStr = String(lat).trim();
       const lngStr = String(lng).trim();
       if (!latStr || !lngStr) {
@@ -159,25 +178,64 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         <input
           placeholder={t("locationForm.titlePlaceholder")}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          maxLength={LOCATION_LIMITS.title}
+          onChange={(e) => {
+            const next = e.target.value;
+            setTitle(next);
+            setFieldErrors(
+              validateLocationTextFields({ title: next, description, contactInfo }, t),
+            );
+          }}
           style={input}
         />
+        <div style={fieldMetaRow}>
+          <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
+          <div style={fieldCounterText}>
+            {title.length}/{LOCATION_LIMITS.title}
+          </div>
+        </div>
 
         <textarea
           placeholder={t("locationForm.descriptionPlaceholder")}
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          maxLength={LOCATION_LIMITS.description}
+          onChange={(e) => {
+            const next = e.target.value;
+            setDescription(next);
+            setFieldErrors(
+              validateLocationTextFields({ title, description: next, contactInfo }, t),
+            );
+          }}
           rows={3}
           style={input}
         />
+        <div style={fieldMetaRow}>
+          <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
+          <div style={fieldCounterText}>
+            {description.length}/{LOCATION_LIMITS.description}
+          </div>
+        </div>
 
         <textarea
           placeholder={t("locationForm.contactsPlaceholderFull")}
           value={contactInfo}
-          onChange={(e) => setContactInfo(e.target.value)}
+          maxLength={LOCATION_LIMITS.contactInfo}
+          onChange={(e) => {
+            const next = e.target.value;
+            setContactInfo(next);
+            setFieldErrors(
+              validateLocationTextFields({ title, description, contactInfo: next }, t),
+            );
+          }}
           rows={2}
           style={input}
         />
+        <div style={fieldMetaRow}>
+          <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
+          <div style={fieldCounterText}>
+            {contactInfo.length}/{LOCATION_LIMITS.contactInfo}
+          </div>
+        </div>
 
         <RegionPicker value={regionSelected} onChange={setRegionSelected} />
 
@@ -270,3 +328,13 @@ const box = {
 };
 const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
 const btn = { padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" };
+const fieldMetaRow = {
+  marginTop: -6,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 8,
+  minHeight: 16,
+};
+const fieldErrorText = { color: "crimson", fontSize: 12, lineHeight: 1.2 };
+const fieldCounterText = { fontSize: 12, opacity: 0.7 };

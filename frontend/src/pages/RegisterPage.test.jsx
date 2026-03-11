@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RegisterPage from "./RegisterPage";
 import { register } from "../auth/auth";
@@ -38,7 +38,8 @@ describe("RegisterPage", () => {
     expect(screen.getByPlaceholderText("auth.displayNamePlaceholder")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("auth.passwordPlaceholder")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("auth.confirmPasswordPlaceholder")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "auth.createAccount" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "auth.createAccount" })).toBeDisabled();
   });
 
   it("submits valid data and navigates to home", async () => {
@@ -63,6 +64,7 @@ describe("RegisterPage", () => {
       screen.getByPlaceholderText("auth.confirmPasswordPlaceholder"),
       "secret123"
     );
+    await user.click(screen.getByRole("checkbox"));
     await user.selectOptions(screen.getByRole("combobox"), "OWNER");
     await user.click(screen.getByRole("button", { name: "auth.createAccount" }));
 
@@ -99,6 +101,7 @@ describe("RegisterPage", () => {
       screen.getByPlaceholderText("auth.confirmPasswordPlaceholder"),
       "456"
     );
+    await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "auth.createAccount" }));
 
     expect(screen.getByText("auth.errors.invalidEmail")).toBeInTheDocument();
@@ -132,10 +135,40 @@ describe("RegisterPage", () => {
       screen.getByPlaceholderText("auth.confirmPasswordPlaceholder"),
       "secret123"
     );
+    await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "auth.createAccount" }));
 
     await waitFor(() => {
       expect(screen.getByText("Registration failed")).toBeInTheDocument();
     });
+  });
+
+  it("shows terms validation error if submit is triggered without acceptance", async () => {
+    const user = userEvent.setup();
+
+    render(<RegisterPage />);
+
+    await user.type(
+      screen.getByPlaceholderText("auth.emailPlaceholder"),
+      "test@example.com"
+    );
+    await user.type(
+      screen.getByPlaceholderText("auth.displayNamePlaceholder"),
+      "test_user"
+    );
+    await user.type(
+      screen.getByPlaceholderText("auth.passwordPlaceholder"),
+      "secret123"
+    );
+    await user.type(
+      screen.getByPlaceholderText("auth.confirmPasswordPlaceholder"),
+      "secret123"
+    );
+
+    const form = screen.getByRole("button", { name: "auth.createAccount" }).closest("form");
+    fireEvent.submit(form);
+
+    expect(screen.getByText("auth.terms.validationError")).toBeInTheDocument();
+    expect(register).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useI18n } from "./client/i18n/I18nContext";
+import "./AppLayout.css";
 
 import HomePage from "./pages/HomePage";
 import LocationDetailsPage from "./pages/LocationDetailsPage";
@@ -40,86 +41,135 @@ export default function App() {
   }
 
   return (
-    <div>
-      <nav
-        style={{
-          padding: 12,
-          borderBottom: "1px solid #eee",
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-        }}
-      >
-        <Link to="/" style={{ textDecoration: "none" }}>
-          {t("nav.home")}
-        </Link>
-
-        {user && <Link to="/profile">{t("nav.profile")}</Link>}
-        {user?.role === "OWNER" && <Link to="/owner">{t("nav.owner")}</Link>}
-        {user?.role === "ADMIN" && <Link to="/admin">{t("nav.admin")}</Link>}
-
-        {(user?.role === "OWNER" || user?.role === "USER") && (
-          <Link to="/favorites">{t("nav.favorites")}</Link>
-        )}
-
-        <div
-          style={{
-            marginLeft: "auto",
-            display: "flex",
-            gap: 10,
-            alignItems: "center",
-          }}
-        >
-          <select
-            value={locale}
-            onChange={(e) => setLocale(e.target.value)}
-            style={{
-              padding: "6px 10px",
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-            aria-label={t("nav.language", "Language")}
-            title={t("nav.language", "Language")}
+    <div className="app-layout">
+      <nav className="app-nav">
+        <div className="app-nav__links">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+            }
           >
-            <option value="en">EN</option>
-            <option value="uk">UK</option>
-          </select>
+            {t("nav.home")}
+          </NavLink>
+
+          {user && (
+            <NavLink
+              to="/profile"
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+            >
+              {t("nav.profile")}
+            </NavLink>
+          )}
+          {user?.role === "OWNER" && (
+            <NavLink
+              to="/owner"
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+            >
+              {t("nav.owner")}
+            </NavLink>
+          )}
+          {user?.role === "ADMIN" && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+            >
+              {t("nav.admin")}
+            </NavLink>
+          )}
+
+          {(user?.role === "OWNER" || user?.role === "USER") && (
+            <NavLink
+              to="/favorites"
+              className={({ isActive }) =>
+                `app-nav__link${isActive ? " app-nav__link--active" : ""}`
+              }
+            >
+              {t("nav.favorites")}
+            </NavLink>
+          )}
+        </div>
+
+        <div className="app-nav__actions">
+          <div
+            className="app-nav__language-toggle"
+            role="group"
+            aria-label={t("nav.language", "Language")}
+          >
+            <button
+              type="button"
+              className={`app-nav__language-button${
+                locale === "en" ? " app-nav__language-button--active" : ""
+              }`}
+              onClick={() => setLocale("en")}
+              aria-pressed={locale === "en"}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={`app-nav__language-button${
+                locale === "uk" ? " app-nav__language-button--active" : ""
+              }`}
+              onClick={() => setLocale("uk")}
+              aria-pressed={locale === "uk"}
+            >
+              УКР
+            </button>
+          </div>
 
           {user ? (
             <>
-              <span style={{ opacity: 0.8 }}>
-                {userLabel} ({roleLabel})
-              </span>
-              <button
-                onClick={logout}
-                style={{
-                  padding: "6px 10px",
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                }}
-              >
+              <span className="app-nav__user-name">{userLabel}</span>
+              <span className="app-nav__role-badge">{roleLabel}</span>
+              <button onClick={logout} className="app-nav__logout">
                 {t("nav.logout")}
               </button>
             </>
           ) : (
             <>
-              <Link to="/login">{t("nav.login")}</Link>
-              <Link to="/register">{t("nav.register")}</Link>
+              <NavLink
+                to="/login"
+                className={({ isActive }) =>
+                  `app-nav__auth-link${isActive ? " app-nav__auth-link--active" : ""}`
+                }
+              >
+                {t("nav.login")}
+              </NavLink>
+              <NavLink
+                to="/register"
+                className={({ isActive }) =>
+                  `app-nav__auth-link${isActive ? " app-nav__auth-link--active" : ""}`
+                }
+              >
+                {t("nav.register")}
+              </NavLink>
             </>
           )}
         </div>
       </nav>
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/locations/:id" element={<LocationDetailsPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/owner" element={<OwnerDashboardPage />} />
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
-      </Routes>
+      <main className="app-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/locations/:id" element={<LocationDetailsPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/owner" element={<OwnerDashboardPage />} />
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/favorites" element={<FavoritesPage />} />
+        </Routes>
+      </main>
+
+      <footer className="app-footer">{t("footer.rights")}</footer>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { http } from "../../api/http";
 import { getErrorMessage } from "../../api/getErrorMessage";
 import { useI18n } from "../../client/i18n/I18nContext";
 import { displayFishName } from "../../client/i18n/displayName";
+import { formatSelectionSummary } from "./selectionSummary";
 
 export default function FishPicker({ value, onChange }) {
   const { t, locale } = useI18n();
@@ -47,6 +48,16 @@ export default function FishPicker({ value, onChange }) {
       .slice(0, 50);
   }, [options, query, value, locale]);
 
+  const summary = useMemo(
+    () =>
+      formatSelectionSummary(
+        value,
+        (name) => displayFishName(name, locale),
+        2,
+      ),
+    [value, locale],
+  );
+
   function add(name) {
     const next = (value || []).includes(name)
       ? value || []
@@ -54,39 +65,28 @@ export default function FishPicker({ value, onChange }) {
     onChange(next);
   }
 
-  function remove(name) {
-    onChange((value || []).filter((x) => x !== name));
-  }
-
   return (
     <div style={{ position: "relative", display: "grid", gap: 6 }}>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {(value || []).map((name) => (
-          <button
-            key={name}
-            type="button"
-            onClick={() => remove(name)}
-            style={chipBtn}
-          >
-            {displayFishName(name, locale)} ✕
-          </button>
-        ))}
-      </div>
-
       <input
         placeholder={t("fishPicker.placeholder")}
-        value={query}
+        value={open ? query : summary}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setOpen(false);
+          setQuery("");
+        }}
         style={input}
       />
 
       {open && filtered.length > 0 ? (
-        <div style={{ ...dropdown, marginTop: 72 }}>
+        <div style={{ ...dropdown, marginTop: 44 }}>
           {filtered.map((name) => (
             <div
               key={name}
@@ -111,12 +111,6 @@ const input = {
   borderRadius: 8,
   border: "1px solid #ddd",
   width: "100%",
-};
-const chipBtn = {
-  border: "1px solid #ddd",
-  borderRadius: 999,
-  padding: "4px 10px",
-  background: "#fff",
 };
 const dropdown = {
   position: "absolute",

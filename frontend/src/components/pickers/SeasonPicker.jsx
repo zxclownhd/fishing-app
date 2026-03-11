@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useI18n } from "../../client/i18n/I18nContext";
+import { formatSelectionSummary } from "./selectionSummary";
 
 const OPTIONS = ["SPRING", "SUMMER", "AUTUMN", "WINTER"];
 
@@ -22,39 +23,40 @@ export default function SeasonPicker({ value, onChange }) {
       .slice(0, 10);
   }, [query, value, t]);
 
-  function add(code) {
-    const next = (value || []).includes(code) ? (value || []) : [...(value || []), code];
-    onChange(next);
-  }
+  const summary = useMemo(
+    () => formatSelectionSummary(value, (code) => t(`seasons.${code}`, code), 2),
+    [value, t],
+  );
 
-  function remove(code) {
-    onChange((value || []).filter((x) => x !== code));
+  function add(code) {
+    const next = (value || []).includes(code)
+      ? value || []
+      : [...(value || []), code];
+    onChange(next);
   }
 
   return (
     <div style={{ position: "relative", display: "grid", gap: 6 }}>
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-        {(value || []).map((code) => (
-          <button key={code} type="button" onClick={() => remove(code)} style={chipBtn}>
-            {t(`seasons.${code}`, code)} ✕
-          </button>
-        ))}
-      </div>
-
       <input
         placeholder={t("seasonPicker.placeholder")}
-        value={query}
+        value={open ? query : summary}
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setOpen(false)}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onBlur={() => {
+          setOpen(false);
+          setQuery("");
+        }}
         style={input}
       />
 
       {open && filtered.length > 0 ? (
-        <div style={{ ...dropdown, marginTop: 72 }}>
+        <div style={{ ...dropdown, marginTop: 44 }}>
           {filtered.map((code) => (
             <div
               key={code}
@@ -74,8 +76,12 @@ export default function SeasonPicker({ value, onChange }) {
   );
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd", width: "100%" };
-const chipBtn = { border: "1px solid #ddd", borderRadius: 999, padding: "4px 10px", background: "#fff" };
+const input = {
+  padding: 10,
+  borderRadius: 8,
+  border: "1px solid #ddd",
+  width: "100%",
+};
 const dropdown = {
   position: "absolute",
   zIndex: 10,

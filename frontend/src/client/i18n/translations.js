@@ -11,6 +11,9 @@ export const translations = {
       login: "Login",
       register: "Register",
     },
+    footer: {
+      rights: "Fishing App © 2026. All rights reserved.",
+    },
     roles: {
       USER: "User",
       OWNER: "Owner",
@@ -94,12 +97,24 @@ export const translations = {
 
       noAccount: "No account?",
       registerTitle: "Register",
+      registerBrandSubtitle:
+        "Plan better fishing trips with trusted spots and practical details.",
 
       displayNamePlaceholder: "Display name",
 
       confirmPasswordPlaceholder: "Confirm password",
       createAccount: "Create account",
       haveAccount: "Have an account?",
+
+      terms: {
+        checkboxLabel: "I agree to the Terms and Conditions",
+        linkText: "Terms and Conditions",
+        validationError:
+          "You must accept the Terms and Conditions to register.",
+        title: "Terms and Conditions",
+        paragraphs: ["Welcome to Fishing App. By creating an account and using this application, you agree to these Terms and Conditions.","Fishing App is an educational diploma project created for informational and demonstration purposes. The application allows users to browse fishing locations, create accounts, and, depending on their role, submit or manage location-related content.","You agree to use the application lawfully, responsibly, and without harming the platform or other users. You must not submit false, misleading, offensive, or unlawful content.","You are responsible for keeping your account information confidential and for all actions performed under your account.","If you submit locations, descriptions, images, or other content, you confirm that you have the right to share it and that it does not violate the rights of third parties.","Fishing App does not guarantee the accuracy, completeness, or reliability of user-submitted content, fishing conditions, or location information. Use of the information provided in the application is at your own risk.","The application owner may update, modify, or remove content and may change or discontinue parts of the service at any time.","By continuing registration, you confirm that you have read and accepted these Terms and Conditions."," This text is provided for educational project purposes."],
+        close: "Close",
+      },
 
       errors: {
         invalidEmail: "Invalid email",
@@ -137,7 +152,7 @@ export const translations = {
       clear: "Clear",
       info: {
         saving: "Saving...",
-        saved: "Saved",
+        nameChanged: "Name changed",
         changingPassword: "Changing password...",
         passwordChanged: "Password changed",
       },
@@ -188,6 +203,7 @@ export const translations = {
       seasons: "Seasons",
       map: "Map",
       mapPreviewTitle: "Map preview",
+      mapHelper: "Pin shows approximate fishing location",
       openGoogleMaps: "Open in Google Maps →",
       leaveReview: "Leave a review",
       loginToReview: "Please login to leave a review.",
@@ -199,6 +215,11 @@ export const translations = {
         submit: "Submit review",
       },
       reviewsTitle: "Reviews",
+      reviewsSortNewest: "Newest first",
+      reviewsSortOldest: "Oldest first",
+      reviewsSortHighest: "Highest rating",
+      reviewsSortLowest: "Lowest rating",
+      showMore: "Show more",
       noReviews: "No reviews yet.",
       anonymous: "Anonymous",
       errors: {
@@ -259,10 +280,10 @@ export const translations = {
       createdLabel: "Created:",
       noDescription: "No description",
       statuses: {
-        PENDING: "PENDING",
-        APPROVED: "APPROVED",
-        REJECTED: "REJECTED",
-        HIDDEN: "HIDDEN",
+        PENDING: "Pending",
+        APPROVED: "Approved",
+        REJECTED: "Rejected",
+        HIDDEN: "Hidden",
       },
     },
     createLocation: {
@@ -407,6 +428,10 @@ export const translations = {
       login: "Увійти",
       register: "Реєстрація",
     },
+    footer: {
+      rights:
+        "Fishing App © 2026. \u0423\u0441\u0456 \u043f\u0440\u0430\u0432\u0430 \u0437\u0430\u0445\u0438\u0449\u0435\u043d\u043e.",
+    },
     roles: {
       USER: "Користувач",
       OWNER: "Власник",
@@ -490,10 +515,25 @@ export const translations = {
 
       noAccount: "Немає акаунта?",
       registerTitle: "Реєстрація",
+      registerBrandSubtitle:
+        "Плануйте риболовлю краще з перевіреними місцями та практичною інформацією.",
       displayNamePlaceholder: "Ім’я для відображення",
       confirmPasswordPlaceholder: "Підтвердіть пароль",
       createAccount: "Створити акаунт",
       haveAccount: "Вже є акаунт?",
+
+      terms: {
+        checkboxLabel:
+          "\u042f \u043f\u043e\u0433\u043e\u0434\u0436\u0443\u044e\u0441\u044f \u0437 \u0423\u043c\u043e\u0432\u0430\u043c\u0438 \u043a\u043e\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u043d\u043d\u044f",
+        linkText:
+          "\u0423\u043c\u043e\u0432\u0438 \u043a\u043e\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u043d\u043d\u044f",
+        validationError:
+          "\u0429\u043e\u0431 \u0437\u0430\u0440\u0435\u0454\u0441\u0442\u0440\u0443\u0432\u0430\u0442\u0438\u0441\u044f, \u043f\u043e\u0442\u0440\u0456\u0431\u043d\u043e \u043f\u043e\u0433\u043e\u0434\u0438\u0442\u0438\u0441\u044f \u0437 \u0423\u043c\u043e\u0432\u0430\u043c\u0438 \u043a\u043e\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u043d\u043d\u044f.",
+        title:
+          "\u0423\u043c\u043e\u0432\u0438 \u043a\u043e\u0440\u0438\u0441\u0442\u0443\u0432\u0430\u043d\u043d\u044f",
+        paragraphs: ["Ласкаво просимо до Fishing App. Створюючи обліковий запис і використовуючи цей застосунок, ви погоджуєтеся з цими Умовами користування.","Fishing App є навчальним дипломним проєктом, створеним для інформаційних і демонстраційних цілей. Застосунок дозволяє користувачам переглядати рибальські локації, створювати облікові записи та, залежно від ролі, додавати або керувати контентом, пов’язаним із локаціями.","Ви погоджуєтеся користуватися застосунком законно, відповідально та без шкоди для платформи або інших користувачів. Забороняється додавати неправдивий, оманливий, образливий або незаконний контент.","Ви несете відповідальність за збереження конфіденційності даних свого облікового запису та за всі дії, виконані у вашому акаунті.","Якщо ви додаєте локації, описи, зображення або інший контент, ви підтверджуєте, що маєте право його поширювати і що він не порушує прав третіх осіб.","Fishing App не гарантує точність, повноту або достовірність контенту, доданого користувачами, інформації про локації чи умов риболовлі. Використання інформації, доступної в застосунку, здійснюється на ваш власний ризик.","Власник застосунку може оновлювати, змінювати або видаляти контент, а також змінювати чи припиняти роботу окремих частин сервісу в будь-який час.","Продовжуючи реєстрацію, ви підтверджуєте, що ознайомилися з цими Умовами користування та приймаєте їх.","Цей текст надано для цілей навчального проєкту."],
+        close: "\u0417\u0430\u043a\u0440\u0438\u0442\u0438",
+      },
 
       errors: {
         invalidEmail: "Некоректна ел. пошта",
@@ -529,6 +569,14 @@ export const translations = {
       confirmNewPassword: "Підтвердіть новий пароль",
       changePasswordBtn: "Змінити пароль",
       clear: "Очистити",
+      info: {
+        saving: "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043d\u044f...",
+        nameChanged: "\u0406\u043c\u2019\u044f \u0437\u043c\u0456\u043d\u0435\u043d\u043e",
+        changingPassword:
+          "\u0417\u043c\u0456\u043d\u0430 \u043f\u0430\u0440\u043e\u043b\u044f...",
+        passwordChanged:
+          "\u041f\u0430\u0440\u043e\u043b\u044c \u0437\u043c\u0456\u043d\u0435\u043d\u043e",
+      },
       errors: {
         loadFailed: "Не вдалося завантажити профіль",
         changePasswordFailed: "Не вдалося змінити пароль",
@@ -570,6 +618,7 @@ export const translations = {
       seasons: "Сезони",
       map: "Карта",
       mapPreviewTitle: "Попередній перегляд карти",
+      mapHelper: "\u041f\u043e\u0437\u043d\u0430\u0447\u043a\u0430 \u043f\u043e\u043a\u0430\u0437\u0443\u0454 \u043f\u0440\u0438\u0431\u043b\u0438\u0437\u043d\u0435 \u043c\u0456\u0441\u0446\u0435 \u0440\u0438\u0431\u043e\u043b\u043e\u0432\u043b\u0456",
       openGoogleMaps: "Відкрити в Google Maps →",
       leaveReview: "Залишити відгук",
       loginToReview: "Увійдіть, щоб залишити відгук.",
@@ -581,6 +630,11 @@ export const translations = {
         submit: "Надіслати відгук",
       },
       reviewsTitle: "Відгуки",
+      reviewsSortNewest: "\u041d\u043e\u0432\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
+      reviewsSortOldest: "\u0421\u0442\u0430\u0440\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
+      reviewsSortHighest: "\u041d\u0430\u0439\u0432\u0438\u0449\u0430 \u043e\u0446\u0456\u043d\u043a\u0430",
+      reviewsSortLowest: "\u041d\u0430\u0439\u043d\u0438\u0436\u0447\u0430 \u043e\u0446\u0456\u043d\u043a\u0430",
+      showMore: "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u0438 \u0449\u0435",
       noReviews: "Поки що немає відгуків.",
       anonymous: "Анонім",
       errors: {
