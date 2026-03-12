@@ -1,4 +1,4 @@
-export const translations = {
+﻿export const translations = {
   en: {
     nav: {
       language: "Language",
@@ -215,6 +215,10 @@ export const translations = {
         submit: "Submit review",
       },
       reviewsTitle: "Reviews",
+      reviewsCount: {
+        one: "{count} review",
+        other: "{count} reviews",
+      },
       reviewsSortNewest: "Newest first",
       reviewsSortOldest: "Oldest first",
       reviewsSortHighest: "Highest rating",
@@ -434,8 +438,7 @@ export const translations = {
       register: "Реєстрація",
     },
     footer: {
-      rights:
-        "Fishing App © 2026. \u0423\u0441\u0456 \u043f\u0440\u0430\u0432\u0430 \u0437\u0430\u0445\u0438\u0449\u0435\u043d\u043e.",
+      rights: "Fishing App © 2026. Усі права захищено.",
     },
     roles: {
       USER: "Користувач",
@@ -635,6 +638,12 @@ export const translations = {
         submit: "Надіслати відгук",
       },
       reviewsTitle: "Відгуки",
+      reviewsCount: {
+        one: "{count} відгук",
+        few: "{count} відгуки",
+        many: "{count} відгуків",
+        other: "{count} відгуків",
+      },
       reviewsSortNewest: "\u041d\u043e\u0432\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
       reviewsSortOldest: "\u0421\u0442\u0430\u0440\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
       reviewsSortHighest: "\u041d\u0430\u0439\u0432\u0438\u0449\u0430 \u043e\u0446\u0456\u043d\u043a\u0430",
@@ -837,6 +846,7 @@ export function getBrowserLocale() {
   if (lang.startsWith("uk")) return "uk";
   return "en";
 }
+
 
 
 

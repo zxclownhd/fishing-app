@@ -143,7 +143,37 @@
 }
 
 .location-card__rating {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.location-card__rating-main {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.location-card__rating-star {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.location-card__rating--empty {
+  align-items: center;
+}
+
+.location-card__rating-empty {
+  display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

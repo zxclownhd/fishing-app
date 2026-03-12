@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getErrorMessage } from "../api/getErrorMessage";
@@ -11,7 +11,6 @@ const LIMIT = 6;
 
 export default function FavoritesPage() {
   const user = getStoredUser();
-  const nav = useNavigate();
   const { t } = useI18n();
 
   const [items, setItems] = useState([]);
@@ -35,7 +34,9 @@ export default function FavoritesPage() {
       const res = await http.get("/favorites", {
         params: { page: pageArg, limit: LIMIT },
       });
-      setItems(res.data.items || []);
+      const rawItems = Array.isArray(res.data?.items) ? res.data.items : [];
+      const normalizedItems = await normalizeAndHydrateFavorites(rawItems);
+      setItems(normalizedItems);
       setTotal(res.data.total || 0);
     } catch (e) {
       setErrorText(getErrorMessage(e, t("errors.favorites.loadFailed"), t));
@@ -116,31 +117,29 @@ export default function FavoritesPage() {
         ) : null}
 
         <section className="favorites-page__results">
-          <div className="favorites-page__cards">
+          <div className="grid favorites-page__cards">
             {items.map((it) => (
               <LocationCard
-                key={it.id}
+                key={it.id || it.locationId}
                 loc={it}
-                variant="admin"
+                to={`/locations/${it.locationId || it.id}`}
+                toState={{ from: "/favorites" }}
+                variant="public"
                 actions={
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => nav(`/locations/${it.id}`)}
-                      className="btn btn-secondary"
-                    >
-                      {t("favoritesPage.details")}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => removeFavorite(it.id)}
-                      disabled={loading}
-                      className="btn btn-secondary"
-                    >
-                      {t("favoritesPage.remove")}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    title={t("favoritesPage.remove")}
+                    aria-label={t("favoritesPage.remove")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeFavorite(it.locationId || it.id);
+                    }}
+                    disabled={loading}
+                    className="btn btn-secondary home-page__favorite-btn favorites-page__remove-btn"
+                  >
+                    {"\u2715"}
+                  </button>
                 }
               />
             ))}
@@ -172,4 +171,85 @@ export default function FavoritesPage() {
       </div>
     </div>
   );
+}
+
+async function normalizeAndHydrateFavorites(rawItems) {
+  const normalized = rawItems
+    .map((raw) => normalizeFavoriteItem(raw))
+    .filter((item) => Boolean(item?.id || item?.locationId));
+
+  const hydrated = await Promise.all(
+    normalized.map(async (item) => {
+      if (!needsLocationHydration(item)) return item;
+      try {
+        const locationId = item.locationId || item.id;
+        const res = await http.get(`/locations/${locationId}`);
+        const details = extractLocationCandidate(res?.data);
+        return mergeLocationData(item, details);
+      } catch {
+        return item;
+      }
+    }),
+  );
+
+  return hydrated;
+}
+
+function normalizeFavoriteItem(raw) {
+  const direct = extractLocationCandidate(raw);
+  const nested = extractLocationCandidate(
+    raw?.location || raw?.locationData || raw?.item || raw?.loc,
+  );
+
+  const merged = mergeLocationData(direct, nested);
+  const locationId =
+    raw?.locationId ||
+    nested?.id ||
+    direct?.id ||
+    raw?.location?.id ||
+    null;
+
+  return {
+    ...merged,
+    id: locationId || merged.id || raw?.id || null,
+    locationId: locationId || merged.id || raw?.id || null,
+  };
+}
+
+function extractLocationCandidate(value) {
+  if (!value || typeof value !== "object") return {};
+  if (value.item && typeof value.item === "object") return value.item;
+  if (value.location && typeof value.location === "object") return value.location;
+  return value;
+}
+
+function mergeLocationData(primary, secondary) {
+  const first = primary && typeof primary === "object" ? primary : {};
+  const second = secondary && typeof secondary === "object" ? secondary : {};
+
+  return {
+    ...first,
+    ...second,
+    id: second.id || first.id || null,
+    photos: pickArray(second.photos, first.photos),
+    fish: pickArray(second.fish, first.fish),
+    seasons: pickArray(second.seasons, first.seasons),
+  };
+}
+
+function pickArray(preferred, fallback) {
+  if (Array.isArray(preferred)) return preferred;
+  if (Array.isArray(fallback)) return fallback;
+  return [];
+}
+
+function needsLocationHydration(item) {
+  const hasMeta = Boolean(item?.region && item?.waterType);
+  const hasContent = Boolean(item?.title) && Array.isArray(item?.photos);
+  const hasCardData =
+    Array.isArray(item?.fish) &&
+    Array.isArray(item?.seasons) &&
+    item?.avgRating !== undefined &&
+    item?.reviewsCount !== undefined;
+  return !(hasMeta && hasContent && hasCardData);
 }

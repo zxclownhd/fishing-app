@@ -49,10 +49,16 @@
 }
 
 .favorites-page__cards .location-card {
-  --location-card-media-ratio: 16 / 10;
-  --location-card-title-size: 20px;
-  --location-card-desc-lines: 3;
-  --location-card-min-height: 500px;
+  box-sizing: border-box;
+  height: 500px !important;
+}
+
+.favorites-page__remove-btn {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .favorites-page__pagination {
@@ -81,8 +87,65 @@
   }
 }
 
+@media (min-width: 401px) and (max-width: 640px) {
+  .favorites-page__cards .location-card {
+    height: 520px !important;
+    --location-card-media-ratio: 16 / 9;
+  }
+}
+
 @media (max-width: 1024px) and (min-width: 641px) {
   .favorites-page__cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .favorites-page__cards .location-card--public {
+    isolation: isolate;
+  }
+
+  .favorites-page__cards .location-card--public .location-card__media {
+    position: relative;
+    z-index: 0;
+  }
+
+  .favorites-page__cards .location-card--public .location-card__utility-row,
+  .favorites-page__cards .location-card--public .location-card__utility-actions {
+    position: relative;
+    z-index: 1;
+  }
+
+  .favorites-page__cards .favorites-page__remove-btn {
+    position: relative;
+    top: 4px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .favorites-page__cards .location-card {
+    height: 512px !important;
+  }
+
+  .favorites-page__cards .location-card--public {
+    isolation: isolate;
+  }
+
+  .favorites-page__cards .location-card--public .location-card__media {
+    position: relative;
+    z-index: 0;
+  }
+
+  .favorites-page__cards .location-card--public .location-card__utility-row,
+  .favorites-page__cards .location-card--public .location-card__utility-actions {
+    position: relative;
+    z-index: 1;
+  }
+
+  .favorites-page__cards .location-card--public .location-card__body {
+    padding-bottom: 0;
+  }
+
+  .favorites-page__cards .favorites-page__remove-btn {
+    position: relative;
+    top: 4px;
   }
 }

@@ -191,10 +191,47 @@
 }
 
 .location-details-page__highlights {
+  display: grid;
+  gap: 8px;
+}
+
+.location-details-page__highlights-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.location-details-page__highlights-status {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.location-details-page__rating-display {
+  display: inline-flex;
   align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  min-width: 0;
+  padding-block: 2px;
+  box-sizing: border-box;
+}
+
+.location-details-page__rating-star {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.location-details-page__rating-value {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--color-text);
 }
 
 .location-details-page__highlight-chip {
@@ -206,18 +243,13 @@
   line-height: 1;
 }
 
-.location-details-page__rating-chip {
-  color: var(--color-text);
-  border-color: color-mix(
-    in srgb,
-    var(--color-primary) 34%,
-    var(--color-border)
-  );
-  background: color-mix(
-    in srgb,
-    var(--color-primary) 14%,
-    var(--color-surface)
-  );
+.location-details-page__posted-by-chip {
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .location-details-page__primary-actions {
@@ -465,6 +497,17 @@
   flex-wrap: wrap;
 }
 
+.location-details-page__reviews-title-wrap {
+  display: grid;
+  gap: 0;
+}
+
+.location-details-page__reviews-meta {
+  font-size: var(--font-small);
+  line-height: 1.2;
+  margin-block: 4px;
+}
+
 .location-details-page__reviews-sort {
   display: grid;
   gap: 6px;
@@ -646,5 +689,10 @@
 
   .location-details-page__reviews-sort .select {
     max-width: 100%;
+  }
+
+  .location-details-page__posted-by-chip {
+    margin-left: 0;
+    white-space: normal;
   }
 }

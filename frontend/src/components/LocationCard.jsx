@@ -8,6 +8,7 @@ import "./LocationCard.css";
 export default function LocationCard({
   loc,
   to, // optional string; if present - wrap in Link
+  toState, // optional Link state when using `to`
   variant = "public", // "public" | "admin"
   actions = null, // optional JSX (buttons etc)
   footer = null, // optional JSX under description
@@ -26,12 +27,23 @@ export default function LocationCard({
       })
     : "";
 
-  const ratingText = useMemo(() => {
+  const rating = useMemo(() => {
     if (variant !== "public") return null;
     const avg = Number(loc?.avgRating ?? 0);
     const cnt = Number(loc?.reviewsCount ?? 0);
-    if (!cnt) return t("card.noReviews");
-    return `${avg.toFixed(1)} / 5 (${cnt})`;
+    if (!cnt) {
+      return {
+        hasReviews: false,
+        label: t("card.noReviews"),
+        title: t("card.noReviews"),
+      };
+    }
+    const value = avg.toFixed(1);
+    return {
+      hasReviews: true,
+      value,
+      title: `${value}`,
+    };
   }, [variant, loc, t]);
 
   const status = loc?.status;
@@ -97,8 +109,24 @@ export default function LocationCard({
       <div className="location-card__body">
         {variant === "public" ? (
           <div className="location-card__utility-row">
-            <div className="location-card__rating" title={ratingText}>
-              {ratingText}
+            <div
+              className={`location-card__rating ${
+                rating?.hasReviews ? "" : "location-card__rating--empty"
+              }`}
+              title={rating?.title}
+            >
+              {rating?.hasReviews ? (
+                <>
+                  <span className="location-card__rating-main">
+                    <span className="location-card__rating-star" aria-hidden>
+                      {"\u2605"}
+                    </span>
+                    {rating.value}
+                  </span>
+                </>
+              ) : (
+                <span className="location-card__rating-empty">{rating?.label}</span>
+              )}
             </div>
 
             {actions ? (
@@ -187,7 +215,7 @@ export default function LocationCard({
 
   if (to) {
     return (
-      <Link to={to} className="location-card__link">
+      <Link to={to} state={toState} className="location-card__link">
         {card}
       </Link>
     );
