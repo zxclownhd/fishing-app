@@ -4,6 +4,7 @@ import { Navigate, Link } from "react-router-dom";
 import { clearAuth, getStoredUser } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
+import PasswordInput from "../components/PasswordInput";
 import "./ProfilePage.css";
 
 export default function ProfilePage() {
@@ -250,24 +251,21 @@ export default function ProfilePage() {
 
                 <div className="profile-security-body">
                   <div className="profile-security-fields">
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder={t("profile.currentPassword")}
                       className="profile-input"
                     />
 
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder={t("profile.newPasswordMin8")}
                       className="profile-input"
                     />
 
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder={t("profile.confirmNewPassword")}

@@ -3,6 +3,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import LocationDetailsPage from "./LocationDetailsPage";
 import { http } from "../api/http";
 
+let mockRouterState = null;
+
 vi.mock("../api/http", () => ({
   http: {
     get: vi.fn(),
@@ -16,6 +18,7 @@ vi.mock("react-router-dom", async () => {
     ...actual,
     Link: ({ to, children }) => <a href={to}>{children}</a>,
     useParams: () => ({ id: "loc-1" }),
+    useLocation: () => ({ state: mockRouterState }),
   };
 });
 
@@ -49,6 +52,7 @@ vi.mock("../client/i18n/displayName", () => ({
 describe("LocationDetailsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRouterState = null;
   });
 
   it("renders location details, hero info and reviews", async () => {
@@ -131,5 +135,36 @@ describe("LocationDetailsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Network error")).toBeInTheDocument();
     });
+  });
+
+  it("uses route state back target when provided", async () => {
+    mockRouterState = { from: "/favorites" };
+
+    http.get
+      .mockResolvedValueOnce({
+        data: {
+          id: "loc-1",
+          title: "Blue Lake",
+          region: "KYIV",
+          waterType: "LAKE",
+          photos: [],
+          fish: [],
+          seasons: [],
+          reviewsCount: 0,
+          avgRating: 0,
+        },
+      })
+      .mockResolvedValueOnce({ data: { items: [] } });
+
+    render(<LocationDetailsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Blue Lake")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("locationDetails.back")).toHaveAttribute(
+      "href",
+      "/favorites",
+    );
   });
 });

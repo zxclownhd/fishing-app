@@ -42,6 +42,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
   // so unmount cleanup won't run after successful save
   const savedRef = useRef(false);
+  const descriptionRef = useRef(null);
+  const contactsRef = useRef(null);
 
   useEffect(() => {
     savedRef.current = false;
@@ -75,6 +77,11 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         t,
       ),
     );
+
+    requestAnimationFrame(() => {
+      autoResizeTextarea(descriptionRef.current);
+      autoResizeTextarea(contactsRef.current);
+    });
   }, [loc, t]);
 
   const isDirty = useMemo(() => {
@@ -300,26 +307,29 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
-      <input
-        value={editTitle}
-        maxLength={LOCATION_LIMITS.title}
-        onChange={(e) => {
-          const next = e.target.value;
-          setEditTitle(next);
-          setFieldErrors(
-            validateLocationTextFields(
-              {
-                title: next,
-                description: editDescription,
-                contactInfo: editContactInfo,
-              },
-              t,
-            ),
-          );
-        }}
-        placeholder={t("locationForm.titlePlaceholder")}
-        style={input}
-      />
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.title")}</div>
+        <input
+          value={editTitle}
+          maxLength={LOCATION_LIMITS.title}
+          onChange={(e) => {
+            const next = e.target.value;
+            setEditTitle(next);
+            setFieldErrors(
+              validateLocationTextFields(
+                {
+                  title: next,
+                  description: editDescription,
+                  contactInfo: editContactInfo,
+                },
+                t,
+              ),
+            );
+          }}
+          placeholder={t("locationForm.titlePlaceholder")}
+          style={input}
+        />
+      </div>
       <div style={fieldMetaRow}>
         <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
         <div style={fieldCounterText}>
@@ -327,27 +337,32 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         </div>
       </div>
 
-      <textarea
-        value={editDescription}
-        maxLength={LOCATION_LIMITS.description}
-        onChange={(e) => {
-          const next = e.target.value;
-          setEditDescription(next);
-          setFieldErrors(
-            validateLocationTextFields(
-              {
-                title: editTitle,
-                description: next,
-                contactInfo: editContactInfo,
-              },
-              t,
-            ),
-          );
-        }}
-        rows={3}
-        placeholder={t("locationForm.descriptionPlaceholder")}
-        style={input}
-      />
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.description")}</div>
+        <textarea
+          ref={descriptionRef}
+          value={editDescription}
+          maxLength={LOCATION_LIMITS.description}
+          onChange={(e) => {
+            const next = e.target.value;
+            setEditDescription(next);
+            autoResizeTextarea(e.target);
+            setFieldErrors(
+              validateLocationTextFields(
+                {
+                  title: editTitle,
+                  description: next,
+                  contactInfo: editContactInfo,
+                },
+                t,
+              ),
+            );
+          }}
+          rows={3}
+          placeholder={t("locationForm.descriptionPlaceholder")}
+          style={textareaInput}
+        />
+      </div>
       <div style={fieldMetaRow}>
         <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
         <div style={fieldCounterText}>
@@ -355,27 +370,32 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         </div>
       </div>
 
-      <textarea
-        value={editContactInfo}
-        maxLength={LOCATION_LIMITS.contactInfo}
-        onChange={(e) => {
-          const next = e.target.value;
-          setEditContactInfo(next);
-          setFieldErrors(
-            validateLocationTextFields(
-              {
-                title: editTitle,
-                description: editDescription,
-                contactInfo: next,
-              },
-              t,
-            ),
-          );
-        }}
-        placeholder={t("locationForm.contactsPlaceholder")}
-        rows={2}
-        style={input}
-      />
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.contacts")}</div>
+        <textarea
+          ref={contactsRef}
+          value={editContactInfo}
+          maxLength={LOCATION_LIMITS.contactInfo}
+          onChange={(e) => {
+            const next = e.target.value;
+            setEditContactInfo(next);
+            autoResizeTextarea(e.target);
+            setFieldErrors(
+              validateLocationTextFields(
+                {
+                  title: editTitle,
+                  description: editDescription,
+                  contactInfo: next,
+                },
+                t,
+              ),
+            );
+          }}
+          placeholder={t("locationForm.contactsPlaceholder")}
+          rows={2}
+          style={textareaInput}
+        />
+      </div>
       <div style={fieldMetaRow}>
         <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
         <div style={fieldCounterText}>
@@ -383,80 +403,103 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         </div>
       </div>
 
-      <RegionPicker
-        value={editRegionSelected}
-        onChange={setEditRegionSelected}
-      />
-
-      <select
-        value={editWaterType}
-        onChange={(e) => setEditWaterType(e.target.value)}
-        style={input}
-      >
-        <option value="LAKE">
-          {t("locationForm.waterTypes.LAKE", "LAKE")}
-        </option>
-        <option value="RIVER">
-          {t("locationForm.waterTypes.RIVER", "RIVER")}
-        </option>
-        <option value="POND">
-          {t("locationForm.waterTypes.POND", "POND")}
-        </option>
-        <option value="SEA">{t("locationForm.waterTypes.SEA", "SEA")}</option>
-        <option value="OTHER">
-          {t("locationForm.waterTypes.OTHER", "OTHER")}
-        </option>
-      </select>
-
-      <LocationPickerMap
-        lat={editLat}
-        lng={editLng}
-        onSelect={(nextLat, nextLng) => {
-          setEditLat(String(nextLat));
-          setEditLng(String(nextLng));
-        }}
-      />
-
-      <div style={{ display: "flex", gap: 10 }}>
-        <input
-          value={editLat}
-          readOnly
-          placeholder={t("locationForm.latPlaceholder")}
-          style={{ ...input, flex: 1 }}
-        />
-        <input
-          value={editLng}
-          readOnly
-          placeholder={t("locationForm.lngPlaceholder")}
-          style={{ ...input, flex: 1 }}
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.region")}</div>
+        <RegionPicker
+          value={editRegionSelected}
+          onChange={setEditRegionSelected}
         />
       </div>
 
-      <FishPicker value={fishSelected} onChange={setFishSelected} />
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.waterType")}</div>
+        <select
+          value={editWaterType}
+          onChange={(e) => setEditWaterType(e.target.value)}
+          style={input}
+        >
+          <option value="LAKE">
+            {t("locationForm.waterTypes.LAKE", "LAKE")}
+          </option>
+          <option value="RIVER">
+            {t("locationForm.waterTypes.RIVER", "RIVER")}
+          </option>
+          <option value="POND">
+            {t("locationForm.waterTypes.POND", "POND")}
+          </option>
+          <option value="SEA">{t("locationForm.waterTypes.SEA", "SEA")}</option>
+          <option value="OTHER">
+            {t("locationForm.waterTypes.OTHER", "OTHER")}
+          </option>
+        </select>
+      </div>
 
-      <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.selectCoordinatesOnMap")}</div>
+        <LocationPickerMap
+          lat={editLat}
+          lng={editLng}
+          onSelect={(nextLat, nextLng) => {
+            setEditLat(String(nextLat));
+            setEditLng(String(nextLng));
+          }}
+        />
 
-      <PhotoUploader
-        photos={photos}
-        onChange={setPhotos}
-        max={5}
-        onRemove={handleRemove}
-        draftFolder={draftFolder}
-      />
+        <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ ...displayField, flex: 1 }}>
+            {editLat || t("locationForm.latPlaceholder")}
+          </div>
+          <div style={{ ...displayField, flex: 1 }}>
+            {editLng || t("locationForm.lngPlaceholder")}
+          </div>
+        </div>
+      </div>
+
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.fish")}</div>
+        <FishPicker value={fishSelected} onChange={setFishSelected} />
+      </div>
+
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.seasons")}</div>
+        <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+      </div>
+
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.photos")}</div>
+        <PhotoUploader
+          photos={photos}
+          onChange={setPhotos}
+          max={5}
+          onRemove={handleRemove}
+          draftFolder={draftFolder}
+        />
+      </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button disabled={saving || !isDirty} style={btn}>
-          {saving ? t("locationForm.saving") : t("locationForm.savePending")}
+        <button
+          disabled={saving || !isDirty}
+          className="btn btn-primary"
+          type="submit"
+        >
+          {saving ? t("locationForm.saving") : t("locationForm.save")}
         </button>
 
-        <button type="button" onClick={cancel} style={btn} disabled={saving}>
+        <button
+          type="button"
+          onClick={cancel}
+          className="btn btn-secondary"
+          disabled={saving}
+        >
           {t("locationForm.cancel")}
         </button>
       </div>
 
-      {!saving && !isDirty ? (
+      {!saving ? (
         <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-          {t("locationForm.noChanges")}
+          {isDirty
+            ? t("locationForm.pendingAfterSaveNotice")
+            : t("locationForm.noChanges")}
         </div>
       ) : null}
 
@@ -466,7 +509,27 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 }
 
 const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
-const btn = { padding: "8px 12px", borderRadius: 8, border: "1px solid #ddd" };
+const displayField = {
+  ...input,
+  color: "var(--color-text)",
+  background: "var(--color-surface)",
+  cursor: "default",
+  userSelect: "text",
+};
+const textareaInput = {
+  ...input,
+  resize: "none",
+  overflow: "hidden",
+  minHeight: 88,
+  lineHeight: 1.45,
+};
+const fieldBlock = { display: "grid", gap: 6 };
+const fieldLabel = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: "var(--color-text-secondary)",
+  lineHeight: 1.3,
+};
 const fieldMetaRow = {
   marginTop: -6,
   display: "flex",
@@ -477,3 +540,9 @@ const fieldMetaRow = {
 };
 const fieldErrorText = { color: "crimson", fontSize: 12, lineHeight: 1.2 };
 const fieldCounterText = { fontSize: 12, opacity: 0.7 };
+
+function autoResizeTextarea(node) {
+  if (!node) return;
+  node.style.height = "auto";
+  node.style.height = `${node.scrollHeight}px`;
+}

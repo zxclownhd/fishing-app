@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { http } from "../api/http";
 import { getStoredUser } from "../auth/auth";
 import { useFavorites } from "../client/hooks/useFavorites";
@@ -14,7 +14,9 @@ export default function LocationDetailsPage() {
   const REVIEWS_SHOW_MORE_STEP = 3;
   const REVIEW_COMMENT_MAX = 250;
   const { id } = useParams();
+  const routerLocation = useLocation();
   const { t, locale } = useI18n();
+  const backTo = resolveBackPath(routerLocation?.state);
 
   const [user, setUser] = useState(getStoredUser());
   const [contactInfo, setContactInfo] = useState(null);
@@ -205,6 +207,7 @@ export default function LocationDetailsPage() {
 
   const avg = Number(location?.avgRating ?? 0);
   const reviewsCount = Number(location?.reviewsCount ?? 0);
+  const favorited = isFavorite(location.id);
   const ratingValue = reviewsCount > 0 ? avg.toFixed(1) : "\u2014";
   const sortedReviews = [...reviews].sort((a, b) => {
     if (reviewsSort === "oldest") {
@@ -231,9 +234,29 @@ export default function LocationDetailsPage() {
     <div className="page location-details-page">
       <div className="container location-details-page__container">
         <div className="location-details-page__back-row">
-          <Link to="/" className="btn btn-secondary location-details-page__back-btn">
+          <Link to={backTo} className="btn btn-secondary location-details-page__back-btn">
             {t("locationDetails.back")}
           </Link>
+          {canUseFavorites ? (
+            <button
+              type="button"
+              onClick={async () => {
+                setFavoriteError("");
+                const result = await toggleFavorite(location.id);
+                if (!result.ok) {
+                  setFavoriteError(t("errors.favorites.toggleFailed"));
+                }
+              }}
+              title={
+                favorited ? t("locationDetails.favRemove") : t("locationDetails.favAdd")
+              }
+              className={`btn btn-secondary location-details-page__favorite-btn ${
+                favorited ? "favorite-toggle-btn--active" : ""
+              }`}
+            >
+              {favorited ? "\u2605" : "\u2606"}
+            </button>
+          ) : null}
         </div>
 
         <section className="card location-details-page__hero">
@@ -294,26 +317,6 @@ export default function LocationDetailsPage() {
                     {location.title || t("card.noTitle")}
                   </h1>
                 </div>
-                {canUseFavorites ? (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setFavoriteError("");
-                      const result = await toggleFavorite(location.id);
-                      if (!result.ok) {
-                        setFavoriteError(t("errors.favorites.toggleFailed"));
-                      }
-                    }}
-                    title={
-                      isFavorite(location.id)
-                        ? t("locationDetails.favRemove")
-                        : t("locationDetails.favAdd")
-                    }
-                    className="btn btn-secondary location-details-page__favorite-btn"
-                  >
-                    {isFavorite(location.id) ? "\u2605" : "\u2606"}
-                  </button>
-                ) : null}
               </div>
 
               {favoriteError ? (
@@ -331,23 +334,35 @@ export default function LocationDetailsPage() {
                 </div>
                 <div className="location-details-page__meta-item">
                   <span className="text-muted location-details-page__meta-label">
-                    {t("home.filterLabels.water", "Water type")}
+                    {String(t("home.filterLabels.water", "Water type")).replace(/:\s*$/, "")}
                   </span>
                   <strong className="location-details-page__meta-value">{waterTypeLabel}</strong>
                 </div>
               </div>
 
               <div className="location-details-page__highlights">
-                <div className="chip location-details-page__highlight-chip location-details-page__rating-chip">
-                  {t("locationDetails.ratingLabel")} {ratingValue}
+                <div className="location-details-page__highlights-row">
+                  <div
+                    className="location-details-page__rating-display"
+                    title={`${t("locationDetails.ratingLabel")} ${ratingValue}`}
+                  >
+                    <span className="location-details-page__rating-star" aria-hidden>
+                      {"\u2605"}
+                    </span>
+                    <span className="location-details-page__rating-value">{ratingValue}</span>
+                  </div>
+
+                  <div className="chip location-details-page__highlight-chip location-details-page__posted-by-chip">
+                    {t("locationDetails.postedBy")}{" "}
+                    {location.owner?.displayName || t("locationDetails.unknown")}
+                  </div>
                 </div>
+
                 {showStatusChip ? (
-                  <div className="chip location-details-page__highlight-chip">{statusLabel}</div>
+                  <div className="location-details-page__highlights-status">
+                    <div className="chip location-details-page__highlight-chip">{statusLabel}</div>
+                  </div>
                 ) : null}
-                <div className="chip location-details-page__highlight-chip">
-                  {t("locationDetails.postedBy")}{" "}
-                  {location.owner?.displayName || t("locationDetails.unknown")}
-                </div>
               </div>
 
               <article className="location-details-page__hero-contact">
@@ -512,7 +527,12 @@ export default function LocationDetailsPage() {
 
             <article className="card location-details-page__section location-details-page__reviews-section">
               <div className="location-details-page__reviews-header">
-                <h2 className="section-title">{t("locationDetails.reviewsTitle")}</h2>
+                <div className="location-details-page__reviews-title-wrap">
+                  <h2 className="section-title">{t("locationDetails.reviewsTitle")}</h2>
+                  <div className="text-muted location-details-page__reviews-meta">
+                    {formatReviewsCountLabel(reviews.length, locale, t)}
+                  </div>
+                </div>
                 {reviews.length > 0 ? (
                   <label className="location-details-page__reviews-sort">
                     <span className="text-muted">{t("sort.title")}</span>
@@ -613,4 +633,23 @@ function formatReviewRating(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return "\u2014";
   return Number.isInteger(numeric) ? String(numeric) : String(numeric);
+}
+
+function resolveBackPath(state) {
+  const from = state?.from;
+  if (typeof from === "string" && from.startsWith("/")) {
+    return from;
+  }
+  return "/";
+}
+
+function formatReviewsCountLabel(count, locale, t) {
+  const normalized = Number.isFinite(Number(count)) ? Math.max(0, Number(count)) : 0;
+  const rules = new Intl.PluralRules(locale === "uk" ? "uk" : "en");
+  const category = rules.select(normalized);
+  const template = t(
+    `locationDetails.reviewsCount.${category}`,
+    t("locationDetails.reviewsCount.other", "{count} reviews"),
+  );
+  return String(template).replace("{count}", String(normalized));
 }

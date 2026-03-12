@@ -190,6 +190,19 @@ a:hover {
   background: var(--color-surface-hover);
 }
 
+.favorite-toggle-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #000000;
+}
+
+.favorite-toggle-btn--active:hover,
+.favorite-toggle-btn--active:active {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: #000000;
+}
+
 .input,
 .select,
 .textarea {
@@ -203,6 +216,48 @@ a:hover {
   font: inherit;
   font-size: var(--font-body);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.password-input {
+  position: relative;
+  width: 100%;
+}
+
+.password-input__field {
+  padding-right: 44px;
+}
+
+.password-input__toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.password-input__toggle:hover {
+  color: var(--color-text);
+  background: var(--color-surface-hover);
+}
+
+.password-input__toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.password-input__toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .textarea {

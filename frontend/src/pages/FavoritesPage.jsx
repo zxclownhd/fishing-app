@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
+import "./FavoritesPage.css";
 
-const LIMIT = 20;
+const LIMIT = 6;
 
 export default function FavoritesPage() {
   const user = getStoredUser();
-  const nav = useNavigate();
   const { t } = useI18n();
 
   const [items, setItems] = useState([]);
@@ -24,6 +24,8 @@ export default function FavoritesPage() {
     () => Math.max(1, Math.ceil(total / LIMIT)),
     [total],
   );
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
 
   async function load(pageArg = page) {
     setLoading(true);
@@ -32,7 +34,9 @@ export default function FavoritesPage() {
       const res = await http.get("/favorites", {
         params: { page: pageArg, limit: LIMIT },
       });
-      setItems(res.data.items || []);
+      const rawItems = Array.isArray(res.data?.items) ? res.data.items : [];
+      const normalizedItems = await normalizeAndHydrateFavorites(rawItems);
+      setItems(normalizedItems);
       setTotal(res.data.total || 0);
     } catch (e) {
       setErrorText(getErrorMessage(e, t("errors.favorites.loadFailed"), t));
@@ -78,118 +82,182 @@ export default function FavoritesPage() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
-      <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>{t("favoritesPage.title")}</h2>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {t("favoritesPage.summary.totalLabel")} {total} |{" "}
-            {t("favoritesPage.summary.pageLabel")} {page}{" "}
-            {t("favoritesPage.summary.ofLabel")} {totalPages}
+    <div className="page favorites-page">
+      <div className="container favorites-page__container">
+        <div className="favorites-page__top">
+          <div className="favorites-page__back-row">
+            <Link to="/" className="btn btn-secondary favorites-page__back-btn">
+              {t("profile.back")}
+            </Link>
           </div>
         </div>
 
-        <button onClick={() => load(page)} disabled={loading}>
-          {t("favoritesPage.refresh")}
-        </button>
-      </div>
+        <header className="favorites-page__header">
+          <h1 className="page-title favorites-page__title">
+            {t("favoritesPage.title")}
+          </h1>
+          <div className="text-muted favorites-page__meta">
+            {t("favoritesPage.summary.totalLabel")} {total}
+          </div>
+        </header>
 
-      {errorText ? (
-        <div style={styles.error}>
-          <div>{errorText}</div>
+        {errorText ? (
+          <div className="favorites-page__error">
+            <div>{errorText}</div>
+            <button
+              onClick={() => load(page)}
+              disabled={loading}
+              className="btn btn-secondary favorites-page__retry-btn"
+            >
+              {t("favoritesPage.retry")}
+            </button>
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="text-muted favorites-page__state">{t("common.loading")}</div>
+        ) : null}
+
+        {!loading && !errorText && items.length === 0 ? (
+          <div className="text-muted favorites-page__state">
+            {t("favoritesPage.empty")}
+          </div>
+        ) : null}
+
+        <section className="favorites-page__results">
+          <div className="grid favorites-page__cards">
+            {items.map((it) => (
+              <LocationCard
+                key={it.id || it.locationId}
+                loc={it}
+                to={`/locations/${it.locationId || it.id}`}
+                toState={{ from: "/favorites" }}
+                variant="public"
+                actions={
+                  <button
+                    type="button"
+                    title={t("favoritesPage.remove")}
+                    aria-label={t("favoritesPage.remove")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      removeFavorite(it.locationId || it.id);
+                    }}
+                    disabled={loading}
+                    className="btn btn-secondary home-page__favorite-btn favorites-page__remove-btn"
+                  >
+                    {"\u2715"}
+                  </button>
+                }
+              />
+            ))}
+          </div>
+        </section>
+
+        <div className="pagination favorites-page__pagination">
           <button
-            onClick={() => load(page)}
-            disabled={loading}
-            style={{ marginTop: 8 }}
+            onClick={goPrev}
+            disabled={loading || !canPrev}
+            className="btn btn-secondary"
           >
-            {t("favoritesPage.retry")}
+            {t("common.prev")}
+          </button>
+
+          <div className="text-muted favorites-page__pagination-meta">
+            {t("favoritesPage.summary.pageLabel")} {page}{" "}
+            {t("favoritesPage.summary.ofLabel")} {totalPages}
+          </div>
+
+          <button
+            onClick={goNext}
+            disabled={loading || !canNext}
+            className="btn btn-secondary"
+          >
+            {t("common.next")}
           </button>
         </div>
-      ) : null}
-
-      {loading ? (
-        <div style={{ padding: 12 }}>{t("common.loading")}</div>
-      ) : null}
-
-      {!loading && !errorText && items.length === 0 ? (
-        <div style={styles.empty}>{t("favoritesPage.empty")}</div>
-      ) : null}
-
-      <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        {items.map((it) => (
-          <LocationCard
-            key={it.id}
-            loc={it}
-            variant="admin"
-            actions={
-              <>
-                <button
-                  type="button"
-                  onClick={() => nav(`/locations/${it.id}`)}
-                >
-                  {t("favoritesPage.details")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeFavorite(it.id)}
-                  disabled={loading}
-                >
-                  {t("favoritesPage.remove")}
-                </button>
-              </>
-            }
-          />
-        ))}
-      </div>
-
-      <div style={styles.pagination}>
-        <button onClick={goPrev} disabled={loading || page === 1}>
-          {t("common.prev")}
-        </button>
-
-        <div style={{ opacity: 0.8 }}>
-          {t("favoritesPage.summary.pageLabel")} {page} / {totalPages}
-        </div>
-
-        <button onClick={goNext} disabled={loading || page >= totalPages}>
-          {t("common.next")}
-        </button>
       </div>
     </div>
   );
 }
 
-const styles = {
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    position: "sticky",
-    top: 0,
-    background: "#fff",
-    padding: "12px 0",
-    zIndex: 2,
-  },
-  pagination: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTop: "1px solid #eee",
-  },
-  empty: {
-    padding: 12,
-    opacity: 0.75,
-  },
-  error: {
-    marginTop: 12,
-    padding: 12,
-    border: "1px solid #f2b5b5",
-    background: "#fff0f0",
-    borderRadius: 12,
-  },
-};
+async function normalizeAndHydrateFavorites(rawItems) {
+  const normalized = rawItems
+    .map((raw) => normalizeFavoriteItem(raw))
+    .filter((item) => Boolean(item?.id || item?.locationId));
+
+  const hydrated = await Promise.all(
+    normalized.map(async (item) => {
+      if (!needsLocationHydration(item)) return item;
+      try {
+        const locationId = item.locationId || item.id;
+        const res = await http.get(`/locations/${locationId}`);
+        const details = extractLocationCandidate(res?.data);
+        return mergeLocationData(item, details);
+      } catch {
+        return item;
+      }
+    }),
+  );
+
+  return hydrated;
+}
+
+function normalizeFavoriteItem(raw) {
+  const direct = extractLocationCandidate(raw);
+  const nested = extractLocationCandidate(
+    raw?.location || raw?.locationData || raw?.item || raw?.loc,
+  );
+
+  const merged = mergeLocationData(direct, nested);
+  const locationId =
+    raw?.locationId ||
+    nested?.id ||
+    direct?.id ||
+    raw?.location?.id ||
+    null;
+
+  return {
+    ...merged,
+    id: locationId || merged.id || raw?.id || null,
+    locationId: locationId || merged.id || raw?.id || null,
+  };
+}
+
+function extractLocationCandidate(value) {
+  if (!value || typeof value !== "object") return {};
+  if (value.item && typeof value.item === "object") return value.item;
+  if (value.location && typeof value.location === "object") return value.location;
+  return value;
+}
+
+function mergeLocationData(primary, secondary) {
+  const first = primary && typeof primary === "object" ? primary : {};
+  const second = secondary && typeof secondary === "object" ? secondary : {};
+
+  return {
+    ...first,
+    ...second,
+    id: second.id || first.id || null,
+    photos: pickArray(second.photos, first.photos),
+    fish: pickArray(second.fish, first.fish),
+    seasons: pickArray(second.seasons, first.seasons),
+  };
+}
+
+function pickArray(preferred, fallback) {
+  if (Array.isArray(preferred)) return preferred;
+  if (Array.isArray(fallback)) return fallback;
+  return [];
+}
+
+function needsLocationHydration(item) {
+  const hasMeta = Boolean(item?.region && item?.waterType);
+  const hasContent = Boolean(item?.title) && Array.isArray(item?.photos);
+  const hasCardData =
+    Array.isArray(item?.fish) &&
+    Array.isArray(item?.seasons) &&
+    item?.avgRating !== undefined &&
+    item?.reviewsCount !== undefined;
+  return !(hasMeta && hasContent && hasCardData);
+}

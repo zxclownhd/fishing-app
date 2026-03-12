@@ -8,7 +8,10 @@ import "./LocationCard.css";
 export default function LocationCard({
   loc,
   to, // optional string; if present - wrap in Link
+  toState, // optional Link state when using `to`
   variant = "public", // "public" | "admin"
+  className = "",
+  titleBadge = null,
   actions = null, // optional JSX (buttons etc)
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
@@ -26,12 +29,23 @@ export default function LocationCard({
       })
     : "";
 
-  const ratingText = useMemo(() => {
+  const rating = useMemo(() => {
     if (variant !== "public") return null;
     const avg = Number(loc?.avgRating ?? 0);
     const cnt = Number(loc?.reviewsCount ?? 0);
-    if (!cnt) return t("card.noReviews");
-    return `${avg.toFixed(1)} / 5 (${cnt})`;
+    if (!cnt) {
+      return {
+        hasReviews: false,
+        label: t("card.noReviews"),
+        title: t("card.noReviews"),
+      };
+    }
+    const value = avg.toFixed(1);
+    return {
+      hasReviews: true,
+      value,
+      title: `${value}`,
+    };
   }, [variant, loc, t]);
 
   const status = loc?.status;
@@ -68,7 +82,7 @@ export default function LocationCard({
     <div
       className={`location-card ${
         variant === "public" ? "location-card--public" : "location-card--admin"
-      } ${isInteractive ? "location-card--interactive" : ""}`}
+      } ${isInteractive ? "location-card--interactive" : ""} ${className}`.trim()}
       role={!to && onClick ? "button" : undefined}
       tabIndex={!to && onClick ? 0 : undefined}
       onClick={!to ? onClick : undefined}
@@ -97,8 +111,24 @@ export default function LocationCard({
       <div className="location-card__body">
         {variant === "public" ? (
           <div className="location-card__utility-row">
-            <div className="location-card__rating" title={ratingText}>
-              {ratingText}
+            <div
+              className={`location-card__rating ${
+                rating?.hasReviews ? "" : "location-card__rating--empty"
+              }`}
+              title={rating?.title}
+            >
+              {rating?.hasReviews ? (
+                <>
+                  <span className="location-card__rating-main">
+                    <span className="location-card__rating-star" aria-hidden>
+                      {"\u2605"}
+                    </span>
+                    {rating.value}
+                  </span>
+                </>
+              ) : (
+                <span className="location-card__rating-empty">{rating?.label}</span>
+              )}
             </div>
 
             {actions ? (
@@ -115,7 +145,9 @@ export default function LocationCard({
         <div className="location-card__top-row">
           <div className="location-card__title">{loc?.title || t("card.noTitle")}</div>
 
-          {variant === "admin" && status ? (
+          {titleBadge ? (
+            titleBadge
+          ) : variant === "admin" && status ? (
             <span className="location-card__badge" style={badgeForStatus(status)}>
               {t(`card.statuses.${String(status).toUpperCase()}`, status)}
             </span>
@@ -159,7 +191,13 @@ export default function LocationCard({
           </>
         )}
 
-        {loc?.description ? (
+        {variant === "public" ? (
+          <PublicDescription
+            text={loc?.description}
+            label={t("card.descriptionLabel")}
+            emptyText={t("card.noDescription")}
+          />
+        ) : loc?.description ? (
           <div className="location-card__desc">{loc.description}</div>
         ) : (
           <div className="location-card__desc-empty">{t("card.noDescription")}</div>
@@ -181,7 +219,7 @@ export default function LocationCard({
 
   if (to) {
     return (
-      <Link to={to} className="location-card__link">
+      <Link to={to} state={toState} className="location-card__link">
         {card}
       </Link>
     );
@@ -247,4 +285,25 @@ function extractSeasonCodes(seasons) {
     .map((x) => String(x || "").trim())
     .filter(Boolean);
   return [...new Set(codes)];
+}
+
+function PublicDescription({ text, label, emptyText }) {
+  const hasText = Boolean(String(text || "").trim());
+
+  return (
+    <div className="location-card__desc-section">
+      <div className="location-card__compact-label location-card__desc-label">
+        {label}
+      </div>
+      <div className="location-card__desc-wrap">
+        {hasText ? (
+          <div className="location-card__desc location-card__desc--public">
+            {text}
+          </div>
+        ) : (
+          <div className="location-card__desc-empty">{emptyText}</div>
+        )}
+      </div>
+    </div>
+  );
 }

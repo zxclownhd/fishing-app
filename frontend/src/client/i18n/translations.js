@@ -1,4 +1,4 @@
-export const translations = {
+﻿export const translations = {
   en: {
     nav: {
       language: "Language",
@@ -215,6 +215,10 @@ export const translations = {
         submit: "Submit review",
       },
       reviewsTitle: "Reviews",
+      reviewsCount: {
+        one: "{count} review",
+        other: "{count} reviews",
+      },
       reviewsSortNewest: "Newest first",
       reviewsSortOldest: "Oldest first",
       reviewsSortHighest: "Highest rating",
@@ -230,6 +234,9 @@ export const translations = {
     },
     home: {
       title: "Fishing Locations",
+      subtitle: "Find your next fishing spot faster with focused filters.",
+      resultsTitle: "Results",
+      foundLabel: "Found",
       regionPlaceholder: "Region",
       waterTypeAll: "All water types",
       waterTypes: {
@@ -278,6 +285,8 @@ export const translations = {
       unknownType: "Unknown type",
       ownerLabel: "Owner:",
       createdLabel: "Created:",
+      descriptionLabel: "Description:",
+      moreIndicator: "More...",
       noDescription: "No description",
       statuses: {
         PENDING: "Pending",
@@ -288,6 +297,8 @@ export const translations = {
     },
     createLocation: {
       title: "Create location",
+      create: "Create",
+      createPendingHint: "will stay",
       creating: "Creating...",
       createPending: "Create (PENDING)",
     },
@@ -331,10 +342,25 @@ export const translations = {
       contactsPlaceholder: "Contacts (optional)",
       latPlaceholder: "Lat (e.g. 50.45)",
       lngPlaceholder: "Lng (e.g. 30.52)",
+      labels: {
+        title: "Title",
+        description: "Description",
+        contacts: "Contacts",
+        region: "Region",
+        waterType: "Water type",
+        coordinates: "Coordinates",
+        selectCoordinatesOnMap: "Select coordinates on the map",
+        fish: "Fish",
+        seasons: "Seasons",
+        photos: "Photos",
+      },
+      save: "Save",
+      savePendingHint: "status will remain:",
       saving: "Saving...",
       savePending: "Save (will stay PENDING)",
       cancel: "Cancel",
       noChanges: "No changes to save",
+      pendingAfterSaveNotice: "After saving, status will return to pending.",
       waterTypeAllLabel: "All water types",
       waterTypes: {
         LAKE: "Lake",
@@ -429,8 +455,7 @@ export const translations = {
       register: "Реєстрація",
     },
     footer: {
-      rights:
-        "Fishing App © 2026. \u0423\u0441\u0456 \u043f\u0440\u0430\u0432\u0430 \u0437\u0430\u0445\u0438\u0449\u0435\u043d\u043e.",
+      rights: "Fishing App © 2026. Усі права захищено.",
     },
     roles: {
       USER: "Користувач",
@@ -630,6 +655,12 @@ export const translations = {
         submit: "Надіслати відгук",
       },
       reviewsTitle: "Відгуки",
+      reviewsCount: {
+        one: "{count} відгук",
+        few: "{count} відгуки",
+        many: "{count} відгуків",
+        other: "{count} відгуків",
+      },
       reviewsSortNewest: "\u041d\u043e\u0432\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
       reviewsSortOldest: "\u0421\u0442\u0430\u0440\u0456\u0448\u0456 \u0441\u043f\u043e\u0447\u0430\u0442\u043a\u0443",
       reviewsSortHighest: "\u041d\u0430\u0439\u0432\u0438\u0449\u0430 \u043e\u0446\u0456\u043d\u043a\u0430",
@@ -654,6 +685,10 @@ export const translations = {
         SEA: "Море",
         OTHER: "Інше",
       },
+      subtitle:
+        "\u0417\u043d\u0430\u0439\u0434\u0456\u0442\u044c \u043d\u0430\u0441\u0442\u0443\u043f\u043d\u0435 \u043c\u0456\u0441\u0446\u0435 \u0434\u043b\u044f \u0440\u0438\u0431\u043e\u043b\u043e\u0432\u043b\u0456 \u0448\u0432\u0438\u0434\u0448\u0435 \u0437\u0430 \u0434\u043e\u043f\u043e\u043c\u043e\u0433\u043e\u044e \u0442\u043e\u0447\u043d\u0438\u0445 \u0444\u0456\u043b\u044c\u0442\u0440\u0456\u0432.",
+      resultsTitle: "\u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0438",
+      foundLabel: "\u0417\u043d\u0430\u0439\u0434\u0435\u043d\u043e",
       search: "Пошук",
       reset: "Скинути",
       activeFilters: "Активні фільтри",
@@ -693,6 +728,8 @@ export const translations = {
       unknownType: "Невідомий тип",
       ownerLabel: "Власник:",
       createdLabel: "Створено:",
+      descriptionLabel: "Опис:",
+      moreIndicator: "Більше...",
       noDescription: "Немає опису",
       statuses: {
         PENDING: "Очікує",
@@ -703,6 +740,8 @@ export const translations = {
     },
     createLocation: {
       title: "Створити локацію",
+      create: "Створити",
+      createPendingHint: "статус лишиться",
       creating: "Створення...",
       createPending: "Створити (PENDING)",
     },
@@ -739,10 +778,25 @@ export const translations = {
       contactsPlaceholder: "Контакти (необовʼязково)",
       latPlaceholder: "Широта (напр. 50.45)",
       lngPlaceholder: "Довгота (напр. 30.52)",
+      labels: {
+        title: "Назва",
+        description: "Опис",
+        contacts: "Контакти",
+        region: "Область",
+        waterType: "Тип водойми",
+        coordinates: "Координати",
+        selectCoordinatesOnMap: "Виберіть координати на мапі",
+        fish: "Риба",
+        seasons: "Сезони",
+        photos: "Фото",
+      },
+      save: "Зберегти",
+      savePendingHint: "статус залишиться:",
       saving: "Збереження...",
       savePending: "Зберегти (статус лишиться PENDING)",
       cancel: "Скасувати",
       noChanges: "Немає змін для збереження",
+      pendingAfterSaveNotice: "Після збереження статус повернеться до очікування.",
       waterTypeAllLabel: "Усі типи водойм",
       waterTypes: {
         LAKE: "Озеро",
@@ -826,3 +880,7 @@ export function getBrowserLocale() {
   if (lang.startsWith("uk")) return "uk";
   return "en";
 }
+
+
+
+

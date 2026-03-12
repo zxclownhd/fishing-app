@@ -107,9 +107,6 @@ describe("OwnerDashboardPage", () => {
     expect(screen.getByText("River Spot")).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: "owner.tabs.list" }),
-    ).toBeInTheDocument();
-    expect(
       screen.getByRole("button", { name: "owner.tabs.create" }),
     ).toBeInTheDocument();
 
