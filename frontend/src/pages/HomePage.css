@@ -211,11 +211,51 @@
   .home-page__results {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .home-page__results .home-page__favorite-btn {
+    position: relative;
+    top: 4px;
+  }
+
+  .home-page__results .location-card--public {
+    isolation: isolate;
+  }
+
+  .home-page__results .location-card--public .location-card__media {
+    position: relative;
+    z-index: 0;
+  }
+
+  .home-page__results .location-card--public .location-card__utility-row,
+  .home-page__results .location-card--public .location-card__utility-actions {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 @media (min-width: 1025px) {
   .home-page__results .location-card {
     height: 512px !important;
+  }
+
+  .home-page__results .home-page__favorite-btn {
+    position: relative;
+    top: 4px;
+  }
+
+  .home-page__results .location-card--public {
+    isolation: isolate;
+  }
+
+  .home-page__results .location-card--public .location-card__media {
+    position: relative;
+    z-index: 0;
+  }
+
+  .home-page__results .location-card--public .location-card__utility-row,
+  .home-page__results .location-card--public .location-card__utility-actions {
+    position: relative;
+    z-index: 1;
   }
 
   .home-page__results .location-card--public .location-card__body {
