@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { login } from "../auth/auth";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
+import PasswordInput from "../components/PasswordInput";
 import "./RegisterPage.css";
 
 function FieldError({ msg }) {
@@ -82,9 +83,8 @@ export default function LoginPage() {
             </div>
 
             <div className="register-page__field">
-              <input
+              <PasswordInput
                 placeholder={t("auth.passwordPlaceholder")}
-                type="password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);

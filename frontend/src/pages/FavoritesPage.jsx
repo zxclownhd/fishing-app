@@ -5,8 +5,9 @@ import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
+import "./FavoritesPage.css";
 
-const LIMIT = 20;
+const LIMIT = 6;
 
 export default function FavoritesPage() {
   const user = getStoredUser();
@@ -24,6 +25,8 @@ export default function FavoritesPage() {
     () => Math.max(1, Math.ceil(total / LIMIT)),
     [total],
   );
+  const canPrev = page > 1;
+  const canNext = page < totalPages;
 
   async function load(pageArg = page) {
     setLoading(true);
@@ -78,118 +81,95 @@ export default function FavoritesPage() {
   if (!user) return <Navigate to="/login" replace />;
 
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
-      <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>{t("favoritesPage.title")}</h2>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {t("favoritesPage.summary.totalLabel")} {total} |{" "}
+    <div className="page favorites-page">
+      <div className="container favorites-page__container">
+        <header className="favorites-page__header">
+          <h1 className="page-title favorites-page__title">
+            {t("favoritesPage.title")}
+          </h1>
+          <div className="text-muted favorites-page__meta">
+            {t("favoritesPage.summary.totalLabel")} {total}
+          </div>
+        </header>
+
+        {errorText ? (
+          <div className="favorites-page__error">
+            <div>{errorText}</div>
+            <button
+              onClick={() => load(page)}
+              disabled={loading}
+              className="btn btn-secondary favorites-page__retry-btn"
+            >
+              {t("favoritesPage.retry")}
+            </button>
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="text-muted favorites-page__state">{t("common.loading")}</div>
+        ) : null}
+
+        {!loading && !errorText && items.length === 0 ? (
+          <div className="text-muted favorites-page__state">
+            {t("favoritesPage.empty")}
+          </div>
+        ) : null}
+
+        <section className="favorites-page__results">
+          <div className="favorites-page__cards">
+            {items.map((it) => (
+              <LocationCard
+                key={it.id}
+                loc={it}
+                variant="admin"
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => nav(`/locations/${it.id}`)}
+                      className="btn btn-secondary"
+                    >
+                      {t("favoritesPage.details")}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => removeFavorite(it.id)}
+                      disabled={loading}
+                      className="btn btn-secondary"
+                    >
+                      {t("favoritesPage.remove")}
+                    </button>
+                  </>
+                }
+              />
+            ))}
+          </div>
+        </section>
+
+        <div className="pagination favorites-page__pagination">
+          <button
+            onClick={goPrev}
+            disabled={loading || !canPrev}
+            className="btn btn-secondary"
+          >
+            {t("common.prev")}
+          </button>
+
+          <div className="text-muted favorites-page__pagination-meta">
             {t("favoritesPage.summary.pageLabel")} {page}{" "}
             {t("favoritesPage.summary.ofLabel")} {totalPages}
           </div>
-        </div>
 
-        <button onClick={() => load(page)} disabled={loading}>
-          {t("favoritesPage.refresh")}
-        </button>
-      </div>
-
-      {errorText ? (
-        <div style={styles.error}>
-          <div>{errorText}</div>
           <button
-            onClick={() => load(page)}
-            disabled={loading}
-            style={{ marginTop: 8 }}
+            onClick={goNext}
+            disabled={loading || !canNext}
+            className="btn btn-secondary"
           >
-            {t("favoritesPage.retry")}
+            {t("common.next")}
           </button>
         </div>
-      ) : null}
-
-      {loading ? (
-        <div style={{ padding: 12 }}>{t("common.loading")}</div>
-      ) : null}
-
-      {!loading && !errorText && items.length === 0 ? (
-        <div style={styles.empty}>{t("favoritesPage.empty")}</div>
-      ) : null}
-
-      <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        {items.map((it) => (
-          <LocationCard
-            key={it.id}
-            loc={it}
-            variant="admin"
-            actions={
-              <>
-                <button
-                  type="button"
-                  onClick={() => nav(`/locations/${it.id}`)}
-                >
-                  {t("favoritesPage.details")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeFavorite(it.id)}
-                  disabled={loading}
-                >
-                  {t("favoritesPage.remove")}
-                </button>
-              </>
-            }
-          />
-        ))}
-      </div>
-
-      <div style={styles.pagination}>
-        <button onClick={goPrev} disabled={loading || page === 1}>
-          {t("common.prev")}
-        </button>
-
-        <div style={{ opacity: 0.8 }}>
-          {t("favoritesPage.summary.pageLabel")} {page} / {totalPages}
-        </div>
-
-        <button onClick={goNext} disabled={loading || page >= totalPages}>
-          {t("common.next")}
-        </button>
       </div>
     </div>
   );
 }
-
-const styles = {
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    position: "sticky",
-    top: 0,
-    background: "#fff",
-    padding: "12px 0",
-    zIndex: 2,
-  },
-  pagination: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTop: "1px solid #eee",
-  },
-  empty: {
-    padding: 12,
-    opacity: 0.75,
-  },
-  error: {
-    marginTop: 12,
-    padding: 12,
-    border: "1px solid #f2b5b5",
-    background: "#fff0f0",
-    borderRadius: 12,
-  },
-};

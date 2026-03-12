@@ -159,7 +159,13 @@ export default function LocationCard({
           </>
         )}
 
-        {loc?.description ? (
+        {variant === "public" ? (
+          <PublicDescription
+            text={loc?.description}
+            label={t("card.descriptionLabel")}
+            emptyText={t("card.noDescription")}
+          />
+        ) : loc?.description ? (
           <div className="location-card__desc">{loc.description}</div>
         ) : (
           <div className="location-card__desc-empty">{t("card.noDescription")}</div>
@@ -247,4 +253,25 @@ function extractSeasonCodes(seasons) {
     .map((x) => String(x || "").trim())
     .filter(Boolean);
   return [...new Set(codes)];
+}
+
+function PublicDescription({ text, label, emptyText }) {
+  const hasText = Boolean(String(text || "").trim());
+
+  return (
+    <div className="location-card__desc-section">
+      <div className="location-card__compact-label location-card__desc-label">
+        {label}
+      </div>
+      <div className="location-card__desc-wrap">
+        {hasText ? (
+          <div className="location-card__desc location-card__desc--public">
+            {text}
+          </div>
+        ) : (
+          <div className="location-card__desc-empty">{emptyText}</div>
+        )}
+      </div>
+    </div>
+  );
 }

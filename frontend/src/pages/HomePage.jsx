@@ -155,10 +155,7 @@ export default function HomePage() {
         <header className="home-page__hero">
           <h1 className="page-title">{t("home.title")}</h1>
           <p className="text-muted home-page__subtitle">
-            {t(
-              "home.subtitle",
-              "Find your next fishing spot faster with focused filters.",
-            )}
+            {t("home.subtitle")}
           </p>
         </header>
 
@@ -228,9 +225,9 @@ export default function HomePage() {
         <section className="home-page__results-section">
           <div className="home-page__results-header">
             <div className="home-page__results-header-left">
-              <h2 className="section-title">{t("home.resultsTitle", "Results")}</h2>
+              <h2 className="section-title">{t("home.resultsTitle")}</h2>
               <div className="text-muted">
-                {t("home.foundLabel", "Found")} {total}
+                {t("home.foundLabel")} {total}
               </div>
             </div>
 
