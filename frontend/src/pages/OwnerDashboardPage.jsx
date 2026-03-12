@@ -7,6 +7,7 @@ import { useI18n } from "../client/i18n/I18nContext";
 import CreateLocationForm from "../components/owner/CreateLocationForm";
 import MyLocationsList from "../components/owner/MyLocationsList";
 import { getErrorMessage } from "../api/getErrorMessage";
+import "./OwnerDashboardPage.css";
 
 const LIMIT = 12;
 
@@ -28,6 +29,7 @@ export default function OwnerDashboardPage() {
   );
 
   const [editingId, setEditingId] = useState(null);
+  const createOpen = activeTab === "CREATE";
 
   async function loadMyLocations(pageArg = page) {
     const res = await http.get("/owner/locations", {
@@ -72,6 +74,21 @@ export default function OwnerDashboardPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!createOpen) return;
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [createOpen]);
 
   async function refresh() {
     setLoading(true);
@@ -169,73 +186,60 @@ export default function OwnerDashboardPage() {
     }
   }
 
-  if (!user) return <div style={{ padding: 16 }}>{t("owner.authRequired")}</div>;
+  function openCreateModal() {
+    setEditingId(null);
+    setActiveTab("CREATE");
+  }
+
+  function closeCreateModal() {
+    setActiveTab("LIST");
+  }
+
+  if (!user) return <div className="owner-page__guard">{t("owner.authRequired")}</div>;
   if (user.role !== "OWNER")
-    return <div style={{ padding: 16 }}>{t("owner.ownerOnly")}</div>;
+    return <div className="owner-page__guard">{t("owner.ownerOnly")}</div>;
 
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
-      <div style={{ marginBottom: 10 }}>
-        <Link to="/">{t("owner.back")}</Link>
-      </div>
+    <div className="page owner-page">
+      <div className="container owner-page__container">
+        <div className="owner-page__top">
+          <div className="owner-page__back-row">
+            <Link to="/" className="btn btn-secondary owner-page__back-btn">
+              {t("profile.back")}
+            </Link>
+          </div>
+          <div className="owner-page__top-actions">
+            <button
+              onClick={() => setActiveTab("LIST")}
+              disabled={loading}
+              className="btn btn-secondary owner-page__header-action"
+            >
+              {t("owner.tabs.list")}
+            </button>
 
-      <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>{t("owner.title")}</h2>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {t("owner.summary.totalLabel")} {total} |{" "}
-            {t("owner.summary.pageLabel")} {page} {t("owner.summary.ofLabel")}{" "}
-            {totalPages}
+            <button
+              onClick={openCreateModal}
+              disabled={loading}
+              className="btn btn-primary owner-page__header-action"
+            >
+              {t("owner.tabs.create")}
+            </button>
           </div>
         </div>
 
-        <button onClick={refresh} disabled={loading}>
-          {t("owner.refresh")}
-        </button>
-      </div>
+        <header className="owner-page__header">
+          <div>
+            <h1 className="page-title owner-page__title">{t("owner.title")}</h1>
+            <div className="text-muted owner-page__summary">
+              {t("owner.summary.totalLabel")} {total}
+            </div>
+          </div>
+        </header>
 
-      {error ? (
-        <div
-          style={{
-            marginTop: 12,
-            padding: 12,
-            border: "1px solid #f2b5b5",
-            background: "#fff0f0",
-            borderRadius: 12,
-          }}
-        >
-          {error}
-        </div>
-      ) : null}
+        {error ? (
+          <div className="owner-page__error">{error}</div>
+        ) : null}
 
-      <div style={styles.tabs}>
-        <button
-          onClick={() => setActiveTab("LIST")}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === "LIST" ? styles.tabBtnActive : null),
-          }}
-        >
-          {t("owner.tabs.list")}
-        </button>
-
-        <button
-          onClick={() => setActiveTab("CREATE")}
-          style={{
-            ...styles.tabBtn,
-            ...(activeTab === "CREATE" ? styles.tabBtnActive : null),
-          }}
-        >
-          {t("owner.tabs.create")}
-        </button>
-      </div>
-
-      {activeTab === "CREATE" ? (
-        <CreateLocationForm
-          onCreate={onCreate}
-          onCancel={() => setActiveTab("LIST")}
-        />
-      ) : (
         <MyLocationsList
           items={items}
           loading={loading}
@@ -252,39 +256,34 @@ export default function OwnerDashboardPage() {
           onSaveEdit={onSaveEdit}
           onToggleHidden={onToggleHidden}
         />
-      )}
+
+        {createOpen ? (
+          <div
+            className="owner-page__create-modal-overlay"
+            onClick={closeCreateModal}
+            role="presentation"
+          >
+            <div
+              className="owner-page__create-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("owner.tabs.create")}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="owner-page__create-modal-title">
+                {t("owner.tabs.create")}
+              </div>
+
+              <div className="owner-page__create-modal-content">
+                <CreateLocationForm
+                  onCreate={onCreate}
+                  onCancel={closeCreateModal}
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    position: "sticky",
-    top: 0,
-    background: "#fff",
-    padding: "12px 0",
-    zIndex: 2,
-  },
-  tabs: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    marginTop: 8,
-  },
-  tabBtn: {
-    padding: "6px 10px",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: "#ddd",
-    background: "#fff",
-    cursor: "pointer",
-  },
-  tabBtnActive: {
-    borderColor: "#111",
-  },
-};

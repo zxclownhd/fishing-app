@@ -73,7 +73,7 @@ export default function LocationPickerMap({ lat, lng, onSelect }) {
 
       <div style={{ fontSize: 13, opacity: 0.85 }}>
         {selectedPosition
-          ? `Selected: ${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`
+          ? "Selected"
           : "Click on the map to select coordinates"}
       </div>
     </div>

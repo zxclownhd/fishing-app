@@ -1,0 +1,175 @@
+.owner-list {
+  margin-top: var(--space-2);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.owner-list__error {
+  margin-top: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-error) 9%, var(--color-surface));
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.owner-list__retry-btn {
+  justify-self: start;
+}
+
+.owner-list__state {
+  padding: var(--space-2) 0;
+}
+
+.owner-list__cards {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.owner-list__card {
+  box-sizing: border-box;
+  height: 500px !important;
+}
+
+.owner-list__card--editing {
+  height: auto !important;
+}
+
+.owner-list__footer {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.owner-list__status-badge {
+  font-size: 11px;
+}
+
+.owner-list__status-badge--hidden {
+  background: #eeeeee;
+  border-color: #cfcfcf;
+}
+
+.owner-list__status-badge--pending {
+  background: #fff6d6;
+  border-color: #f2d27a;
+}
+
+.owner-list__status-badge--approved,
+.owner-list__status-badge--published {
+  background: #dff7e6;
+  border-color: #7fd39a;
+}
+
+.owner-list__status-badge--rejected {
+  background: #ffe1e1;
+  border-color: #f09a9a;
+}
+
+.owner-list__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  transform: translateY(2px);
+}
+
+.owner-list__group {
+  display: grid;
+  gap: 6px;
+}
+
+.owner-list__group-label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.owner-list__group-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.owner-list__chip {
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+}
+
+.owner-list__empty-dash {
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.owner-list__edit-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background-color: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.owner-list__edit-modal {
+  width: min(100%, 860px);
+  max-height: min(86vh, 900px);
+  overflow: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.owner-list__edit-modal-title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.owner-list__edit-modal-content {
+  min-width: 0;
+}
+
+.owner-list__edit-modal-close {
+  justify-self: start;
+}
+
+.owner-list__pagination {
+  margin-top: var(--space-2);
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  .owner-list__cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .owner-list__card {
+    height: auto !important;
+  }
+
+  .owner-list__pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .owner-list__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1025px) {
+  .owner-list__card {
+    height: 512px !important;
+  }
+}

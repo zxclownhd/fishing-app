@@ -10,6 +10,8 @@ export default function LocationCard({
   to, // optional string; if present - wrap in Link
   toState, // optional Link state when using `to`
   variant = "public", // "public" | "admin"
+  className = "",
+  titleBadge = null,
   actions = null, // optional JSX (buttons etc)
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
@@ -80,7 +82,7 @@ export default function LocationCard({
     <div
       className={`location-card ${
         variant === "public" ? "location-card--public" : "location-card--admin"
-      } ${isInteractive ? "location-card--interactive" : ""}`}
+      } ${isInteractive ? "location-card--interactive" : ""} ${className}`.trim()}
       role={!to && onClick ? "button" : undefined}
       tabIndex={!to && onClick ? 0 : undefined}
       onClick={!to ? onClick : undefined}
@@ -143,7 +145,9 @@ export default function LocationCard({
         <div className="location-card__top-row">
           <div className="location-card__title">{loc?.title || t("card.noTitle")}</div>
 
-          {variant === "admin" && status ? (
+          {titleBadge ? (
+            titleBadge
+          ) : variant === "admin" && status ? (
             <span className="location-card__badge" style={badgeForStatus(status)}>
               {t(`card.statuses.${String(status).toUpperCase()}`, status)}
             </span>

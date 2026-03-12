@@ -5,6 +5,33 @@
   gap: var(--space-3);
 }
 
+.favorites-page__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 12px;
+}
+
+.favorites-page__back-row {
+  display: flex;
+  align-items: center;
+}
+
+.favorites-page__back-btn {
+  text-decoration: none;
+  padding: 8px 14px;
+  color: var(--color-text-secondary);
+  border-color: transparent;
+  background: transparent;
+}
+
+.favorites-page__back-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+}
+
 .favorites-page__header {
   display: grid;
   gap: 6px;

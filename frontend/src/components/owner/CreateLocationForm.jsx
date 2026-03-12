@@ -44,6 +44,8 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
   });
 
   const createdRef = useRef(false);
+  const descriptionRef = useRef(null);
+  const contactsRef = useRef(null);
 
   function getDraftPublicIds() {
     return (photos || [])
@@ -171,10 +173,9 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
   }
 
   return (
-    <div style={box}>
-      <h2 style={{ marginTop: 0 }}>{t("createLocation.title")}</h2>
-
-      <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
+    <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.title")}</div>
         <input
           placeholder={t("locationForm.titlePlaceholder")}
           value={title}
@@ -188,57 +189,73 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           }}
           style={input}
         />
-        <div style={fieldMetaRow}>
-          <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
-          <div style={fieldCounterText}>
-            {title.length}/{LOCATION_LIMITS.title}
-          </div>
+      </div>
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
+        <div style={fieldCounterText}>
+          {title.length}/{LOCATION_LIMITS.title}
         </div>
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.description")}</div>
         <textarea
+          ref={descriptionRef}
           placeholder={t("locationForm.descriptionPlaceholder")}
           value={description}
           maxLength={LOCATION_LIMITS.description}
           onChange={(e) => {
             const next = e.target.value;
             setDescription(next);
+            autoResizeTextarea(e.target);
             setFieldErrors(
               validateLocationTextFields({ title, description: next, contactInfo }, t),
             );
           }}
           rows={3}
-          style={input}
+          style={textareaInput}
         />
-        <div style={fieldMetaRow}>
-          <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
-          <div style={fieldCounterText}>
-            {description.length}/{LOCATION_LIMITS.description}
-          </div>
+      </div>
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
+        <div style={fieldCounterText}>
+          {description.length}/{LOCATION_LIMITS.description}
         </div>
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.contacts")}</div>
         <textarea
+          ref={contactsRef}
           placeholder={t("locationForm.contactsPlaceholderFull")}
           value={contactInfo}
           maxLength={LOCATION_LIMITS.contactInfo}
           onChange={(e) => {
             const next = e.target.value;
             setContactInfo(next);
+            autoResizeTextarea(e.target);
             setFieldErrors(
               validateLocationTextFields({ title, description, contactInfo: next }, t),
             );
           }}
           rows={2}
-          style={input}
+          style={textareaInput}
         />
-        <div style={fieldMetaRow}>
-          <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
-          <div style={fieldCounterText}>
-            {contactInfo.length}/{LOCATION_LIMITS.contactInfo}
-          </div>
+      </div>
+      <div style={fieldMetaRow}>
+        <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
+        <div style={fieldCounterText}>
+          {contactInfo.length}/{LOCATION_LIMITS.contactInfo}
         </div>
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.region")}</div>
         <RegionPicker value={regionSelected} onChange={setRegionSelected} />
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.waterType")}</div>
         <select
           value={waterType}
           onChange={(e) => setWaterType(e.target.value)}
@@ -258,7 +275,10 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
             {t("locationForm.waterTypes.OTHER", "OTHER")}
           </option>
         </select>
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.selectCoordinatesOnMap")}</div>
         <LocationPickerMap
           lat={lat}
           lng={lng}
@@ -269,65 +289,81 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         />
 
         <div style={{ display: "flex", gap: 10 }}>
-          <input
-            placeholder={t("locationForm.latPlaceholder")}
-            value={lat}
-            readOnly
-            style={{ ...input, flex: 1 }}
-          />
-          <input
-            placeholder={t("locationForm.lngPlaceholder")}
-            value={lng}
-            readOnly
-            style={{ ...input, flex: 1 }}
-          />
+          <div style={{ ...displayField, flex: 1 }}>
+            {lat || t("locationForm.latPlaceholder")}
+          </div>
+          <div style={{ ...displayField, flex: 1 }}>
+            {lng || t("locationForm.lngPlaceholder")}
+          </div>
         </div>
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.fish")}</div>
         <FishPicker value={fishSelected} onChange={setFishSelected} />
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.seasons")}</div>
         <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+      </div>
 
+      <div style={fieldBlock}>
+        <div style={fieldLabel}>{t("locationForm.labels.photos")}</div>
         <PhotoUploader
           photos={photos}
           onChange={setPhotos}
           max={5}
           draftFolder={draftFolder}
         />
+      </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button disabled={creating} style={btn}>
-            {creating
-              ? t("createLocation.creating")
-              : t("createLocation.createPending")}
-          </button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button disabled={creating} className="btn btn-primary" type="submit">
+          {creating
+            ? t("createLocation.creating")
+            : t("createLocation.create")}
+        </button>
 
-          <button
-            type="button"
-            onClick={cancel}
-            disabled={creating}
-            style={btn}
-          >
-            {t("locationForm.cancel")}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={cancel}
+          disabled={creating}
+          className="btn btn-secondary"
+        >
+          {t("locationForm.cancel")}
+        </button>
+      </div>
 
-        {createError ? (
-          <div style={{ color: "crimson" }}>{createError}</div>
-        ) : null}
-      </form>
-    </div>
+      {createError ? (
+        <div style={{ color: "crimson" }}>{createError}</div>
+      ) : null}
+    </form>
   );
 }
 
-const box = {
-  marginTop: 16,
-  border: "1px solid #eee",
-  borderRadius: 10,
-  padding: 12,
-  maxWidth: 720,
-};
 const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
-const btn = { padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" };
+const textareaInput = {
+  ...input,
+  resize: "none",
+  overflow: "hidden",
+  minHeight: 88,
+  lineHeight: 1.45,
+};
+const displayField = {
+  ...input,
+  color: "var(--color-text)",
+  background: "var(--color-surface)",
+  cursor: "default",
+  userSelect: "text",
+};
+const fieldBlock = { display: "grid", gap: 6 };
+const fieldLabel = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: "var(--color-text-secondary)",
+  lineHeight: 1.3,
+};
 const fieldMetaRow = {
   marginTop: -6,
   display: "flex",
@@ -338,3 +374,9 @@ const fieldMetaRow = {
 };
 const fieldErrorText = { color: "crimson", fontSize: 12, lineHeight: 1.2 };
 const fieldCounterText = { fontSize: 12, opacity: 0.7 };
+
+function autoResizeTextarea(node) {
+  if (!node) return;
+  node.style.height = "auto";
+  node.style.height = `${node.scrollHeight}px`;
+}

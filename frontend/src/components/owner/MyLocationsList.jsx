@@ -1,14 +1,15 @@
+import { useEffect } from "react";
 import LocationCard from "../LocationCard";
 import EditLocationForm from "./EditLocationForm";
 import { useI18n } from "../../client/i18n/I18nContext";
 import { displayFishName } from "../../client/i18n/displayName";
+import "./MyLocationsList.css";
 
 export default function MyLocationsList({
   items,
   loading,
   error,
   page,
-  total,
   totalPages,
   onPrev,
   onNext,
@@ -20,16 +21,32 @@ export default function MyLocationsList({
   onToggleHidden,
 }) {
   const { t, locale } = useI18n();
+  const editingLoc = items.find((loc) => loc.id === editingId) || null;
+
+  useEffect(() => {
+    if (!editingLoc) return;
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [editingLoc]);
 
   return (
-    <div style={{ marginTop: 12 }}>
+    <div className="owner-list">
       {error ? (
-        <div style={styles.error}>
+        <div className="owner-list__error">
           <div>{error}</div>
           <button
             onClick={onRefresh}
             disabled={loading}
-            style={{ marginTop: 8 }}
+            className="btn btn-secondary owner-list__retry-btn"
           >
             {t("ownerList.retry")}
           </button>
@@ -37,42 +54,39 @@ export default function MyLocationsList({
       ) : null}
 
       {loading ? (
-        <div style={{ padding: 12 }}>{t("ownerList.loading")}</div>
+        <div className="text-muted owner-list__state">{t("ownerList.loading")}</div>
       ) : null}
 
       {!loading && !error && items.length === 0 ? (
-        <div style={styles.empty}>{t("ownerList.empty")}</div>
+        <div className="text-muted owner-list__state">{t("ownerList.empty")}</div>
       ) : null}
 
-      <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+      <div className="grid owner-list__cards">
         {items.map((loc) => {
           const isEditing = editingId === loc.id;
-
-          const fishChips = (loc.fish || []).slice(0, 8).map((x, idx) => (
-            <span
-              key={
-                x.fishId
-                  ? `${loc.id}-fish-${x.fishId}`
-                  : `${loc.id}-fish-${idx}`
-              }
-              style={styles.chip}
-            >
-              {displayFishName(x.fish?.name, locale) || t("admin.unknown")}
-            </span>
-          ));
-
-          const seasonChips = (loc.seasons || []).slice(0, 8).map((x, idx) => {
-            const code = x.season?.code || x.season?.name || "";
+          const statusCode = String(loc?.status || "").toUpperCase();
+          const fishChips = (loc.fish || []).slice(0, 8).map((x, idx) => {
+            const rawName = typeof x === "string" ? x : (x?.fish?.name || x?.name || "");
             return (
               <span
-                key={
-                  x.seasonId
-                    ? `${loc.id}-season-${x.seasonId}`
-                    : `${loc.id}-season-${idx}`
-                }
-                style={styles.chip}
+                key={x?.fishId ? `${loc.id}-fish-${x.fishId}` : `${loc.id}-fish-${idx}`}
+                className="owner-list__chip"
               >
-                {code ? t(`seasons.${code}`, code) : t("admin.unknown")}
+                {displayFishName(rawName, locale) || t("admin.unknown")}
+              </span>
+            );
+          });
+
+          const seasonChips = (loc.seasons || []).slice(0, 8).map((x, idx) => {
+            const code = typeof x === "string"
+              ? x
+              : (x?.season?.code || x?.season?.name || x?.code || x?.name || "");
+            return (
+              <span
+                key={x?.seasonId ? `${loc.id}-season-${x.seasonId}` : `${loc.id}-season-${idx}`}
+                className="owner-list__chip"
+              >
+                {code ? t(`seasons.${String(code).toUpperCase()}`, code) : t("admin.unknown")}
               </span>
             );
           });
@@ -81,54 +95,20 @@ export default function MyLocationsList({
             <LocationCard
               key={loc.id}
               loc={loc}
-              variant="admin"
-              footer={
-                <div style={{ display: "grid", gap: 10 }}>
-                  <div style={styles.group}>
-                    <div style={styles.groupLabel}>
-                      {t("admin.groups.fish")}
-                    </div>
-                    <div style={styles.groupChips}>
-                      {fishChips.length ? (
-                        fishChips
-                      ) : (
-                        <span style={styles.emptyDash}>—</span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={styles.group}>
-                    <div style={styles.groupLabel}>
-                      {t("admin.groups.seasons")}
-                    </div>
-                    <div style={styles.groupChips}>
-                      {seasonChips.length ? (
-                        seasonChips
-                      ) : (
-                        <span style={styles.emptyDash}>—</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {isEditing ? (
-                    <div style={styles.editBox}>
-                      <EditLocationForm
-                        loc={loc}
-                        onSave={onSaveEdit}
-                        onCancel={onCancelEdit}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              }
+              variant="public"
+              className={`owner-list__card ${isEditing ? "owner-list__card--editing" : ""}`}
               actions={
-                <>
+                <div className="owner-list__actions">
                   {isEditing ? (
-                    <button type="button" disabled>
+                    <button type="button" disabled className="btn btn-secondary">
                       {t("ownerList.editing")}
                     </button>
                   ) : (
-                    <button onClick={() => onStartEdit(loc)} disabled={loading}>
+                    <button
+                      onClick={() => onStartEdit(loc)}
+                      disabled={loading}
+                      className="btn btn-secondary"
+                    >
                       {t("ownerList.edit")}
                     </button>
                   )}
@@ -136,79 +116,93 @@ export default function MyLocationsList({
                   <button
                     onClick={() => onToggleHidden(loc)}
                     disabled={loading}
+                    className="btn btn-secondary"
                   >
                     {loc.status === "HIDDEN"
                       ? t("ownerList.unhide")
                       : t("ownerList.hide")}
                   </button>
-                </>
+                </div>
+              }
+              titleBadge={
+                <span
+                  className={`location-card__badge owner-list__status-badge owner-list__status-badge--${statusCode.toLowerCase()}`}
+                >
+                  {t(`card.statuses.${statusCode}`, loc?.status || statusCode || "-")}
+                </span>
+              }
+              footer={
+                <div className="owner-list__footer">
+                  <div className="owner-list__group">
+                    <div className="owner-list__group-label">{t("admin.groups.fish")}</div>
+                    <div className="owner-list__group-chips">
+                      {fishChips.length ? fishChips : <span className="owner-list__empty-dash">{"\u2014"}</span>}
+                    </div>
+                  </div>
+
+                  <div className="owner-list__group">
+                    <div className="owner-list__group-label">{t("admin.groups.seasons")}</div>
+                    <div className="owner-list__group-chips">
+                      {seasonChips.length ? seasonChips : <span className="owner-list__empty-dash">{"\u2014"}</span>}
+                    </div>
+                  </div>
+
+                </div>
               }
             />
           );
         })}
       </div>
 
-      <div style={styles.pagination}>
-        <button onClick={onPrev} disabled={loading || page === 1}>
+      {editingLoc ? (
+        <div
+          className="owner-list__edit-modal-overlay"
+          onClick={onCancelEdit}
+          role="presentation"
+        >
+          <div
+            className="owner-list__edit-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("ownerList.edit")}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="owner-list__edit-modal-title">
+              {t("ownerList.edit")} - {editingLoc.title || t("card.noTitle")}
+            </div>
+
+            <div className="owner-list__edit-modal-content">
+              <EditLocationForm
+                loc={editingLoc}
+                onSave={onSaveEdit}
+                onCancel={onCancelEdit}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="pagination owner-list__pagination">
+        <button
+          onClick={onPrev}
+          disabled={loading || page === 1}
+          className="btn btn-secondary"
+        >
           {t("common.prev")}
         </button>
 
-        <div style={{ opacity: 0.8 }}>
-          {t("ownerList.pageLabel")} {page} / {totalPages} |{" "}
-          {t("ownerList.totalLabel")} {total}
+        <div className="text-muted">
+          {t("ownerList.pageLabel")} {page} {t("owner.summary.ofLabel")} {totalPages}
         </div>
 
-        <button onClick={onNext} disabled={loading || page >= totalPages}>
+        <button
+          onClick={onNext}
+          disabled={loading || page >= totalPages}
+          className="btn btn-secondary"
+        >
           {t("common.next")}
         </button>
       </div>
     </div>
   );
 }
-
-const styles = {
-  pagination: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTop: "1px solid #eee",
-  },
-  chip: {
-    fontSize: 12,
-    padding: "2px 8px",
-    border: "1px solid #eee",
-    borderRadius: 999,
-  },
-  editBox: {
-    border: "1px solid #eee",
-    borderRadius: 12,
-    padding: 12,
-    background: "#fafafa",
-  },
-  empty: { padding: 12, opacity: 0.75 },
-  error: {
-    marginTop: 12,
-    padding: 12,
-    border: "1px solid #f2b5b5",
-    background: "#fff0f0",
-    borderRadius: 12,
-  },
-
-  group: { display: "grid", gap: 6 },
-  groupLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  groupChips: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
-  emptyDash: { opacity: 0.6, fontSize: 13 },
-};

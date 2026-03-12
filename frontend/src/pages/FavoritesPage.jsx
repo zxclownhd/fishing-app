@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getErrorMessage } from "../api/getErrorMessage";
@@ -84,6 +84,14 @@ export default function FavoritesPage() {
   return (
     <div className="page favorites-page">
       <div className="container favorites-page__container">
+        <div className="favorites-page__top">
+          <div className="favorites-page__back-row">
+            <Link to="/" className="btn btn-secondary favorites-page__back-btn">
+              {t("profile.back")}
+            </Link>
+          </div>
+        </div>
+
         <header className="favorites-page__header">
           <h1 className="page-title favorites-page__title">
             {t("favoritesPage.title")}
