@@ -205,6 +205,7 @@ export default function LocationDetailsPage() {
 
   const avg = Number(location?.avgRating ?? 0);
   const reviewsCount = Number(location?.reviewsCount ?? 0);
+  const favorited = isFavorite(location.id);
   const ratingValue = reviewsCount > 0 ? avg.toFixed(1) : "\u2014";
   const sortedReviews = [...reviews].sort((a, b) => {
     if (reviewsSort === "oldest") {
@@ -234,6 +235,26 @@ export default function LocationDetailsPage() {
           <Link to="/" className="btn btn-secondary location-details-page__back-btn">
             {t("locationDetails.back")}
           </Link>
+          {canUseFavorites ? (
+            <button
+              type="button"
+              onClick={async () => {
+                setFavoriteError("");
+                const result = await toggleFavorite(location.id);
+                if (!result.ok) {
+                  setFavoriteError(t("errors.favorites.toggleFailed"));
+                }
+              }}
+              title={
+                favorited ? t("locationDetails.favRemove") : t("locationDetails.favAdd")
+              }
+              className={`btn btn-secondary location-details-page__favorite-btn ${
+                favorited ? "favorite-toggle-btn--active" : ""
+              }`}
+            >
+              {favorited ? "\u2605" : "\u2606"}
+            </button>
+          ) : null}
         </div>
 
         <section className="card location-details-page__hero">
@@ -294,26 +315,6 @@ export default function LocationDetailsPage() {
                     {location.title || t("card.noTitle")}
                   </h1>
                 </div>
-                {canUseFavorites ? (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setFavoriteError("");
-                      const result = await toggleFavorite(location.id);
-                      if (!result.ok) {
-                        setFavoriteError(t("errors.favorites.toggleFailed"));
-                      }
-                    }}
-                    title={
-                      isFavorite(location.id)
-                        ? t("locationDetails.favRemove")
-                        : t("locationDetails.favAdd")
-                    }
-                    className="btn btn-secondary location-details-page__favorite-btn"
-                  >
-                    {isFavorite(location.id) ? "\u2605" : "\u2606"}
-                  </button>
-                ) : null}
               </div>
 
               {favoriteError ? (

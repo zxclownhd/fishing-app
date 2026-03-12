@@ -190,6 +190,19 @@ a:hover {
   background: var(--color-surface-hover);
 }
 
+.favorite-toggle-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #000000;
+}
+
+.favorite-toggle-btn--active:hover,
+.favorite-toggle-btn--active:active {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  color: #000000;
+}
+
 .input,
 .select,
 .textarea {

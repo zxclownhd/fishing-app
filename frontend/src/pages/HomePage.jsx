@@ -293,38 +293,39 @@ export default function HomePage() {
           ) : null}
 
           <div className="grid home-page__results">
-            {items.map((loc) => (
-              <LocationCard
-                key={loc.id}
-                loc={loc}
-                to={`/locations/${loc.id}`}
-                variant="public"
-                actions={
-                  canUseFavorites ? (
-                    <button
-                      type="button"
-                      title={
-                        isFavorite(loc.id)
-                          ? t("favorites.remove")
-                          : t("favorites.add")
-                      }
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setFavoriteError("");
-                        const result = await toggleFavorite(loc.id);
-                        if (!result.ok) {
-                          setFavoriteError(t("errors.favorites.toggleFailed"));
-                        }
-                      }}
-                      className="btn btn-secondary home-page__favorite-btn"
-                    >
-                      {isFavorite(loc.id) ? "\u2605" : "\u2606"}
-                    </button>
-                  ) : null
-                }
-              />
-            ))}
+            {items.map((loc) => {
+              const favorited = isFavorite(loc.id);
+              return (
+                <LocationCard
+                  key={loc.id}
+                  loc={loc}
+                  to={`/locations/${loc.id}`}
+                  variant="public"
+                  actions={
+                    canUseFavorites ? (
+                      <button
+                        type="button"
+                        title={favorited ? t("favorites.remove") : t("favorites.add")}
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setFavoriteError("");
+                          const result = await toggleFavorite(loc.id);
+                          if (!result.ok) {
+                            setFavoriteError(t("errors.favorites.toggleFailed"));
+                          }
+                        }}
+                        className={`btn btn-secondary home-page__favorite-btn ${
+                          favorited ? "favorite-toggle-btn--active" : ""
+                        }`}
+                      >
+                        {favorited ? "\u2605" : "\u2606"}
+                      </button>
+                    ) : null
+                  }
+                />
+              );
+            })}
           </div>
         </section>
 

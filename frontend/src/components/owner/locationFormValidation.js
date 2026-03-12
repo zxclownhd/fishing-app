@@ -1,7 +1,7 @@
 export const LOCATION_LIMITS = {
-  title: 20,
-  contactInfo: 220,
-  description: 800,
+  title: 24,
+  contactInfo: 245,
+  description: 889,
 };
 
 export function validateLocationTextFields(values, t) {
