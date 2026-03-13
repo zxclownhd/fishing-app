@@ -29,6 +29,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   const [editContactInfo, setEditContactInfo] = useState("");
 
   const [photos, setPhotos] = useState([]);
+  const [pendingDeletedPhotoIds, setPendingDeletedPhotoIds] = useState([]);
 
   const [fishSelected, setFishSelected] = useState([]);
   const [seasonSelected, setSeasonSelected] = useState([]);
@@ -66,6 +67,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         .map((p) => ({ id: p.id, url: p.url, publicId: p.publicId }))
         .filter((p) => p.url),
     );
+    setPendingDeletedPhotoIds([]);
 
     setEditError("");
     setFieldErrors(
@@ -247,6 +249,18 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         }))
         .filter((p) => p.url && p.publicId);
 
+      if (pendingDeletedPhotoIds.length) {
+        const uniquePhotoIds = Array.from(new Set(pendingDeletedPhotoIds));
+        const deleteResults = await Promise.allSettled(
+          uniquePhotoIds.map((photoId) => http.delete(`/photos/${photoId}`)),
+        );
+        const failedDeletes = deleteResults.filter((r) => r.status === "rejected");
+        if (failedDeletes.length) {
+          setEditError(t("photos.errors.deleteFailed"));
+          return;
+        }
+      }
+
       await onSave(loc.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
@@ -262,6 +276,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       });
 
       savedRef.current = true;
+      setPendingDeletedPhotoIds([]);
       onCancel();
     } catch (err) {
       setEditError(getErrorMessage(err, t("ownerEdit.errors.updateFailed"), t));
@@ -275,14 +290,12 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
     if (!photo) return;
 
-    // optimistic UI remove (optional). safer after delete, so do after success
+    // persisted photo remove in edit mode: local-only until Save
     if (photo.id) {
-      try {
-        await http.delete(`/photos/${photo.id}`);
-        setPhotos((prev) => (prev || []).filter((p) => p.id !== photo.id));
-      } catch (e) {
-        setEditError(getErrorMessage(e, t("photos.errors.deleteFailed"), t));
-      }
+      setPendingDeletedPhotoIds((prev) =>
+        prev.includes(photo.id) ? prev : [...prev, photo.id],
+      );
+      setPhotos((prev) => (prev || []).filter((p) => p.id !== photo.id));
       return;
     }
 
@@ -303,6 +316,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
   async function cancel() {
     if (saving) return;
     await cleanupDrafts();
+    setPendingDeletedPhotoIds([]);
     onCancel();
   }
 
