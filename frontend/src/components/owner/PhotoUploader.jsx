@@ -99,14 +99,11 @@ export default function PhotoUploader({
     setUploading(true);
 
     try {
-      const uploaded = [];
-
-      for (const file of picked) {
+      const uploads = picked.map(async (file) => {
         const form = new FormData();
         form.append("file", file);
         form.append("upload_preset", uploadPreset);
 
-        // NEW: put drafts into a user-scoped folder for safe cleanup
         if (draftFolder) {
           form.append("folder", String(draftFolder));
         }
@@ -123,15 +120,36 @@ export default function PhotoUploader({
         if (!data.secure_url) throw new Error("No secure_url");
         if (!data.public_id) throw new Error("No public_id");
 
-        uploaded.push({
+        return {
           url: data.secure_url,
           publicId: data.public_id,
-        });
+        };
+      });
+
+      const settled = await Promise.allSettled(uploads);
+
+      const uploaded = settled
+        .filter((r) => r.status === "fulfilled")
+        .map((r) => r.value);
+
+      const failedCount = settled.length - uploaded.length;
+      const hadFailures = failedCount > 0;
+
+      if (!uploaded.length) {
+        setErrorText(t("photos.errors.uploadFailed"));
+        return;
       }
 
       const next = uniqByUrl([...(photos || []), ...uploaded]).slice(0, max);
       onChange(next);
-      setErrorText("");
+
+      if (hadFailures) {
+        setErrorText(
+          `${t("photos.errors.uploadFailed")} (${failedCount}/${picked.length})`,
+        );
+      } else {
+        setErrorText("");
+      }
     } catch (e) {
       console.error(e);
       setErrorText(t("photos.errors.uploadFailed"));
@@ -140,10 +158,13 @@ export default function PhotoUploader({
     }
   }
 
-  function onPick(e) {
+  async function onPick(e) {
     const files = e.target.files;
-    if (files?.length) upload(files);
-    e.target.value = "";
+    try {
+      if (files?.length) await upload(files);
+    } finally {
+      e.target.value = "";
+    }
   }
 
   function onDrop(e) {

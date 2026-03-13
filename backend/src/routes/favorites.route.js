@@ -74,7 +74,10 @@ router.get(
         include: {
           location: {
             include: {
-              photos: { take: 1, orderBy: { createdAt: "desc" } },
+              photos: {
+                take: 1,
+                orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              },
             },
           },
         },

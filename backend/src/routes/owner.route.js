@@ -82,7 +82,10 @@ router.get(
         take: limit,
         include: {
           owner: { select: { id: true, displayName: true, email: true } },
-          photos: { select: { id: true, url: true, createdAt: true } },
+          photos: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: { id: true, url: true, createdAt: true },
+          },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
         },
@@ -105,7 +108,10 @@ router.get(
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: { select: { id: true, url: true, createdAt: true } },
+        photos: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: { id: true, url: true, createdAt: true },
+        },
       },
     });
 
@@ -324,7 +330,10 @@ router.patch(
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
-          photos: { select: { id: true, url: true, createdAt: true } },
+          photos: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: { id: true, url: true, createdAt: true },
+          },
         },
       });
     });
@@ -356,7 +365,10 @@ router.post(
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
-          photos: { select: { id: true, url: true, createdAt: true } },
+          photos: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: { id: true, url: true, createdAt: true },
+          },
         },
       });
 
@@ -393,7 +405,10 @@ router.post(
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
-          photos: { select: { id: true, url: true, createdAt: true } },
+          photos: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: { id: true, url: true, createdAt: true },
+          },
         },
       });
 

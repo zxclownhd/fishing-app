@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { toCompactFishChipLabel } from "../utils/fishChipLabel";
 import { useI18n } from "../client/i18n/I18nContext";
 import { displayFishName } from "../client/i18n/displayName";
 import "./LocationCard.css";
@@ -304,26 +305,6 @@ function extractSeasonCodes(seasons) {
     .map((x) => String(x || "").trim())
     .filter(Boolean);
   return [...new Set(codes)];
-}
-
-function toCompactFishChipLabel(label) {
-  const raw = String(label || "").trim();
-  if (!raw) return "";
-
-  const parts = raw.split(/\s+/).filter(Boolean);
-  if (!parts.length) return raw;
-  if (parts.length === 1) return parts[0];
-
-  // Cyrillic fish labels read naturally with the first word; Latin labels with the last.
-  const hasCyrillic = /[\u0400-\u04FF\u0500-\u052F]/.test(raw);
-  const compact = hasCyrillic ? parts[0] : parts[parts.length - 1];
-  return capitalizeFirstLetter(compact);
-}
-
-function capitalizeFirstLetter(value) {
-  const text = String(value || "");
-  if (!text) return "";
-  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
 
 function PublicDescription({ text, label, emptyText }) {

@@ -159,7 +159,10 @@ router.get(
           owner: { select: { id: true, displayName: true } },
           fish: { include: { fish: true } },
           seasons: { include: { season: true } },
-          photos: { take: 1, orderBy: { createdAt: "desc" } },
+          photos: {
+            take: 1,
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          },
           _count: { select: { reviews: true } },
         },
       });
@@ -198,7 +201,10 @@ router.get(
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: { take: 1, orderBy: { createdAt: "desc" } },
+        photos: {
+          take: 1,
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        },
         _count: { select: { reviews: true } },
       },
       orderBy: { [orderField]: sortOrder },
@@ -372,7 +378,9 @@ router.post(
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: true,
+        photos: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        },
       },
     });
 
@@ -485,7 +493,9 @@ router.get(
         owner: { select: { id: true, displayName: true } },
         fish: { include: { fish: true } },
         seasons: { include: { season: true } },
-        photos: true,
+        photos: {
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        },
         _count: { select: { reviews: true } },
       },
     });

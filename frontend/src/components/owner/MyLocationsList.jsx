@@ -3,6 +3,7 @@ import LocationCard from "../LocationCard";
 import EditLocationForm from "./EditLocationForm";
 import { useI18n } from "../../client/i18n/I18nContext";
 import { displayFishName } from "../../client/i18n/displayName";
+import { toCompactFishChipLabel } from "../../utils/fishChipLabel";
 import "./MyLocationsList.css";
 
 export default function MyLocationsList({
@@ -65,14 +66,25 @@ export default function MyLocationsList({
         {items.map((loc) => {
           const isEditing = editingId === loc.id;
           const statusCode = String(loc?.status || "").toUpperCase();
-          const fishChips = (loc.fish || []).slice(0, 8).map((x, idx) => {
+          const fishItems = (loc.fish || []).map((x) => {
             const rawName = typeof x === "string" ? x : (x?.fish?.name || x?.name || "");
+            const fullLabel = displayFishName(rawName, locale) || t("admin.unknown");
+            return {
+              fullLabel,
+              compactLabel: toCompactFishChipLabel(fullLabel),
+            };
+          });
+          const visibleFish = fishItems.slice(0, 3);
+          const hiddenFishCount = Math.max(0, fishItems.length - visibleFish.length);
+
+          const fishChips = visibleFish.map((item, idx) => {
             return (
               <span
-                key={x?.fishId ? `${loc.id}-fish-${x.fishId}` : `${loc.id}-fish-${idx}`}
+                key={`${loc.id}-fish-${idx}-${item.fullLabel}`}
                 className="owner-list__chip"
+                title={item.fullLabel}
               >
-                {displayFishName(rawName, locale) || t("admin.unknown")}
+                {item.compactLabel || item.fullLabel}
               </span>
             );
           });
@@ -97,6 +109,7 @@ export default function MyLocationsList({
               loc={loc}
               variant="public"
               className={`owner-list__card ${isEditing ? "owner-list__card--editing" : ""}`}
+              compactFishLabelMode="locale-smart"
               actions={
                 <div className="owner-list__actions">
                   {isEditing ? (
@@ -137,6 +150,9 @@ export default function MyLocationsList({
                     <div className="owner-list__group-label">{t("admin.groups.fish")}</div>
                     <div className="owner-list__group-chips">
                       {fishChips.length ? fishChips : <span className="owner-list__empty-dash">{"\u2014"}</span>}
+                      {hiddenFishCount > 0 ? (
+                        <span className="owner-list__chip">+{hiddenFishCount}</span>
+                      ) : null}
                     </div>
                   </div>
 
