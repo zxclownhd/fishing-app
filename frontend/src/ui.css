@@ -282,6 +282,50 @@ a:hover {
   line-height: 1;
 }
 
+.owner-location-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.owner-location-form__chip {
+  justify-content: flex-start;
+  max-width: 100%;
+  padding-right: 6px;
+}
+
+.owner-location-form__chip-label {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owner-location-form__chip-remove {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.owner-location-form__chip-remove:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.owner-location-form__chip-remove:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
 .grid {
   display: grid;
   gap: var(--space-5);

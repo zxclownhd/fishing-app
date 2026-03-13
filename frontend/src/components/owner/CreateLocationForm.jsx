@@ -3,6 +3,7 @@ import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
 import { useI18n } from "../../client/i18n/I18nContext";
+import { displayFishName } from "../../client/i18n/displayName";
 
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
@@ -18,7 +19,7 @@ import {
 export default function CreateLocationForm({ onCreate, onCancel }) {
   const user = getStoredUser();
   const draftFolder = user ? `drafts/${user.id}` : undefined;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -172,6 +173,22 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     if (typeof onCancel === "function") onCancel();
   }
 
+  function handleFishChange(next) {
+    setFishSelected(uniqueValues(next));
+  }
+
+  function handleSeasonChange(next) {
+    setSeasonSelected(uniqueValues(next));
+  }
+
+  function handleRemoveFishType(name) {
+    setFishSelected((prev) => (prev || []).filter((x) => x !== name));
+  }
+
+  function handleRemoveSeason(code) {
+    setSeasonSelected((prev) => (prev || []).filter((x) => x !== code));
+  }
+
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
       <div style={fieldBlock}>
@@ -300,12 +317,53 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.fish")}</div>
-        <FishPicker value={fishSelected} onChange={setFishSelected} />
+        <FishPicker value={fishSelected} onChange={handleFishChange} />
+        {fishSelected.length ? (
+          <div className="owner-location-form__chips">
+            {fishSelected.map((name) => (
+              <span key={`selected-fish-${name}`} className="chip owner-location-form__chip">
+                <span className="owner-location-form__chip-label">
+                  {displayFishName(name, locale)}
+                </span>
+                <button
+                  type="button"
+                  className="owner-location-form__chip-remove"
+                  onClick={() => handleRemoveFishType(name)}
+                  title={t("home.removeFilterTitle")}
+                  aria-label={`${t("home.removeFilterTitle")}: ${displayFishName(name, locale)}`}
+                >
+                  {"\u2715"}
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.seasons")}</div>
-        <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+        <SeasonPicker value={seasonSelected} onChange={handleSeasonChange} />
+        {seasonSelected.length ? (
+          <div className="owner-location-form__chips">
+            {seasonSelected.map((code) => {
+              const label = t(`seasons.${String(code).toUpperCase()}`, code);
+              return (
+                <span key={`selected-season-${code}`} className="chip owner-location-form__chip">
+                  <span className="owner-location-form__chip-label">{label}</span>
+                  <button
+                    type="button"
+                    className="owner-location-form__chip-remove"
+                    onClick={() => handleRemoveSeason(code)}
+                    title={t("home.removeFilterTitle")}
+                    aria-label={`${t("home.removeFilterTitle")}: ${label}`}
+                  >
+                    {"\u2715"}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
@@ -379,4 +437,8 @@ function autoResizeTextarea(node) {
   if (!node) return;
   node.style.height = "auto";
   node.style.height = `${node.scrollHeight}px`;
+}
+
+function uniqueValues(items) {
+  return Array.from(new Set((items || []).filter(Boolean)));
 }

@@ -8,6 +8,7 @@ import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
 import { useI18n } from "../../client/i18n/I18nContext";
+import { displayFishName } from "../../client/i18n/displayName";
 import {
   LOCATION_LIMITS,
   validateLocationTextFields,
@@ -17,7 +18,7 @@ import {
 export default function EditLocationForm({ loc, onSave, onCancel }) {
   const user = getStoredUser();
   const draftFolder = user ? `drafts/${user.id}` : undefined;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [editDescription, setEditDescription] = useState("");
   const [editLat, setEditLat] = useState("");
@@ -49,10 +50,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     savedRef.current = false;
 
     setEditDescription(loc.description || "");
-    setFishSelected((loc.fish || []).map((x) => x.fish?.name).filter(Boolean));
-    setSeasonSelected(
+    setFishSelected(uniqueValues((loc.fish || []).map((x) => x.fish?.name).filter(Boolean)));
+    setSeasonSelected(uniqueValues(
       (loc.seasons || []).map((x) => x.season?.code).filter(Boolean),
-    );
+    ));
     setEditContactInfo(loc.contactInfo || "");
     setEditLat(String(loc.lat ?? ""));
     setEditLng(String(loc.lng ?? ""));
@@ -305,6 +306,22 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
     onCancel();
   }
 
+  function handleFishChange(next) {
+    setFishSelected(uniqueValues(next));
+  }
+
+  function handleSeasonChange(next) {
+    setSeasonSelected(uniqueValues(next));
+  }
+
+  function handleRemoveFishType(name) {
+    setFishSelected((prev) => (prev || []).filter((x) => x !== name));
+  }
+
+  function handleRemoveSeason(code) {
+    setSeasonSelected((prev) => (prev || []).filter((x) => x !== code));
+  }
+
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
       <div style={fieldBlock}>
@@ -457,12 +474,53 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.fish")}</div>
-        <FishPicker value={fishSelected} onChange={setFishSelected} />
+        <FishPicker value={fishSelected} onChange={handleFishChange} />
+        {fishSelected.length ? (
+          <div className="owner-location-form__chips">
+            {fishSelected.map((name) => (
+              <span key={`selected-fish-${name}`} className="chip owner-location-form__chip">
+                <span className="owner-location-form__chip-label">
+                  {displayFishName(name, locale)}
+                </span>
+                <button
+                  type="button"
+                  className="owner-location-form__chip-remove"
+                  onClick={() => handleRemoveFishType(name)}
+                  title={t("home.removeFilterTitle")}
+                  aria-label={`${t("home.removeFilterTitle")}: ${displayFishName(name, locale)}`}
+                >
+                  {"\u2715"}
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.seasons")}</div>
-        <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+        <SeasonPicker value={seasonSelected} onChange={handleSeasonChange} />
+        {seasonSelected.length ? (
+          <div className="owner-location-form__chips">
+            {seasonSelected.map((code) => {
+              const label = t(`seasons.${String(code).toUpperCase()}`, code);
+              return (
+                <span key={`selected-season-${code}`} className="chip owner-location-form__chip">
+                  <span className="owner-location-form__chip-label">{label}</span>
+                  <button
+                    type="button"
+                    className="owner-location-form__chip-remove"
+                    onClick={() => handleRemoveSeason(code)}
+                    title={t("home.removeFilterTitle")}
+                    aria-label={`${t("home.removeFilterTitle")}: ${label}`}
+                  >
+                    {"\u2715"}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
@@ -545,4 +603,8 @@ function autoResizeTextarea(node) {
   if (!node) return;
   node.style.height = "auto";
   node.style.height = `${node.scrollHeight}px`;
+}
+
+function uniqueValues(items) {
+  return Array.from(new Set((items || []).filter(Boolean)));
 }
