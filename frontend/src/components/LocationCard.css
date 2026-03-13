@@ -68,8 +68,8 @@
   min-height: 22px;
   padding: 0 8px;
   border-radius: var(--radius-pill);
-  background: rgba(0, 0, 0, 0.62);
-  color: #fff;
+  background: var(--color-image-overlay);
+  color: var(--color-on-primary);
   font-size: 12px;
   font-weight: 600;
   line-height: 1;

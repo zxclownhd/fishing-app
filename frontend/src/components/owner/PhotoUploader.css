@@ -4,10 +4,10 @@
 }
 
 .photo-uploader__dropzone {
-  border: 1px dashed #bbb;
+  border: 1px dashed var(--color-border-soft);
   border-radius: 12px;
   padding: 12px;
-  background: #fafafa;
+  background: var(--color-surface-muted);
   display: block;
 }
 
@@ -47,7 +47,7 @@
 }
 
 .photo-uploader__error {
-  color: crimson;
+  color: var(--color-error);
   font-size: 13px;
 }
 
@@ -62,9 +62,9 @@
   grid-template-columns: 1fr;
   gap: 8px;
   align-items: stretch;
-  border: 1px solid #e6e6e6;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 12px;
-  background: #fff;
+  background: var(--color-surface);
   padding: 8px;
 }
 
@@ -77,7 +77,7 @@
   position: relative;
   border-radius: 10px;
   overflow: hidden;
-  background: #f3f3f3;
+  background: var(--color-surface-muted-strong);
   width: 100%;
   aspect-ratio: 4 / 3;
 }
@@ -97,8 +97,8 @@
   font-weight: 600;
   padding: 3px 6px;
   border-radius: 999px;
-  background: rgba(19, 119, 75, 0.9);
-  color: #fff;
+  background: var(--color-success-overlay);
+  color: var(--color-on-primary);
 }
 
 .photo-uploader__status {
@@ -109,15 +109,15 @@
   font-weight: 600;
   padding: 3px 6px;
   border-radius: 8px;
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .photo-uploader__status--uploading {
-  background: rgba(33, 97, 157, 0.9);
+  background: var(--color-info-overlay);
 }
 
 .photo-uploader__status--failed {
-  background: rgba(165, 39, 58, 0.9);
+  background: var(--color-error-overlay);
 }
 
 .photo-uploader__meta {
@@ -160,15 +160,15 @@
 
 .photo-uploader__reorder-btn:disabled {
   opacity: 0.45;
-  color: #9ca3af;
-  border-color: #e2e8f0;
-  background: #f8fafc;
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+  background: var(--color-surface-soft);
   cursor: not-allowed;
 }
 
 .photo-uploader__filename {
   font-size: 12px;
-  color: #444;
+  color: var(--color-text-muted-strong);
   opacity: 0.85;
   overflow: hidden;
   text-overflow: ellipsis;

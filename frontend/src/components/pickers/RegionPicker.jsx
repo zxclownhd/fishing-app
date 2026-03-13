@@ -113,14 +113,16 @@ export default function RegionPicker({ value, onChange, placeholder }) {
 const input = {
   padding: 10,
   borderRadius: 8,
-  border: "1px solid #ddd",
+  border: "1px solid var(--color-border-soft)",
+  background: "var(--color-surface)",
+  color: "var(--color-text)",
   width: "100%",
 };
 const dropdown = {
   position: "absolute",
   zIndex: 10,
-  background: "white",
-  border: "1px solid #ddd",
+  background: "var(--color-surface)",
+  border: "1px solid var(--color-border-soft)",
   width: "100%",
   marginTop: 4,
   borderRadius: 8,

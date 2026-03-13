@@ -253,11 +253,34 @@ export default function LocationCard({
 
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
-  if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
-  if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
-  return { background: "#EEEEEE", borderColor: "#CFCFCF" };
+  if (s === "PENDING") {
+    return {
+      background: "var(--color-status-pending-bg)",
+      borderColor: "var(--color-status-pending-border)",
+    };
+  }
+  if (s === "APPROVED") {
+    return {
+      background: "var(--color-status-approved-bg)",
+      borderColor: "var(--color-status-approved-border)",
+    };
+  }
+  if (s === "REJECTED") {
+    return {
+      background: "var(--color-status-rejected-bg)",
+      borderColor: "var(--color-status-rejected-border)",
+    };
+  }
+  if (s === "HIDDEN") {
+    return {
+      background: "var(--color-status-hidden-bg)",
+      borderColor: "var(--color-status-hidden-border)",
+    };
+  }
+  return {
+    background: "var(--color-status-hidden-bg)",
+    borderColor: "var(--color-status-hidden-border)",
+  };
 }
 
 function CompactRow({ label, items, hiddenCount }) {

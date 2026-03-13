@@ -398,7 +398,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
           placeholder={t("locationForm.titlePlaceholder")}
           style={{
             ...input,
-            borderColor: fieldErrors.title ? "var(--color-error)" : "#ddd",
+            borderColor: fieldErrors.title ? "var(--color-error)" : "var(--color-border-soft)",
           }}
         />
       </div>
@@ -420,7 +420,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
           placeholder={t("locationForm.descriptionPlaceholder")}
           style={{
             ...textareaInput,
-            borderColor: fieldErrors.description ? "var(--color-error)" : "#ddd",
+            borderColor: fieldErrors.description ? "var(--color-error)" : "var(--color-border-soft)",
           }}
         />
       </div>
@@ -442,7 +442,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
           rows={2}
           style={{
             ...textareaInput,
-            borderColor: fieldErrors.contactInfo ? "var(--color-error)" : "#ddd",
+            borderColor: fieldErrors.contactInfo ? "var(--color-error)" : "var(--color-border-soft)",
           }}
         />
       </div>
@@ -498,7 +498,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
             style={{
               ...displayField,
               flex: 1,
-              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "#ddd",
+              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "var(--color-border-soft)",
             }}
           >
             {editLat || t("locationForm.latPlaceholder")}
@@ -507,7 +507,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
             style={{
               ...displayField,
               flex: 1,
-              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "#ddd",
+              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "var(--color-border-soft)",
             }}
           >
             {editLng || t("locationForm.lngPlaceholder")}
@@ -617,7 +617,7 @@ function FieldError({ msg }) {
   return <div className="error-text register-page__field-error">{msg}</div>;
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
+const input = { padding: 10, borderRadius: 8, border: "1px solid var(--color-border-soft)" };
 const displayField = {
   ...input,
   color: "var(--color-text)",
@@ -689,3 +689,4 @@ function getPhotosError(photoCount, t) {
   if (photoCount > 6) return t("locationForm.errors.maxPhotos");
   return "";
 }
+

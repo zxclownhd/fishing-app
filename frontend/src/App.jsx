@@ -17,6 +17,12 @@ import { clearAuth, getStoredUser } from "./auth/auth";
 export default function App() {
   const nav = useNavigate();
   const [user, setUser] = useState(getStoredUser());
+  const [theme, setTheme] = useState(() => {
+    if (typeof document === "undefined") return "light";
+    return document.documentElement.getAttribute("data-theme") === "dark"
+      ? "dark"
+      : "light";
+  });
 
   const { locale, setLocale, t } = useI18n();
 
@@ -33,6 +39,14 @@ export default function App() {
     window.addEventListener("authChanged", onAuthChanged);
     return () => window.removeEventListener("authChanged", onAuthChanged);
   }, []);
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+      return;
+    }
+    document.documentElement.removeAttribute("data-theme");
+  }, [theme]);
 
   function logout() {
     clearAuth();
@@ -125,6 +139,35 @@ export default function App() {
             </button>
           </div>
 
+          <div
+            className="app-nav__theme-toggle"
+            role="group"
+            aria-label={t("nav.theme", "Theme")}
+          >
+            <button
+              type="button"
+              className={`app-nav__theme-button${
+                theme === "light" ? " app-nav__theme-button--active" : ""
+              }`}
+              onClick={() => setTheme("light")}
+              aria-pressed={theme === "light"}
+              title={t("nav.themeLight", "Light theme")}
+            >
+              L
+            </button>
+            <button
+              type="button"
+              className={`app-nav__theme-button${
+                theme === "dark" ? " app-nav__theme-button--active" : ""
+              }`}
+              onClick={() => setTheme("dark")}
+              aria-pressed={theme === "dark"}
+              title={t("nav.themeDark", "Dark theme")}
+            >
+              D
+            </button>
+          </div>
+
           {user ? (
             <>
               <span className="app-nav__user-name">{userLabel}</span>
@@ -173,3 +216,4 @@ export default function App() {
     </div>
   );
 }
+

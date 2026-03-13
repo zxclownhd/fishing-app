@@ -67,8 +67,8 @@
 .owner-page__error {
   margin-top: var(--space-1);
   padding: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-border));
-  background: color-mix(in srgb, var(--color-error) 9%, var(--color-surface));
+  border: 1px solid var(--color-error-border-soft);
+  background: var(--color-error-bg-soft);
   border-radius: var(--radius-md);
 }
 
@@ -76,7 +76,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background-color: rgba(15, 23, 42, 0.35);
+  background-color: var(--color-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -120,3 +120,4 @@
     justify-content: flex-start;
   }
 }
+
