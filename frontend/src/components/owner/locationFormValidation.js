@@ -60,3 +60,14 @@ export function validateLocationTextFields(values, t) {
 export function hasLocationTextFieldErrors(errors) {
   return Boolean(errors.title || errors.description || errors.contactInfo);
 }
+
+export function hasLocationFieldErrors(errors) {
+  return Boolean(
+    errors?.title ||
+      errors?.description ||
+      errors?.contactInfo ||
+      errors?.region ||
+      errors?.coordinates ||
+      errors?.photos,
+  );
+}

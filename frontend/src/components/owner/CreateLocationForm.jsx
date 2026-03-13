@@ -3,6 +3,7 @@ import { http } from "../../api/http";
 import { getStoredUser } from "../../auth/auth";
 import { getErrorMessage } from "../../api/getErrorMessage";
 import { useI18n } from "../../client/i18n/I18nContext";
+import { displayFishName } from "../../client/i18n/displayName";
 
 import RegionPicker from "../pickers/RegionPicker";
 import FishPicker from "../pickers/FishPicker";
@@ -12,13 +13,22 @@ import LocationPickerMap from "./LocationPickerMap";
 import {
   LOCATION_LIMITS,
   validateLocationTextFields,
-  hasLocationTextFieldErrors,
+  hasLocationFieldErrors,
 } from "./locationFormValidation";
+
+const emptyFieldErrors = {
+  title: "",
+  description: "",
+  contactInfo: "",
+  region: "",
+  coordinates: "",
+  photos: "",
+};
 
 export default function CreateLocationForm({ onCreate, onCancel }) {
   const user = getStoredUser();
   const draftFolder = user ? `drafts/${user.id}` : undefined;
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -37,11 +47,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({
-    title: "",
-    description: "",
-    contactInfo: "",
-  });
+  const [fieldErrors, setFieldErrors] = useState(emptyFieldErrors);
 
   const createdRef = useRef(false);
   const descriptionRef = useRef(null);
@@ -85,59 +91,28 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     setCreateError("");
 
     try {
-      const nextFieldErrors = validateLocationTextFields(
-        { title, description, contactInfo },
-        t,
-      );
-      setFieldErrors(nextFieldErrors);
-      if (hasLocationTextFieldErrors(nextFieldErrors)) {
-        return;
-      }
-
+      const regionCode = String(regionSelected || "").trim();
       const latStr = String(lat).trim();
       const lngStr = String(lng).trim();
-      if (!latStr || !lngStr) {
-        setCreateError(t("locationForm.errors.coordsRequired"));
-        return;
-      }
+      const normalizedPhotos = normalizePhotos(photos);
 
-      const latNum = Number(latStr);
-      const lngNum = Number(lngStr);
+      const nextFieldErrors = {
+        ...validateLocationTextFields({ title, description, contactInfo }, t),
+        region: regionCode ? "" : t("locationForm.errors.regionRequired"),
+        coordinates: getCoordinatesError(latStr, lngStr, t),
+        photos: getPhotosError(normalizedPhotos.length, t),
+      };
 
-      if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-        setCreateError(t("locationForm.errors.coordsInvalid"));
-        return;
-      }
-      if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
-        setCreateError(t("locationForm.errors.coordsRange"));
-        return;
-      }
-
-      const normalizedPhotos = Array.isArray(photos)
-        ? photos
-            .map((p) => ({
-              url: p?.url ? String(p.url).trim() : "",
-              publicId: p?.publicId ? String(p.publicId).trim() : "",
-            }))
-            .filter((p) => p.url && p.publicId)
-        : [];
-
-      if (normalizedPhotos.length < 1) {
-        setCreateError(t("locationForm.errors.minPhotos"));
-        return;
-      }
-      if (normalizedPhotos.length > 5) {
-        setCreateError(t("locationForm.errors.maxPhotos"));
-        return;
-      }
+      setFieldErrors(nextFieldErrors);
+      if (hasLocationFieldErrors(nextFieldErrors)) return;
 
       await onCreate({
         title: title.trim(),
         description: description.trim(),
-        region: regionSelected,
+        region: regionCode,
         waterType,
-        lat: latNum,
-        lng: lngNum,
+        lat: Number(latStr),
+        lng: Number(lngStr),
         fishNames: fishSelected,
         seasonCodes: seasonSelected,
         contactInfo: contactInfo.trim() || undefined,
@@ -158,6 +133,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       setSeasonSelected([]);
       setContactInfo("");
       setPhotos([]);
+      setFieldErrors(emptyFieldErrors);
     } catch (err) {
       setCreateError(getErrorMessage(err, t("ownerCreate.errors.createFailed"), t));
     } finally {
@@ -172,6 +148,80 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
     if (typeof onCancel === "function") onCancel();
   }
 
+  function handleRegionChange(next) {
+    const nextRegion = String(next || "").trim();
+    setRegionSelected(next);
+    setFieldErrors((prev) => ({
+      ...prev,
+      region: prev.region ? (nextRegion ? "" : t("locationForm.errors.regionRequired")) : "",
+    }));
+  }
+
+  function handleCoordinatesSelect(nextLat, nextLng) {
+    const latValue = String(nextLat);
+    const lngValue = String(nextLng);
+
+    setLat(latValue);
+    setLng(lngValue);
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      coordinates: prev.coordinates
+        ? getCoordinatesError(latValue.trim(), lngValue.trim(), t)
+        : "",
+    }));
+  }
+
+  function handlePhotosChange(nextPhotos) {
+    setPhotos(nextPhotos);
+    setFieldErrors((prev) => ({
+      ...prev,
+      photos: prev.photos ? getPhotosError(normalizePhotos(nextPhotos).length, t) : "",
+    }));
+  }
+
+  function handleTitleChange(next) {
+    setTitle(next);
+    setFieldErrors((prev) => ({
+      ...prev,
+      ...validateLocationTextFields({ title: next, description, contactInfo }, t),
+    }));
+  }
+
+  function handleDescriptionChange(target, next) {
+    setDescription(next);
+    autoResizeTextarea(target);
+    setFieldErrors((prev) => ({
+      ...prev,
+      ...validateLocationTextFields({ title, description: next, contactInfo }, t),
+    }));
+  }
+
+  function handleContactInfoChange(target, next) {
+    setContactInfo(next);
+    autoResizeTextarea(target);
+    setFieldErrors((prev) => ({
+      ...prev,
+      ...validateLocationTextFields({ title, description, contactInfo: next }, t),
+    }));
+  }
+
+  function handleFishChange(next) {
+    setFishSelected(uniqueValues(next));
+  }
+
+  function handleSeasonChange(next) {
+    setSeasonSelected(uniqueValues(next));
+  }
+
+  function handleRemoveFishType(name) {
+    setFishSelected((prev) => (prev || []).filter((x) => x !== name));
+  }
+
+  function handleRemoveSeason(code) {
+    setSeasonSelected((prev) => (prev || []).filter((x) => x !== code));
+  }
+
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 8 }}>
       <div style={fieldBlock}>
@@ -180,18 +230,15 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           placeholder={t("locationForm.titlePlaceholder")}
           value={title}
           maxLength={LOCATION_LIMITS.title}
-          onChange={(e) => {
-            const next = e.target.value;
-            setTitle(next);
-            setFieldErrors(
-              validateLocationTextFields({ title: next, description, contactInfo }, t),
-            );
+          onChange={(e) => handleTitleChange(e.target.value)}
+          style={{
+            ...input,
+            borderColor: fieldErrors.title ? "var(--color-error)" : "var(--color-border-soft)",
           }}
-          style={input}
         />
       </div>
       <div style={fieldMetaRow}>
-        <div style={fieldErrorText}>{fieldErrors.title || ""}</div>
+        <div className="error-text register-page__field-error">{fieldErrors.title || ""}</div>
         <div style={fieldCounterText}>
           {title.length}/{LOCATION_LIMITS.title}
         </div>
@@ -204,20 +251,16 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           placeholder={t("locationForm.descriptionPlaceholder")}
           value={description}
           maxLength={LOCATION_LIMITS.description}
-          onChange={(e) => {
-            const next = e.target.value;
-            setDescription(next);
-            autoResizeTextarea(e.target);
-            setFieldErrors(
-              validateLocationTextFields({ title, description: next, contactInfo }, t),
-            );
-          }}
+          onChange={(e) => handleDescriptionChange(e.target, e.target.value)}
           rows={3}
-          style={textareaInput}
+          style={{
+            ...textareaInput,
+            borderColor: fieldErrors.description ? "var(--color-error)" : "var(--color-border-soft)",
+          }}
         />
       </div>
       <div style={fieldMetaRow}>
-        <div style={fieldErrorText}>{fieldErrors.description || ""}</div>
+        <div className="error-text register-page__field-error">{fieldErrors.description || ""}</div>
         <div style={fieldCounterText}>
           {description.length}/{LOCATION_LIMITS.description}
         </div>
@@ -230,20 +273,16 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           placeholder={t("locationForm.contactsPlaceholderFull")}
           value={contactInfo}
           maxLength={LOCATION_LIMITS.contactInfo}
-          onChange={(e) => {
-            const next = e.target.value;
-            setContactInfo(next);
-            autoResizeTextarea(e.target);
-            setFieldErrors(
-              validateLocationTextFields({ title, description, contactInfo: next }, t),
-            );
-          }}
+          onChange={(e) => handleContactInfoChange(e.target, e.target.value)}
           rows={2}
-          style={textareaInput}
+          style={{
+            ...textareaInput,
+            borderColor: fieldErrors.contactInfo ? "var(--color-error)" : "var(--color-border-soft)",
+          }}
         />
       </div>
       <div style={fieldMetaRow}>
-        <div style={fieldErrorText}>{fieldErrors.contactInfo || ""}</div>
+        <div className="error-text register-page__field-error">{fieldErrors.contactInfo || ""}</div>
         <div style={fieldCounterText}>
           {contactInfo.length}/{LOCATION_LIMITS.contactInfo}
         </div>
@@ -251,7 +290,8 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.region")}</div>
-        <RegionPicker value={regionSelected} onChange={setRegionSelected} />
+        <RegionPicker value={regionSelected} onChange={handleRegionChange} />
+        <FieldError msg={fieldErrors.region} />
       </div>
 
       <div style={fieldBlock}>
@@ -282,40 +322,93 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         <LocationPickerMap
           lat={lat}
           lng={lng}
-          onSelect={(nextLat, nextLng) => {
-            setLat(String(nextLat));
-            setLng(String(nextLng));
-          }}
+          onSelect={handleCoordinatesSelect}
         />
 
         <div style={{ display: "flex", gap: 10 }}>
-          <div style={{ ...displayField, flex: 1 }}>
+          <div
+            style={{
+              ...displayField,
+              flex: 1,
+              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "var(--color-border-soft)",
+            }}
+          >
             {lat || t("locationForm.latPlaceholder")}
           </div>
-          <div style={{ ...displayField, flex: 1 }}>
+          <div
+            style={{
+              ...displayField,
+              flex: 1,
+              borderColor: fieldErrors.coordinates ? "var(--color-error)" : "var(--color-border-soft)",
+            }}
+          >
             {lng || t("locationForm.lngPlaceholder")}
           </div>
         </div>
+        <FieldError msg={fieldErrors.coordinates} />
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.fish")}</div>
-        <FishPicker value={fishSelected} onChange={setFishSelected} />
+        <FishPicker value={fishSelected} onChange={handleFishChange} />
+        {fishSelected.length ? (
+          <div className="owner-location-form__chips">
+            {fishSelected.map((name) => (
+              <span key={`selected-fish-${name}`} className="chip owner-location-form__chip">
+                <span className="owner-location-form__chip-label">
+                  {displayFishName(name, locale)}
+                </span>
+                <button
+                  type="button"
+                  className="owner-location-form__chip-remove"
+                  onClick={() => handleRemoveFishType(name)}
+                  title={t("home.removeFilterTitle")}
+                  aria-label={`${t("home.removeFilterTitle")}: ${displayFishName(name, locale)}`}
+                >
+                  {"\u2715"}
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.seasons")}</div>
-        <SeasonPicker value={seasonSelected} onChange={setSeasonSelected} />
+        <SeasonPicker value={seasonSelected} onChange={handleSeasonChange} />
+        {seasonSelected.length ? (
+          <div className="owner-location-form__chips">
+            {seasonSelected.map((code) => {
+              const label = t(`seasons.${String(code).toUpperCase()}`, code);
+              return (
+                <span key={`selected-season-${code}`} className="chip owner-location-form__chip">
+                  <span className="owner-location-form__chip-label">{label}</span>
+                  <button
+                    type="button"
+                    className="owner-location-form__chip-remove"
+                    onClick={() => handleRemoveSeason(code)}
+                    title={t("home.removeFilterTitle")}
+                    aria-label={`${t("home.removeFilterTitle")}: ${label}`}
+                  >
+                    {"\u2715"}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.photos")}</div>
         <PhotoUploader
           photos={photos}
-          onChange={setPhotos}
-          max={5}
+          onChange={handlePhotosChange}
+          max={6}
           draftFolder={draftFolder}
+          previewHintStyle={fieldLabel}
         />
+        <FieldError msg={fieldErrors.photos} />
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -336,13 +429,18 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       </div>
 
       {createError ? (
-        <div style={{ color: "crimson" }}>{createError}</div>
+        <div className="error-text">{createError}</div>
       ) : null}
     </form>
   );
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid #ddd" };
+function FieldError({ msg }) {
+  if (!msg) return null;
+  return <div className="error-text register-page__field-error">{msg}</div>;
+}
+
+const input = { padding: 10, borderRadius: 8, border: "1px solid var(--color-border-soft)" };
 const textareaInput = {
   ...input,
   resize: "none",
@@ -370,9 +468,8 @@ const fieldMetaRow = {
   alignItems: "center",
   justifyContent: "space-between",
   gap: 8,
-  minHeight: 16,
+  minHeight: 20,
 };
-const fieldErrorText = { color: "crimson", fontSize: 12, lineHeight: 1.2 };
 const fieldCounterText = { fontSize: 12, opacity: 0.7 };
 
 function autoResizeTextarea(node) {
@@ -380,3 +477,42 @@ function autoResizeTextarea(node) {
   node.style.height = "auto";
   node.style.height = `${node.scrollHeight}px`;
 }
+
+function uniqueValues(items) {
+  return Array.from(new Set((items || []).filter(Boolean)));
+}
+
+function getCoordinatesError(latStr, lngStr, t) {
+  if (!latStr || !lngStr) {
+    return t("locationForm.errors.coordsRequired");
+  }
+
+  const latNum = Number(latStr);
+  const lngNum = Number(lngStr);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+    return t("locationForm.errors.coordsInvalid");
+  }
+  if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+    return t("locationForm.errors.coordsRange");
+  }
+
+  return "";
+}
+
+function getPhotosError(photoCount, t) {
+  if (photoCount < 1) return t("locationForm.errors.minPhotos");
+  if (photoCount > 6) return t("locationForm.errors.maxPhotos");
+  return "";
+}
+
+function normalizePhotos(photos) {
+  return Array.isArray(photos)
+    ? photos
+        .map((p) => ({
+          url: p?.url ? String(p.url).trim() : "",
+          publicId: p?.publicId ? String(p.publicId).trim() : "",
+        }))
+        .filter((p) => p.url && p.publicId)
+    : [];
+}
+

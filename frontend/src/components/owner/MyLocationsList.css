@@ -7,8 +7,8 @@
 .owner-list__error {
   margin-top: var(--space-1);
   padding: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-border));
-  background: color-mix(in srgb, var(--color-error) 9%, var(--color-surface));
+  border: 1px solid var(--color-error-border-soft);
+  background: var(--color-error-bg-soft);
   border-radius: var(--radius-md);
   display: grid;
   gap: var(--space-2);
@@ -46,24 +46,24 @@
 }
 
 .owner-list__status-badge--hidden {
-  background: #eeeeee;
-  border-color: #cfcfcf;
+  background: var(--color-status-hidden-bg);
+  border-color: var(--color-status-hidden-border);
 }
 
 .owner-list__status-badge--pending {
-  background: #fff6d6;
-  border-color: #f2d27a;
+  background: var(--color-status-pending-bg);
+  border-color: var(--color-status-pending-border);
 }
 
 .owner-list__status-badge--approved,
 .owner-list__status-badge--published {
-  background: #dff7e6;
-  border-color: #7fd39a;
+  background: var(--color-status-approved-bg);
+  border-color: var(--color-status-approved-border);
 }
 
 .owner-list__status-badge--rejected {
-  background: #ffe1e1;
-  border-color: #f09a9a;
+  background: var(--color-status-rejected-bg);
+  border-color: var(--color-status-rejected-border);
 }
 
 .owner-list__actions {
@@ -110,16 +110,16 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background-color: rgba(15, 23, 42, 0.35);
+  background-color: var(--color-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4);
+  padding: var(--space-2);
 }
 
 .owner-list__edit-modal {
   width: min(100%, 860px);
-  max-height: min(86vh, 900px);
+  max-height: min(94vh, 980px);
   overflow: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);

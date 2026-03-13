@@ -301,6 +301,7 @@ export default function HomePage() {
                   loc={loc}
                   to={`/locations/${loc.id}`}
                   variant="public"
+                  compactFishLabelMode="locale-smart"
                   actions={
                     canUseFavorites ? (
                       <button

@@ -15,8 +15,9 @@ export default function SortPicker({ value, onChange }) {
         style={{
           padding: "10px 12px",
           borderRadius: 10,
-          border: "1px solid #ddd",
-          background: "#fff",
+          border: "1px solid var(--color-border-soft)",
+          background: "var(--color-surface)",
+          color: "var(--color-text)",
         }}
       >
         {SORT_OPTIONS.map((opt) => (

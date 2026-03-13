@@ -71,11 +71,6 @@ export default function LocationPickerMap({ lat, lng, onSelect }) {
         {selectedPosition ? <Marker position={selectedPosition} /> : null}
       </MapContainer>
 
-      <div style={{ fontSize: 13, opacity: 0.85 }}>
-        {selectedPosition
-          ? "Selected"
-          : "Click on the map to select coordinates"}
-      </div>
     </div>
   );
 }

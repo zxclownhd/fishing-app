@@ -49,8 +49,8 @@
 .favorites-page__error {
   margin-top: var(--space-1);
   padding: var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--color-error) 28%, var(--color-border));
-  background: color-mix(in srgb, var(--color-error) 9%, var(--color-surface));
+  border: 1px solid var(--color-error-border-soft);
+  background: var(--color-error-bg-soft);
   border-radius: var(--radius-md);
   display: grid;
   gap: var(--space-2);
@@ -176,3 +176,4 @@
     top: 4px;
   }
 }
+

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { toCompactFishChipLabel } from "../utils/fishChipLabel";
 import { useI18n } from "../client/i18n/I18nContext";
 import { displayFishName } from "../client/i18n/displayName";
 import "./LocationCard.css";
@@ -15,10 +16,16 @@ export default function LocationCard({
   actions = null, // optional JSX (buttons etc)
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
+  hideAdminDescription = false,
+  compactFishLabelMode = "full", // "full" | "locale-smart"
 }) {
   const { t, locale } = useI18n();
 
   const photoUrl = loc?.photos?.[0]?.url || null;
+  const photoCount = getLocationPhotoCount(loc);
+  const extraPhotoCount = Math.max(0, photoCount - 1);
+  const extraPhotosLabel =
+    extraPhotoCount > 0 ? formatExtraPhotosLabel(extraPhotoCount, locale, t) : "";
 
   const thumbUrl = photoUrl
     ? getCloudinaryVariant(photoUrl, {
@@ -72,8 +79,20 @@ export default function LocationCard({
     [loc?.seasons, t],
   );
 
-  const visibleFish = fishNames.slice(0, 3);
-  const hiddenFishCount = Math.max(0, fishNames.length - visibleFish.length);
+  const compactFish = useMemo(
+    () =>
+      fishNames.map((name) => ({
+        label:
+          compactFishLabelMode === "locale-smart"
+            ? toCompactFishChipLabel(name)
+            : name,
+        title: name,
+      })),
+    [fishNames, compactFishLabelMode],
+  );
+
+  const visibleFish = compactFish.slice(0, 3);
+  const hiddenFishCount = Math.max(0, compactFish.length - visibleFish.length);
   const visibleSeasons = seasonLabels.slice(0, 2);
   const hiddenSeasonsCount = Math.max(0, seasonLabels.length - visibleSeasons.length);
   const isInteractive = Boolean(to || onClick);
@@ -106,6 +125,9 @@ export default function LocationCard({
         ) : (
           <div className="location-card__no-img">{t("card.noPhoto")}</div>
         )}
+        {photoUrl && extraPhotoCount > 0 ? (
+          <span className="location-card__photo-count-pill">{extraPhotosLabel}</span>
+        ) : null}
       </div>
 
       <div className="location-card__body">
@@ -162,15 +184,16 @@ export default function LocationCard({
 
         {variant === "admin" ? (
           <div className="location-card__admin-meta">
+            {loc?.createdAt ? (
+              <div className="location-card__admin-line">
+                {t("card.createdAtLabel", "Created at:")}{" "}
+                {new Date(loc.createdAt).toLocaleString()}
+              </div>
+            ) : null}
             {owner ? (
               <div className="location-card__admin-line">
                 {t("card.ownerLabel")} {owner.displayName || "\u2014"}
                 {owner.email ? ` (${owner.email})` : ""}
-              </div>
-            ) : null}
-            {loc?.createdAt ? (
-              <div className="location-card__admin-line">
-                {t("card.createdLabel")} {new Date(loc.createdAt).toLocaleString()}
               </div>
             ) : null}
           </div>
@@ -197,7 +220,7 @@ export default function LocationCard({
             label={t("card.descriptionLabel")}
             emptyText={t("card.noDescription")}
           />
-        ) : loc?.description ? (
+        ) : hideAdminDescription ? null : loc?.description ? (
           <div className="location-card__desc">{loc.description}</div>
         ) : (
           <div className="location-card__desc-empty">{t("card.noDescription")}</div>
@@ -230,11 +253,34 @@ export default function LocationCard({
 
 function badgeForStatus(status) {
   const s = String(status || "").toUpperCase();
-  if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
-  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
-  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
-  if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
-  return { background: "#EEEEEE", borderColor: "#CFCFCF" };
+  if (s === "PENDING") {
+    return {
+      background: "var(--color-status-pending-bg)",
+      borderColor: "var(--color-status-pending-border)",
+    };
+  }
+  if (s === "APPROVED") {
+    return {
+      background: "var(--color-status-approved-bg)",
+      borderColor: "var(--color-status-approved-border)",
+    };
+  }
+  if (s === "REJECTED") {
+    return {
+      background: "var(--color-status-rejected-bg)",
+      borderColor: "var(--color-status-rejected-border)",
+    };
+  }
+  if (s === "HIDDEN") {
+    return {
+      background: "var(--color-status-hidden-bg)",
+      borderColor: "var(--color-status-hidden-border)",
+    };
+  }
+  return {
+    background: "var(--color-status-hidden-bg)",
+    borderColor: "var(--color-status-hidden-border)",
+  };
 }
 
 function CompactRow({ label, items, hiddenCount }) {
@@ -245,8 +291,12 @@ function CompactRow({ label, items, hiddenCount }) {
         {items.length ? (
           <>
             {items.map((item) => (
-              <span key={item} className="location-card__compact-chip">
-                {item}
+              <span
+                key={typeof item === "string" ? item : `${item.title}-${item.label}`}
+                className="location-card__compact-chip"
+                title={typeof item === "string" ? undefined : item.title}
+              >
+                {typeof item === "string" ? item : item.label}
               </span>
             ))}
             {hiddenCount > 0 ? (
@@ -306,4 +356,25 @@ function PublicDescription({ text, label, emptyText }) {
       </div>
     </div>
   );
+}
+
+function getLocationPhotoCount(loc) {
+  const byField = Number(loc?.photosCount);
+  if (Number.isFinite(byField) && byField >= 0) return byField;
+
+  const byCountObj = Number(loc?._count?.photos);
+  if (Number.isFinite(byCountObj) && byCountObj >= 0) return byCountObj;
+
+  return Array.isArray(loc?.photos) ? loc.photos.length : 0;
+}
+
+function formatExtraPhotosLabel(count, locale, t) {
+  const normalized = Number.isFinite(Number(count)) ? Math.max(0, Number(count)) : 0;
+  const rules = new Intl.PluralRules(locale === "uk" ? "uk" : "en");
+  const category = rules.select(normalized);
+  const template = t(
+    `card.extraPhotos.${category}`,
+    t("card.extraPhotos.other", "+{count} photos"),
+  );
+  return String(template).replace("{count}", String(normalized));
 }

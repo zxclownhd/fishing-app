@@ -133,6 +133,7 @@ export default function FavoritesPage() {
                 to={`/locations/${it.locationId || it.id}`}
                 toState={{ from: "/favorites" }}
                 variant="public"
+                compactFishLabelMode="locale-smart"
                 actions={
                   <button
                     type="button"

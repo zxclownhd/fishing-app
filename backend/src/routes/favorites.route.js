@@ -74,7 +74,13 @@ router.get(
         include: {
           location: {
             include: {
-              photos: { take: 1, orderBy: { createdAt: "desc" } },
+              photos: {
+                take: 1,
+                orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+              },
+              _count: {
+                select: { photos: true },
+              },
             },
           },
         },
@@ -85,7 +91,10 @@ router.get(
     ]);
 
     res.json({
-      items: favorites.map((x) => x.location),
+      items: favorites.map((x) => {
+        const photosCount = x.location?._count?.photos ?? x.location?.photos?.length ?? 0;
+        return { ...x.location, photosCount };
+      }),
       total,
       page,
       limit,
