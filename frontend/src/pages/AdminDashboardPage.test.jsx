@@ -21,6 +21,11 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     Navigate: ({ to }) => <div>Navigate:{to}</div>,
+    Link: ({ to, children, ...rest }) => (
+      <a href={to} {...rest}>
+        {children}
+      </a>
+    ),
   };
 });
 
@@ -90,7 +95,7 @@ describe("AdminDashboardPage", () => {
 
     await waitFor(() => {
       expect(http.get).toHaveBeenCalledWith("/admin/locations", {
-        params: { status: "PENDING", page: 1, limit: 20 },
+        params: { status: "PENDING", page: 1, limit: 6 },
       });
     });
 

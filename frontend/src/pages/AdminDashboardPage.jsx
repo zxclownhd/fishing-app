@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { http } from "../api/http";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
 import { displayFishName } from "../client/i18n/displayName";
+import "./AdminDashboardPage.css";
 
-const LIMIT = 20;
+const LIMIT = 6;
 
 export default function AdminDashboardPage() {
   const user = getStoredUser();
@@ -22,6 +24,7 @@ export default function AdminDashboardPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [detailsById, setDetailsById] = useState({});
   const [detailsLoadingId, setDetailsLoadingId] = useState(null);
+  const [activeModalPhotoIndex, setActiveModalPhotoIndex] = useState(0);
 
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
@@ -55,6 +58,25 @@ export default function AdminDashboardPage() {
     setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
+
+  useEffect(() => {
+    if (!expandedId) return;
+
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [expandedId]);
+
+  useEffect(() => {
+    setActiveModalPhotoIndex(0);
+  }, [expandedId]);
 
   function goNext() {
     const next = page + 1;
@@ -127,395 +149,537 @@ export default function AdminDashboardPage() {
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "ADMIN") return <Navigate to="/" replace />;
 
+  const activeItem = expandedId
+    ? items.find((candidate) => candidate.id === expandedId) || null
+    : null;
+  const activeFull = expandedId ? detailsById[expandedId] || null : null;
+  const activeData = activeItem || activeFull;
+
+  const activeFish = activeFull?.fish ?? activeItem?.fish ?? [];
+  const activeSeasons = activeFull?.seasons ?? activeItem?.seasons ?? [];
+  const activeDesc = activeFull?.description ?? activeItem?.description ?? "";
+  const activeContacts = activeFull?.contactInfo ?? activeItem?.contactInfo ?? "";
+  const activePhotos = activeFull?.photos ?? activeItem?.photos ?? [];
+  const normalizedModalPhotoIndex = Math.min(
+    activeModalPhotoIndex,
+    Math.max(activePhotos.length - 1, 0),
+  );
+  const activeModalPhoto = activePhotos[normalizedModalPhotoIndex] || null;
+  const activeLatNum = Number(activeFull?.lat ?? activeItem?.lat);
+  const activeLngNum = Number(activeFull?.lng ?? activeItem?.lng);
+  const activeCoordsOk = Number.isFinite(activeLatNum) && Number.isFinite(activeLngNum);
+  const activeStatus = String(activeData?.status || "").toUpperCase();
+  const activeOwner = activeFull?.owner ?? activeItem?.owner ?? null;
+
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto", padding: 16 }}>
-      <div style={styles.header}>
-        <div>
-          <h2 style={{ margin: 0 }}>{t("admin.title")}</h2>
-          <div style={{ marginTop: 6, fontSize: 13, opacity: 0.75 }}>
-            {t("admin.summary.totalLabel")} {total} |{" "}
-            {t("admin.summary.pageLabel")} {page} {t("admin.summary.ofLabel")}{" "}
-            {totalPages}
+    <div className="page admin-page">
+      <div className="container admin-page__container">
+        <div className="admin-page__top-row">
+          <Link to="/" className="btn btn-secondary admin-page__back-btn">
+            {t("locationDetails.back")}
+          </Link>
+        </div>
+
+        <header className="admin-page__header">
+          <div>
+            <h1 className="page-title admin-page__title">{t("admin.title")}</h1>
+            <div className="text-muted admin-page__summary">
+              {t("admin.summary.totalLabel")} {total}
+            </div>
           </div>
-        </div>
+        </header>
 
-        <button onClick={() => loadLocations(page, status)} disabled={loading}>
-          {t("admin.refresh")}
-        </button>
-      </div>
+        <section className="card admin-page__tabs-card">
+          <div className="admin-page__tabs">
+            {["PENDING", "APPROVED", "REJECTED", "HIDDEN"].map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatus(s)}
+                className={`btn admin-page__tab-btn admin-page__tab-btn--${s.toLowerCase()} ${
+                  status === s ? "admin-page__tab--active" : ""
+                }`}
+                disabled={loading && status === s}
+              >
+                {t(`admin.tabs.${s}`, s)}
+              </button>
+            ))}
+          </div>
+        </section>
 
-      <div style={styles.tabs}>
-        {["PENDING", "APPROVED", "REJECTED", "HIDDEN"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setStatus(s)}
-            style={{
-              ...styles.tabBtn,
-              ...(status === s ? styles.tabBtnActive : null),
-            }}
-            disabled={loading && status === s}
-          >
-            {t(`admin.tabs.${s}`, s)}
-          </button>
-        ))}
-      </div>
+        {errorText ? (
+          <div className="admin-page__error">
+            <div>{errorText}</div>
+            <button
+              onClick={() => loadLocations(page, status)}
+              disabled={loading}
+              className="btn btn-secondary admin-page__retry-btn"
+            >
+              {t("admin.retry")}
+            </button>
+          </div>
+        ) : null}
 
-      {errorText ? (
-        <div style={styles.error}>
-          <div>{errorText}</div>
-          <button
-            onClick={() => loadLocations(page, status)}
-            disabled={loading}
-            style={{ marginTop: 8 }}
-          >
-            {t("admin.retry")}
-          </button>
-        </div>
-      ) : null}
+        {loading ? (
+          <div className="text-muted admin-page__state">{t("admin.loading")}</div>
+        ) : null}
 
-      {loading ? <div style={{ padding: 12 }}>{t("admin.loading")}</div> : null}
+        {!loading && !errorText && items.length === 0 ? (
+          <div className="text-muted admin-page__state">
+            {t("admin.empty")} {t(`admin.tabs.${status}`, status)}
+          </div>
+        ) : null}
 
-      {!loading && !errorText && items.length === 0 ? (
-        <div style={styles.empty}>
-          {t("admin.empty")} {t(`admin.tabs.${status}`, status)}
-        </div>
-      ) : null}
+        <section className="admin-page__results">
+          {items.map((it) => {
+            const isExpanded = expandedId === it.id;
 
-      <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
-        {items.map((it) => {
-          const full = detailsById[it.id];
-          const isExpanded = expandedId === it.id;
-
-          const desc = full?.description ?? it.description;
-          const contacts = full?.contactInfo ?? it.contactInfo;
-
-          const latNum = Number(it.lat);
-          const lngNum = Number(it.lng);
-          const coordsOk = Number.isFinite(latNum) && Number.isFinite(lngNum);
-
-          const photos = isExpanded
-            ? (full?.photos ?? it.photos ?? [])
-            : (it.photos ?? []);
-
-          return (
-            <LocationCard
-              key={it.id}
-              loc={it}
-              variant="admin"
-              footer={
-                <div style={{ display: "grid", gap: 10 }}>
-                  <div style={styles.group}>
-                    <div style={styles.groupLabel}>
-                      {t("admin.groups.fish")}
-                    </div>
-                    <div style={styles.groupChips}>
-                      {(it.fish || []).slice(0, 8).map((x, idx) => (
-                        <span
-                          key={
-                            x.fishId
-                              ? `${it.id}-fish-${x.fishId}`
-                              : `${it.id}-fish-${idx}`
-                          }
-                          style={styles.chip}
-                        >
-                          {displayFishName(x.fish?.name, locale) ||
-                            t("admin.unknown")}
-                        </span>
-                      ))}
-                      {!it.fish || it.fish.length === 0 ? (
-                        <span style={styles.emptyDash}>—</span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div style={styles.group}>
-                    <div style={styles.groupLabel}>
-                      {t("admin.groups.seasons")}
-                    </div>
-                    <div style={styles.groupChips}>
-                      {(it.seasons || []).slice(0, 8).map((x, idx) => (
-                        <span
-                          key={
-                            x.seasonId
-                              ? `${it.id}-season-${x.seasonId}`
-                              : `${it.id}-season-${idx}`
-                          }
-                          style={styles.chip}
-                        >
-                          {(() => {
-                            const code = x.season?.code || x.season?.name || "";
-                            return code
-                              ? t(`seasons.${code}`, code)
-                              : t("admin.unknown");
-                          })()}
-                        </span>
-                      ))}
-                      {!it.seasons || it.seasons.length === 0 ? (
-                        <span style={styles.emptyDash}>—</span>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {expandedId === it.id ? (
-                    <div style={styles.detailsBox}>
-                      <div style={styles.detailsLabel}>
-                        {t("admin.details.description")}
+            return (
+              <LocationCard
+                key={it.id}
+                loc={it}
+                variant="admin"
+                hideAdminDescription
+                footer={
+                  <div className="admin-page__footer-grid">
+                    <div className="admin-page__group">
+                      <div className="admin-page__group-label">
+                        {t("admin.groups.fish")}
                       </div>
-                      <div style={styles.detailsText}>{desc || "—"}</div>
-
-                      {contacts ? (
-                        <div style={{ marginTop: 10 }}>
-                          <div style={styles.detailsLabel}>
-                            {t("admin.details.contacts")}
-                          </div>
-                          <div style={styles.detailsText}>{contacts}</div>
-                        </div>
-                      ) : null}
-
-                      <div style={{ marginTop: 10 }}>
-                        <div style={styles.detailsLabel}>
-                          {t("admin.details.coordinates")}
-                        </div>
-
-                        {coordsOk ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: 10,
-                              alignItems: "center",
-                              flexWrap: "wrap",
-                            }}
+                      <div className="admin-page__group-chips">
+                        {(it.fish || []).slice(0, 4).map((x, idx) => (
+                          <span
+                            key={
+                              x.fishId
+                                ? `${it.id}-fish-${x.fishId}`
+                                : `${it.id}-fish-${idx}`
+                            }
+                            className="chip admin-page__group-chip"
                           >
-                            <div style={styles.detailsText}>
-                              {latNum.toFixed(6)}, {lngNum.toFixed(6)}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                window.open(
-                                  `https://www.google.com/maps?q=${latNum},${lngNum}`,
-                                  "_blank",
-                                  "noopener,noreferrer",
-                                )
-                              }
-                            >
-                              {t("admin.details.openGoogleMaps")}
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ opacity: 0.75 }}>
-                            {t("admin.details.invalidCoords")}
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ marginTop: 10 }}>
-                        <div style={styles.detailsLabel}>
-                          {t("admin.details.photos")}
-                        </div>
-                        {detailsLoadingId === it.id ? (
-                          <div style={{ opacity: 0.75 }}>
-                            {t("admin.details.loadingPhotos")}
-                          </div>
-                        ) : photos && photos.length ? (
-                          <div style={{ display: "grid", gap: 8 }}>
-                            {photos.map((p, idx) => {
-                              const src = getCloudinaryVariant(p.url, {
-                                w: 1200,
-                                h: 900,
-                                crop: "fit",
-                              });
-
-                              return (
-                                <img
-                                  key={p.id ? `p-${p.id}` : `p-${idx}`}
-                                  src={src}
-                                  alt=""
-                                  loading="lazy"
-                                  decoding="async"
-                                  style={styles.detailsImg}
-                                />
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div style={{ opacity: 0.75 }}>
-                            {t("admin.details.noPhotos")}
-                          </div>
-                        )}
+                            {displayFishName(x.fish?.name, locale) ||
+                              t("admin.unknown")}
+                          </span>
+                        ))}
+                        {(it.fish || []).length > 4 ? (
+                          <span className="chip admin-page__group-chip admin-page__group-chip--more">
+                            +{(it.fish || []).length - 4}
+                          </span>
+                        ) : null}
+                        {!it.fish || it.fish.length === 0 ? (
+                          <span className="admin-page__empty-dash">{"\u2014"}</span>
+                        ) : null}
                       </div>
                     </div>
-                  ) : null}
+
+                    <div className="admin-page__group">
+                      <div className="admin-page__group-label">
+                        {t("admin.groups.seasons")}
+                      </div>
+                      <div className="admin-page__group-chips">
+                        {(it.seasons || []).map((x, idx) => (
+                          <span
+                            key={
+                              x.seasonId
+                                ? `${it.id}-season-${x.seasonId}`
+                                : `${it.id}-season-${idx}`
+                            }
+                            className="chip admin-page__group-chip"
+                          >
+                            {(() => {
+                              const code = x.season?.code || x.season?.name || "";
+                              return code
+                                ? t(`seasons.${code}`, code)
+                                : t("admin.unknown");
+                            })()}
+                          </span>
+                        ))}
+                        {!it.seasons || it.seasons.length === 0 ? (
+                          <span className="admin-page__empty-dash">{"\u2014"}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                }
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleDetails(it.id)}
+                      disabled={loading}
+                      className="btn btn-secondary admin-page__action-btn"
+                    >
+                      {isExpanded
+                        ? t("admin.actions.close")
+                        : t("admin.actions.details")}
+                    </button>
+
+                    <button
+                      onClick={() => setStatusForLocation(it.id, "APPROVED")}
+                      disabled={loading || it.status === "APPROVED"}
+                      className="btn btn-primary admin-page__action-btn"
+                    >
+                      {t("admin.actions.approve")}
+                    </button>
+
+                    <button
+                      onClick={() => setStatusForLocation(it.id, "REJECTED")}
+                      disabled={loading || it.status === "REJECTED"}
+                      className="btn btn-secondary admin-page__action-btn"
+                    >
+                      {t("admin.actions.reject")}
+                    </button>
+
+                    <button
+                      onClick={() => setStatusForLocation(it.id, "HIDDEN")}
+                      disabled={loading || it.status === "HIDDEN"}
+                      className="btn btn-secondary admin-page__action-btn"
+                    >
+                      {t("admin.actions.hide")}
+                    </button>
+
+                    <button
+                      onClick={() => deleteLocation(it)}
+                      disabled={loading || !canDelete(it)}
+                      title={
+                        !canDelete(it)
+                          ? t("admin.delete.onlyHidden")
+                          : t("admin.delete.permanent")
+                      }
+                      className={`btn btn-secondary admin-page__action-btn ${
+                        canDelete(it) ? "admin-page__action-btn--danger" : ""
+                      }`}
+                    >
+                      {t("admin.actions.delete")}
+                    </button>
+                  </>
+                }
+              />
+            );
+          })}
+        </section>
+
+        {expandedId ? (
+          <div
+            className="admin-page__details-modal-overlay"
+            onClick={() => setExpandedId(null)}
+            role="presentation"
+          >
+            <div
+              className="admin-page__details-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("admin.actions.details")}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="admin-page__details-modal-head">
+                <div className="admin-page__details-modal-title-wrap">
+                  <div className="admin-page__details-modal-meta">
+                    <div className="text-muted">
+                      {t("card.ownerLabel")}{" "}
+                      {activeOwner
+                        ? `${activeOwner.displayName || "\u2014"}${
+                            activeOwner.email ? ` (${activeOwner.email})` : ""
+                          }`
+                        : "\u2014"}
+                    </div>
+                    <div className="text-muted">
+                      {t("card.createdAtLabel", "Created at:")}{" "}
+                      {activeData?.createdAt
+                        ? new Date(activeData.createdAt).toLocaleString()
+                        : "\u2014"}
+                    </div>
+                  </div>
                 </div>
-              }
-              actions={
-                <>
-                  <button
-                    type="button"
-                    onClick={() => toggleDetails(it.id)}
-                    disabled={loading}
+
+                {activeStatus ? (
+                  <span
+                    className="chip admin-page__details-modal-status"
+                    style={statusBadgeStyle(activeStatus)}
                   >
-                    {isExpanded
-                      ? t("admin.actions.close")
-                      : t("admin.actions.details")}
-                  </button>
+                    {t(`card.statuses.${activeStatus}`, activeStatus)}
+                  </span>
+                ) : null}
+              </div>
 
-                  <button
-                    onClick={() => setStatusForLocation(it.id, "APPROVED")}
-                    disabled={loading || it.status === "APPROVED"}
-                  >
-                    {t("admin.actions.approve")}
-                  </button>
+              <div className="admin-page__details-modal-content">
+                <div className="admin-page__details-fields">
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("locationForm.labels.title")}</div>
+                    <div className="admin-page__field-value admin-page__field-value--title">
+                      {activeData?.title || t("card.noTitle")}
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => setStatusForLocation(it.id, "REJECTED")}
-                    disabled={loading || it.status === "REJECTED"}
-                  >
-                    {t("admin.actions.reject")}
-                  </button>
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">
+                      {t("admin.details.description")}
+                    </div>
+                    <div className="admin-page__field-value admin-page__field-value--text">
+                      {activeDesc || "\u2014"}
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => setStatusForLocation(it.id, "HIDDEN")}
-                    disabled={loading || it.status === "HIDDEN"}
-                  >
-                    {t("admin.actions.hide")}
-                  </button>
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("admin.details.contacts")}</div>
+                    <div className="admin-page__field-value admin-page__field-value--text">
+                      {activeContacts || "\u2014"}
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => deleteLocation(it)}
-                    disabled={loading || !canDelete(it)}
-                    title={
-                      !canDelete(it)
-                        ? t("admin.delete.onlyHidden")
-                        : t("admin.delete.permanent")
-                    }
-                    style={canDelete(it) ? styles.dangerBtn : null}
-                  >
-                    {t("admin.actions.delete")}
-                  </button>
-                </>
-              }
-            />
-          );
-        })}
-      </div>
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("locationForm.labels.region")}</div>
+                    <div className="admin-page__field-value">
+                      {activeData?.region
+                        ? t(
+                            `regions.${String(activeData.region).toUpperCase()}`,
+                            activeData.region,
+                          )
+                        : "\u2014"}
+                    </div>
+                  </div>
 
-      <div style={styles.pagination}>
-        <button onClick={goPrev} disabled={loading || page === 1}>
-          {t("common.prev")}
-        </button>
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">
+                      {t("locationForm.labels.waterType")}
+                    </div>
+                    <div className="admin-page__field-value">
+                      {activeData?.waterType
+                        ? t(
+                            `locationForm.waterTypes.${String(activeData.waterType).toUpperCase()}`,
+                            activeData.waterType,
+                          )
+                        : "\u2014"}
+                    </div>
+                  </div>
 
-        <div style={{ opacity: 0.8 }}>
-          {t("admin.summary.pageLabel")} {page} / {totalPages}
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">
+                      {t("admin.details.coordinates")}
+                    </div>
+                    <div className="admin-page__coords-map-wrap">
+                      {activeCoordsOk ? (
+                        <MapContainer
+                          key={`admin-preview-map-${expandedId}`}
+                          center={[activeLatNum, activeLngNum]}
+                          zoom={13}
+                          scrollWheelZoom
+                          dragging
+                          doubleClickZoom
+                          touchZoom
+                          boxZoom
+                          keyboard
+                          zoomControl
+                          className="admin-page__coords-map"
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          />
+                          <Marker position={[activeLatNum, activeLngNum]} />
+                        </MapContainer>
+                      ) : (
+                        <div className="admin-page__coords-map-placeholder text-muted">
+                          {t("admin.details.invalidCoords")}
+                        </div>
+                      )}
+                    </div>
+                    {activeCoordsOk ? (
+                      <div className="admin-page__coords-row">
+                        <div className="admin-page__coords-values">
+                          <div className="admin-page__coords-item">
+                            <div className="admin-page__coords-item-label">
+                              {t("admin.details.latShort")}
+                            </div>
+                            <div className="admin-page__field-value admin-page__coords-item-value">
+                              {activeLatNum.toFixed(6)}
+                            </div>
+                          </div>
+
+                          <div className="admin-page__coords-item">
+                            <div className="admin-page__coords-item-label">
+                              {t("admin.details.lngShort")}
+                            </div>
+                            <div className="admin-page__field-value admin-page__coords-item-value">
+                              {activeLngNum.toFixed(6)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            window.open(
+                              `https://www.google.com/maps?q=${activeLatNum},${activeLngNum}`,
+                              "_blank",
+                              "noopener,noreferrer",
+                            )
+                          }
+                          className="btn btn-primary admin-page__coords-map-btn"
+                        >
+                          {t("admin.details.openGoogleMaps")}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="admin-page__field-value text-muted">
+                        {t("admin.details.invalidCoords")}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("admin.groups.fish")}</div>
+                    <div className="admin-page__field-value">
+                      <div className="admin-page__group-chips">
+                        {activeFish.slice(0, 20).map((x, idx) => (
+                          <span
+                            key={
+                              x.fishId
+                                ? `${expandedId}-fish-full-${x.fishId}`
+                                : `${expandedId}-fish-full-${idx}`
+                            }
+                            className="chip admin-page__group-chip"
+                          >
+                            {displayFishName(x.fish?.name, locale) || t("admin.unknown")}
+                          </span>
+                        ))}
+                        {!activeFish.length ? (
+                          <span className="admin-page__empty-dash">{"\u2014"}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("admin.groups.seasons")}</div>
+                    <div className="admin-page__field-value">
+                      <div className="admin-page__group-chips">
+                        {activeSeasons.slice(0, 20).map((x, idx) => (
+                          <span
+                            key={
+                              x.seasonId
+                                ? `${expandedId}-season-full-${x.seasonId}`
+                                : `${expandedId}-season-full-${idx}`
+                            }
+                            className="chip admin-page__group-chip"
+                          >
+                            {(() => {
+                              const code = x.season?.code || x.season?.name || "";
+                              return code ? t(`seasons.${code}`, code) : t("admin.unknown");
+                            })()}
+                          </span>
+                        ))}
+                        {!activeSeasons.length ? (
+                          <span className="admin-page__empty-dash">{"\u2014"}</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="admin-page__field-block">
+                    <div className="admin-page__field-label">{t("admin.details.photos")}</div>
+                    <div className="admin-page__field-value">
+                      {detailsLoadingId === expandedId ? (
+                        <div className="text-muted">{t("admin.details.loadingPhotos")}</div>
+                      ) : activePhotos && activePhotos.length ? (
+                        <div className="admin-page__photos-gallery">
+                          <div className="admin-page__photos-main">
+                            {activeModalPhoto ? (
+                              <img
+                                src={getCloudinaryVariant(activeModalPhoto.url, {
+                                  w: 1600,
+                                  h: 1000,
+                                  crop: "fill",
+                                  gravity: "auto",
+                                })}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                className="admin-page__photos-main-img"
+                              />
+                            ) : null}
+                          </div>
+
+                          {activePhotos.length > 1 ? (
+                            <div className="admin-page__photos-thumbs" role="list">
+                              {activePhotos.map((p, idx) => (
+                                <button
+                                  key={p.id ? `thumb-${p.id}` : `thumb-${idx}`}
+                                  type="button"
+                                  onClick={() => setActiveModalPhotoIndex(idx)}
+                                  className={`admin-page__photos-thumb ${
+                                    idx === normalizedModalPhotoIndex
+                                      ? "admin-page__photos-thumb--active"
+                                      : ""
+                                  }`}
+                                  title={t("admin.details.photos")}
+                                >
+                                  <img
+                                    src={getCloudinaryVariant(p.url, {
+                                      w: 180,
+                                      h: 120,
+                                      crop: "fill",
+                                      gravity: "auto",
+                                    })}
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="text-muted">{t("admin.details.noPhotos")}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-page__details-modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setExpandedId(null)}
+                >
+                  {t("admin.actions.close")}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="pagination admin-page__pagination">
+          <button
+            onClick={goPrev}
+            disabled={loading || page === 1}
+            className="btn btn-secondary"
+          >
+            {t("common.prev")}
+          </button>
+
+          <div className="text-muted admin-page__pagination-meta">
+            {t("admin.summary.pageLabel")} {page} / {totalPages}
+          </div>
+
+          <button
+            onClick={goNext}
+            disabled={loading || page >= totalPages}
+            className="btn btn-secondary"
+          >
+            {t("common.next")}
+          </button>
         </div>
-
-        <button onClick={goNext} disabled={loading || page >= totalPages}>
-          {t("common.next")}
-        </button>
       </div>
     </div>
   );
 }
 
-const styles = {
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    position: "sticky",
-    top: 0,
-    background: "#fff",
-    padding: "12px 0",
-    zIndex: 2,
-  },
-  tabs: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    marginTop: 8,
-  },
-  tabBtn: {
-    padding: "6px 10px",
-    borderRadius: 10,
-    borderWidth: 1,
-    borderStyle: "solid",
-    borderColor: "#ddd",
-    background: "#fff",
-    cursor: "pointer",
-  },
-  tabBtnActive: {
-    borderColor: "#111",
-  },
-  chip: {
-    fontSize: 12,
-    padding: "2px 8px",
-    border: "1px solid #eee",
-    borderRadius: 999,
-  },
-  pagination: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTop: "1px solid #eee",
-  },
-  empty: {
-    padding: 12,
-    opacity: 0.75,
-  },
-  error: {
-    marginTop: 12,
-    padding: 12,
-    border: "1px solid #f2b5b5",
-    background: "#fff0f0",
-    borderRadius: 12,
-  },
-  dangerBtn: {
-    borderColor: "#f2b5b5",
-  },
-  detailsBox: {
-    border: "1px solid #eee",
-    borderRadius: 12,
-    padding: 12,
-    background: "#fafafa",
-  },
-  detailsLabel: {
-    fontSize: 13,
-    opacity: 0.75,
-    marginBottom: 6,
-  },
-  detailsText: {
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-  },
-  detailsImg: {
-    width: "100%",
-    maxWidth: 640,
-    borderRadius: 10,
-    border: "1px solid #eee",
-  },
-  group: {
-    display: "grid",
-    gap: 6,
-  },
-  groupLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  groupChips: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
-  emptyDash: {
-    opacity: 0.6,
-    fontSize: 13,
-  },
-};
+function statusBadgeStyle(status) {
+  const s = String(status || "").toUpperCase();
+  if (s === "PENDING") return { background: "#FFF6D6", borderColor: "#F2D27A" };
+  if (s === "APPROVED") return { background: "#DFF7E6", borderColor: "#7FD39A" };
+  if (s === "REJECTED") return { background: "#FFE1E1", borderColor: "#F09A9A" };
+  if (s === "HIDDEN") return { background: "#EEEEEE", borderColor: "#CFCFCF" };
+  return { background: "#EEEEEE", borderColor: "#CFCFCF" };
+}

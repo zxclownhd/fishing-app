@@ -15,6 +15,7 @@ export default function LocationCard({
   actions = null, // optional JSX (buttons etc)
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
+  hideAdminDescription = false,
 }) {
   const { t, locale } = useI18n();
 
@@ -162,15 +163,16 @@ export default function LocationCard({
 
         {variant === "admin" ? (
           <div className="location-card__admin-meta">
+            {loc?.createdAt ? (
+              <div className="location-card__admin-line">
+                {t("card.createdAtLabel", "Created at:")}{" "}
+                {new Date(loc.createdAt).toLocaleString()}
+              </div>
+            ) : null}
             {owner ? (
               <div className="location-card__admin-line">
                 {t("card.ownerLabel")} {owner.displayName || "\u2014"}
                 {owner.email ? ` (${owner.email})` : ""}
-              </div>
-            ) : null}
-            {loc?.createdAt ? (
-              <div className="location-card__admin-line">
-                {t("card.createdLabel")} {new Date(loc.createdAt).toLocaleString()}
               </div>
             ) : null}
           </div>
@@ -197,7 +199,7 @@ export default function LocationCard({
             label={t("card.descriptionLabel")}
             emptyText={t("card.noDescription")}
           />
-        ) : loc?.description ? (
+        ) : hideAdminDescription ? null : loc?.description ? (
           <div className="location-card__desc">{loc.description}</div>
         ) : (
           <div className="location-card__desc-empty">{t("card.noDescription")}</div>

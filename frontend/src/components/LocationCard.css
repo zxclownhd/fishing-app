@@ -235,13 +235,13 @@
 }
 
 .location-card__admin-meta {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  display: grid;
+  gap: 4px;
 }
 
 .location-card__admin-line {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .location-card__desc,
