@@ -16,6 +16,7 @@ export default function LocationCard({
   footer = null, // optional JSX under description
   onClick, // optional click handler when NOT using `to`
   hideAdminDescription = false,
+  compactFishLabelMode = "full", // "full" | "locale-smart"
 }) {
   const { t, locale } = useI18n();
 
@@ -73,8 +74,20 @@ export default function LocationCard({
     [loc?.seasons, t],
   );
 
-  const visibleFish = fishNames.slice(0, 3);
-  const hiddenFishCount = Math.max(0, fishNames.length - visibleFish.length);
+  const compactFish = useMemo(
+    () =>
+      fishNames.map((name) => ({
+        label:
+          compactFishLabelMode === "locale-smart"
+            ? toCompactFishChipLabel(name)
+            : name,
+        title: name,
+      })),
+    [fishNames, compactFishLabelMode],
+  );
+
+  const visibleFish = compactFish.slice(0, 3);
+  const hiddenFishCount = Math.max(0, compactFish.length - visibleFish.length);
   const visibleSeasons = seasonLabels.slice(0, 2);
   const hiddenSeasonsCount = Math.max(0, seasonLabels.length - visibleSeasons.length);
   const isInteractive = Boolean(to || onClick);
@@ -247,8 +260,12 @@ function CompactRow({ label, items, hiddenCount }) {
         {items.length ? (
           <>
             {items.map((item) => (
-              <span key={item} className="location-card__compact-chip">
-                {item}
+              <span
+                key={typeof item === "string" ? item : `${item.title}-${item.label}`}
+                className="location-card__compact-chip"
+                title={typeof item === "string" ? undefined : item.title}
+              >
+                {typeof item === "string" ? item : item.label}
               </span>
             ))}
             {hiddenCount > 0 ? (
@@ -287,6 +304,26 @@ function extractSeasonCodes(seasons) {
     .map((x) => String(x || "").trim())
     .filter(Boolean);
   return [...new Set(codes)];
+}
+
+function toCompactFishChipLabel(label) {
+  const raw = String(label || "").trim();
+  if (!raw) return "";
+
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (!parts.length) return raw;
+  if (parts.length === 1) return parts[0];
+
+  // Cyrillic fish labels read naturally with the first word; Latin labels with the last.
+  const hasCyrillic = /[\u0400-\u04FF\u0500-\u052F]/.test(raw);
+  const compact = hasCyrillic ? parts[0] : parts[parts.length - 1];
+  return capitalizeFirstLetter(compact);
+}
+
+function capitalizeFirstLetter(value) {
+  const text = String(value || "");
+  if (!text) return "";
+  return text.charAt(0).toLocaleUpperCase() + text.slice(1);
 }
 
 function PublicDescription({ text, label, emptyText }) {

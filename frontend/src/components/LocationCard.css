@@ -201,17 +201,17 @@
 
 .location-card__compact-items {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
   min-width: 0;
-  max-height: 52px;
   overflow: hidden;
 }
 
 .location-card__compact-chip {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   min-height: 22px;
   padding: 0 8px;
   border: 1px solid var(--color-border);
@@ -219,13 +219,19 @@
   background: var(--color-surface);
   font-size: 12px;
   color: var(--color-text-secondary);
-  max-width: 130px;
+  flex: 0 1 auto;
+  max-width: 110px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .location-card__compact-chip--more {
+  flex: 0 0 auto;
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
   font-weight: 600;
 }
 
@@ -356,7 +362,7 @@
   }
 
   .location-card__compact-items {
-    max-height: none;
+    min-width: 0;
   }
 
   .location-card__actions {
