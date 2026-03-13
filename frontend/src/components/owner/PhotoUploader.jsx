@@ -22,6 +22,7 @@ export default function PhotoUploader({
   max = 10,
   onRemove,
   draftFolder,
+  previewHintStyle,
 }) {
   const { t } = useI18n();
 
@@ -258,6 +259,18 @@ export default function PhotoUploader({
     });
   }
 
+  function movePhotoByIndex(fromIdx, toIdx) {
+    if (!Array.isArray(photos)) return;
+    if (fromIdx < 0 || toIdx < 0) return;
+    if (fromIdx >= photos.length || toIdx >= photos.length) return;
+    if (fromIdx === toIdx) return;
+
+    const next = [...photos];
+    const [moved] = next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, moved);
+    onChange(next);
+  }
+
   const photosList = photos || [];
   const previewItems = [
     ...photosList.map((p, idx) => ({
@@ -298,119 +311,134 @@ export default function PhotoUploader({
         }}
         onDrop={onDrop}
       >
-        <div className="photo-uploader__toolbar">
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? t("photos.uploading") : t("photos.addPhotos")}
-          </button>
-        </div>
+        <div className="photo-uploader__dropzone-row">
+          <div className="photo-uploader__dropzone-text">
+            <div className="photo-uploader__drop-hint">
+              {t("photos.dragDropHint", "Drag and drop images here")}
+            </div>
 
-        <div className="photo-uploader__drop-hint">
-          {t("photos.dragDropHint", "Drag and drop images here")}
-        </div>
+            <div className="photo-uploader__limit-hint">
+              {t("photos.hint").includes("{max}")
+                ? t("photos.hint").replace("{max}", String(max))
+                : `${t("photos.hint")} ${max}`}
+            </div>
+          </div>
 
-        <div className="photo-uploader__limit-hint">
-          {t("photos.hint").includes("{max}")
-            ? t("photos.hint").replace("{max}", String(max))
-            : `${t("photos.hint")} ${max}`}
+          <div className="photo-uploader__toolbar">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className="btn btn-secondary photo-uploader__add-btn"
+            >
+              {uploading ? t("photos.uploading") : t("photos.addPhotos")}
+            </button>
+          </div>
         </div>
       </div>
 
       {errorText ? <div className="photo-uploader__error">{errorText}</div> : null}
 
       {previewItems.length ? (
-        <div className="photo-uploader__preview-list">
-          {previewItems.map((item, idx) => {
-            const isFirst = idx === 0;
-            const isLast = idx === previewItems.length - 1;
+        <>
+          <div style={previewHintStyle}>{t("photos.previewOrderHint")}</div>
+          <div className="photo-uploader__preview-list">
+            {previewItems.map((item) => {
+              const isSaved = item.kind === "saved";
+              const isFirst = isSaved && item.index === 0;
+              const isLast = isSaved && item.index === photosList.length - 1;
+              const disableReorder = !isSaved;
 
-            return (
-            <div key={item.key} className="photo-uploader__row">
-              <div className="photo-uploader__media">
-                <div className="photo-uploader__thumb-wrap">
-                  <img
-                    src={
-                      item.kind === "saved" ? item.photo?.url : item.pending?.previewUrl
-                    }
-                    alt="Photo preview"
-                    className="photo-uploader__thumb"
-                  />
-                  {item.isCover ? (
-                    <span className="photo-uploader__cover-badge">Cover</span>
-                  ) : null}
-                  {item.kind === "pending" && item.pending?.status === "uploading" ? (
-                    <span className="photo-uploader__status photo-uploader__status--uploading">
-                      {t("photos.uploading")}
-                    </span>
-                  ) : null}
-                  {item.kind === "pending" && item.pending?.status === "failed" ? (
-                    <span className="photo-uploader__status photo-uploader__status--failed">
-                      Upload failed
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="photo-uploader__meta">
-                  {item.kind === "pending" && item.fileName ? (
-                    <div className="photo-uploader__filename" title={item.fileName}>
-                      {item.fileName}
+              return (
+                <div key={item.key} className="photo-uploader__row">
+                  <div className="photo-uploader__media">
+                    <div className="photo-uploader__thumb-wrap">
+                      <img
+                        src={
+                          item.kind === "saved" ? item.photo?.url : item.pending?.previewUrl
+                        }
+                        alt="Photo preview"
+                        className="photo-uploader__thumb"
+                      />
+                      {item.isCover ? (
+                        <span className="photo-uploader__cover-badge">Cover</span>
+                      ) : null}
+                      {item.kind === "pending" && item.pending?.status === "uploading" ? (
+                        <span className="photo-uploader__status photo-uploader__status--uploading">
+                          {t("photos.uploading")}
+                        </span>
+                      ) : null}
+                      {item.kind === "pending" && item.pending?.status === "failed" ? (
+                        <span className="photo-uploader__status photo-uploader__status--failed">
+                          Upload failed
+                        </span>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
 
-                              </div>
+                    <div className="photo-uploader__meta">
+                      {item.kind === "pending" && item.fileName ? (
+                        <div className="photo-uploader__filename" title={item.fileName}>
+                          {item.fileName}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
 
-              <div className="photo-uploader__controls">
-                <div className="photo-uploader__reorder-controls">
-                  <button
-                    type="button"
-                    className="photo-uploader__reorder-btn"
-                    disabled={isFirst}
-                    aria-label="Move photo up"
-                  >
-                    {"\u2191"}
-                  </button>
-                  <button
-                    type="button"
-                    className="photo-uploader__reorder-btn"
-                    disabled={isLast}
-                    aria-label="Move photo down"
-                  >
-                    {"\u2193"}
-                  </button>
+                  <div className="photo-uploader__controls">
+                    <div className="photo-uploader__reorder-controls">
+                      <button
+                        type="button"
+                        className="photo-uploader__reorder-btn"
+                        disabled={disableReorder || isFirst}
+                        aria-label="Move photo up"
+                        onClick={() =>
+                          movePhotoByIndex(item.index, item.index - 1)
+                        }
+                      >
+                        {"\u2191"}
+                      </button>
+                      <button
+                        type="button"
+                        className="photo-uploader__reorder-btn"
+                        disabled={disableReorder || isLast}
+                        aria-label="Move photo down"
+                        onClick={() =>
+                          movePhotoByIndex(item.index, item.index + 1)
+                        }
+                      >
+                        {"\u2193"}
+                      </button>
+                    </div>
+                    {item.kind === "saved" ? (
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(item.photo, item.index)}
+                        disabled={uploading}
+                        title={
+                          item.photo?.id
+                            ? t("photos.removeTitleSaved")
+                            : t("photos.removeTitleLocal")
+                        }
+                        className="btn btn-secondary photo-uploader__remove-btn"
+                      >
+                        {t("photos.remove")}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => removePendingItem(item.pending.tempId)}
+                        disabled={item.pending?.status === "uploading"}
+                        className="btn btn-secondary photo-uploader__remove-btn"
+                      >
+                        {t("photos.remove")}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {item.kind === "saved" ? (
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(item.photo, item.index)}
-                    disabled={uploading}
-                    title={
-                      item.photo?.id
-                        ? t("photos.removeTitleSaved")
-                        : t("photos.removeTitleLocal")
-                    }
-                    className="photo-uploader__remove-btn"
-                  >
-                    {t("photos.remove")}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => removePendingItem(item.pending.tempId)}
-                    disabled={item.pending?.status === "uploading"}
-                    className="photo-uploader__remove-btn"
-                  >
-                    {t("photos.remove")}
-                  </button>
-                )}
-              </div>
-            </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <div className="photo-uploader__empty">{t("photos.empty")}</div>
       )}

@@ -186,6 +186,7 @@ export default function ProfilePage() {
   const summaryEmail = profile?.email || storedUser.email;
   const summaryRole = profile?.role || storedUser.role;
   const avatarLetter = String(summaryName || "").trim().charAt(0).toUpperCase();
+  const hasFeedback = Boolean(errorText || infoText);
 
   return (
     <div className="profile-page">
@@ -200,13 +201,25 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {errorText ? <div className="profile-alert profile-alert--error">{errorText}</div> : null}
+      {hasFeedback ? (
+        <div className="profile-feedback-slot">
+          {errorText ? (
+            <div className="profile-alert profile-alert--error">
+              <span className="profile-alert__text">{errorText}</span>
+            </div>
+          ) : (
+            <div className="profile-alert profile-alert--info">
+              <span className="profile-alert__text">{infoText}</span>
+            </div>
+          )}
+        </div>
+      ) : null}
       {loading ? (
         <div className="profile-loading">{t("common.loading")}</div>
       ) : null}
 
       {!loading && profile ? (
-        <div className="profile-content">
+        <div className={`profile-content ${hasFeedback ? "profile-content--with-feedback" : ""}`}>
           <div className="profile-layout">
             <aside className="profile-card profile-summary-card">
               <h3 className="profile-summary-name">{summaryName}</h3>
@@ -223,6 +236,9 @@ export default function ProfilePage() {
                   onChange={(e) => setDisplayName(e.target.value)}
                   className="profile-input"
                 />
+                <div className="text-muted profile-section__helper">
+                  {t("profile.minLen3")}
+                </div>
                 <div className="profile-actions">
                   <button
                     onClick={saveProfile}
@@ -239,9 +255,6 @@ export default function ProfilePage() {
                   >
                     {t("profile.resetName")}
                   </button>
-                  <div className="profile-hint profile-hint--inline">
-                    {t("profile.minLen3")}
-                  </div>
                 </div>
               </div>
             </aside>
@@ -300,9 +313,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      ) : null}
-      {!loading && infoText ? (
-        <div className="profile-alert profile-alert--info">{infoText}</div>
       ) : null}
     </div>
   );

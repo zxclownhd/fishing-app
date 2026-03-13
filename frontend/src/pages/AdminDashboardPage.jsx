@@ -5,12 +5,14 @@ import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import { getStoredUser } from "../auth/auth";
 import LocationCard from "../components/LocationCard";
 import { getCloudinaryVariant } from "../utils/cloudinaryUrl";
+import { toCompactFishChipLabel } from "../utils/fishChipLabel";
 import { getErrorMessage } from "../api/getErrorMessage";
 import { useI18n } from "../client/i18n/I18nContext";
 import { displayFishName } from "../client/i18n/displayName";
 import "./AdminDashboardPage.css";
 
 const LIMIT = 6;
+const ADMIN_CARD_VISIBLE_FISH_LIMIT = 3;
 
 export default function AdminDashboardPage() {
   const user = getStoredUser();
@@ -232,6 +234,19 @@ export default function AdminDashboardPage() {
         <section className="admin-page__results">
           {items.map((it) => {
             const isExpanded = expandedId === it.id;
+            const fishItems = (it.fish || []).map((x) => {
+              const fullLabel = displayFishName(x.fish?.name, locale) || t("admin.unknown");
+              return {
+                fullLabel,
+                compactLabel: toCompactFishChipLabel(fullLabel) || fullLabel,
+                keyBase: x.fishId || fullLabel,
+              };
+            });
+            const visibleFish = fishItems.slice(0, ADMIN_CARD_VISIBLE_FISH_LIMIT);
+            const hiddenFishCount = Math.max(
+              0,
+              fishItems.length - visibleFish.length,
+            );
 
             return (
               <LocationCard
@@ -246,22 +261,18 @@ export default function AdminDashboardPage() {
                         {t("admin.groups.fish")}
                       </div>
                       <div className="admin-page__group-chips">
-                        {(it.fish || []).slice(0, 4).map((x, idx) => (
+                        {visibleFish.map((item, idx) => (
                           <span
-                            key={
-                              x.fishId
-                                ? `${it.id}-fish-${x.fishId}`
-                                : `${it.id}-fish-${idx}`
-                            }
+                            key={`${it.id}-fish-${item.keyBase}-${idx}`}
                             className="chip admin-page__group-chip"
+                            title={item.fullLabel}
                           >
-                            {displayFishName(x.fish?.name, locale) ||
-                              t("admin.unknown")}
+                            {item.compactLabel}
                           </span>
                         ))}
-                        {(it.fish || []).length > 4 ? (
+                        {hiddenFishCount > 0 ? (
                           <span className="chip admin-page__group-chip admin-page__group-chip--more">
-                            +{(it.fish || []).length - 4}
+                            +{hiddenFishCount}
                           </span>
                         ) : null}
                         {!it.fish || it.fish.length === 0 ? (

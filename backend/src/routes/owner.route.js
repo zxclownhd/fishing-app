@@ -39,7 +39,7 @@ const REGION_CODES = new Set([
 
 const WATER_TYPES = new Set(["LAKE", "RIVER", "POND", "SEA", "OTHER"]);
 
-function normalizePhotoInputs(photos, max = 5) {
+function normalizePhotoInputs(photos, max = 6) {
   if (!Array.isArray(photos)) return [];
 
   const cleaned = photos
@@ -58,6 +58,13 @@ function normalizePhotoInputs(photos, max = 5) {
   }
 
   return uniqueByUrl.slice(0, max);
+}
+
+function normalizePhotoUrls(photoUrls, max = 6) {
+  if (!Array.isArray(photoUrls)) return [];
+  const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
+  const unique = [...new Set(cleaned)];
+  return unique.slice(0, max);
 }
 
 // GET /owner/locations?page=1&limit=20
@@ -141,6 +148,7 @@ router.patch(
       seasonCodes,
       contactInfo,
       photos, // optional: [{ url, publicId }]
+      photoUrls, // optional: ordered urls used for explicit photo order persistence
     } = req.body;
 
     const data = {};
@@ -225,7 +233,10 @@ router.patch(
     }
 
     const normalizedNewPhotos = Array.isArray(photos)
-      ? normalizePhotoInputs(photos, 5)
+      ? normalizePhotoInputs(photos, 6)
+      : null;
+    const normalizedPhotoUrls = Array.isArray(photoUrls)
+      ? normalizePhotoUrls(photoUrls, 6)
       : null;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -305,7 +316,7 @@ router.patch(
         const existingUrls = new Set(existingPhotos.map((p) => p.url));
         const currentCount = existingPhotos.length;
 
-        const remainingSlots = Math.max(0, 5 - currentCount);
+        const remainingSlots = Math.max(0, 6 - currentCount);
         if (remainingSlots > 0) {
           const toAdd = normalizedNewPhotos
             .filter((p) => !existingUrls.has(p.url))
@@ -323,7 +334,46 @@ router.patch(
         }
       }
 
-      // 5) return updated location
+      // 5) Persist explicit photo order from payload.
+      // We use createdAt sequencing because reads are ordered by createdAt asc, id asc.
+      if (normalizedPhotoUrls) {
+        const currentPhotos = await tx.photo.findMany({
+          where: { locationId: id },
+          select: { id: true, url: true },
+        });
+
+        if (currentPhotos.length) {
+          const byUrl = new Map(currentPhotos.map((p) => [p.url, p]));
+          const usedIds = new Set();
+          const ordered = [];
+
+          for (const url of normalizedPhotoUrls) {
+            const photo = byUrl.get(url);
+            if (!photo) continue;
+            if (usedIds.has(photo.id)) continue;
+            usedIds.add(photo.id);
+            ordered.push(photo);
+          }
+
+          // Keep any DB rows missing from payload at the end (defensive fallback).
+          for (const photo of currentPhotos) {
+            if (usedIds.has(photo.id)) continue;
+            ordered.push(photo);
+          }
+
+          const baseTs = Date.now();
+          await Promise.all(
+            ordered.map((photo, index) =>
+              tx.photo.update({
+                where: { id: photo.id },
+                data: { createdAt: new Date(baseTs + index) },
+              }),
+            ),
+          );
+        }
+      }
+
+      // 6) return updated location
       return tx.location.findFirst({
         where: { id, ownerId: req.user.id },
         include: {

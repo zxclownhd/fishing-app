@@ -112,11 +112,7 @@ export default function MyLocationsList({
               compactFishLabelMode="locale-smart"
               actions={
                 <div className="owner-list__actions">
-                  {isEditing ? (
-                    <button type="button" disabled className="btn btn-secondary">
-                      {t("ownerList.editing")}
-                    </button>
-                  ) : (
+                  {!isEditing ? (
                     <button
                       onClick={() => onStartEdit(loc)}
                       disabled={loading}
@@ -124,7 +120,7 @@ export default function MyLocationsList({
                     >
                       {t("ownerList.edit")}
                     </button>
-                  )}
+                  ) : null}
 
                   <button
                     onClick={() => onToggleHidden(loc)}

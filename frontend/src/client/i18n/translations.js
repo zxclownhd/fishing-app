@@ -171,7 +171,6 @@
       title: "Owner Dashboard",
       refresh: "Refresh",
       tabs: {
-        list: "My locations",
         create: "Create",
       },
       summary: {
@@ -295,6 +294,10 @@
         REJECTED: "Rejected",
         HIDDEN: "Hidden",
       },
+      extraPhotos: {
+        one: "+{count} photo",
+        other: "+{count} photos",
+      },
     },
     createLocation: {
       title: "Create location",
@@ -307,6 +310,8 @@
       uploading: "Uploading...",
       addPhotos: "Add photos",
       hint: "Drag and drop images here. Max {max}. Up to 10MB each.",
+      previewOrderHint:
+        "Use arrows to change photo order. The first photo will appear on the Home page card.",
       saved: "Saved",
       notSaved: "Not saved yet",
       remove: "Remove",
@@ -343,6 +348,10 @@
       contactsPlaceholder: "Contacts (optional)",
       latPlaceholder: "Lat (e.g. 50.45)",
       lngPlaceholder: "Lng (e.g. 30.52)",
+      mapStatus: {
+        selected: "Selected",
+        clickToSelect: "Click on the map to select coordinates",
+      },
       labels: {
         title: "Title",
         description: "Description",
@@ -375,7 +384,7 @@
         coordsInvalid: "Lat and Lng must be valid numbers",
         coordsRange: "Lat/Lng out of range",
         minPhotos: "At least 1 photo is required",
-        maxPhotos: "Max 5 photos",
+        maxPhotos: "Max 6 photos",
       },
     },
     pages: {},
@@ -616,7 +625,6 @@
       title: "Кабінет власника",
       refresh: "Оновити",
       tabs: {
-        list: "Мої локації",
         create: "Створити",
       },
       summary: {
@@ -741,6 +749,12 @@
         REJECTED: "Відхилено",
         HIDDEN: "Приховано",
       },
+      extraPhotos: {
+        one: "+{count} фото",
+        few: "+{count} фото",
+        many: "+{count} фото",
+        other: "+{count} фото",
+      },
     },
     createLocation: {
       title: "Створити локацію",
@@ -753,6 +767,8 @@
       uploading: "Завантаження...",
       addPhotos: "Додати фото",
       hint: "Перетягніть зображення сюди. Максимум {max}. До 10MB кожне.",
+      previewOrderHint:
+        "Використовуйте стрілки, щоб змінити порядок фото. Перше фото буде показано на картці на головній сторінці.",
       saved: "Збережено",
       notSaved: "Ще не збережено",
       remove: "Видалити",
@@ -782,6 +798,10 @@
       contactsPlaceholder: "Контакти (необовʼязково)",
       latPlaceholder: "Широта (напр. 50.45)",
       lngPlaceholder: "Довгота (напр. 30.52)",
+      mapStatus: {
+        selected: "Вибрано",
+        clickToSelect: "Натисніть на мапі, щоб вибрати координати",
+      },
       labels: {
         title: "Назва",
         description: "Опис",

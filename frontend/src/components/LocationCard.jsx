@@ -22,6 +22,10 @@ export default function LocationCard({
   const { t, locale } = useI18n();
 
   const photoUrl = loc?.photos?.[0]?.url || null;
+  const photoCount = getLocationPhotoCount(loc);
+  const extraPhotoCount = Math.max(0, photoCount - 1);
+  const extraPhotosLabel =
+    extraPhotoCount > 0 ? formatExtraPhotosLabel(extraPhotoCount, locale, t) : "";
 
   const thumbUrl = photoUrl
     ? getCloudinaryVariant(photoUrl, {
@@ -121,6 +125,9 @@ export default function LocationCard({
         ) : (
           <div className="location-card__no-img">{t("card.noPhoto")}</div>
         )}
+        {photoUrl && extraPhotoCount > 0 ? (
+          <span className="location-card__photo-count-pill">{extraPhotosLabel}</span>
+        ) : null}
       </div>
 
       <div className="location-card__body">
@@ -326,4 +333,25 @@ function PublicDescription({ text, label, emptyText }) {
       </div>
     </div>
   );
+}
+
+function getLocationPhotoCount(loc) {
+  const byField = Number(loc?.photosCount);
+  if (Number.isFinite(byField) && byField >= 0) return byField;
+
+  const byCountObj = Number(loc?._count?.photos);
+  if (Number.isFinite(byCountObj) && byCountObj >= 0) return byCountObj;
+
+  return Array.isArray(loc?.photos) ? loc.photos.length : 0;
+}
+
+function formatExtraPhotosLabel(count, locale, t) {
+  const normalized = Number.isFinite(Number(count)) ? Math.max(0, Number(count)) : 0;
+  const rules = new Intl.PluralRules(locale === "uk" ? "uk" : "en");
+  const category = rules.select(normalized);
+  const template = t(
+    `card.extraPhotos.${category}`,
+    t("card.extraPhotos.other", "+{count} photos"),
+  );
+  return String(template).replace("{count}", String(normalized));
 }

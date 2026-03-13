@@ -34,14 +34,14 @@ const REGION_CODES = new Set([
   "CRIMEA",
 ]);
 
-function normalizePhotoUrls(photoUrls, max = 5) {
+function normalizePhotoUrls(photoUrls, max = 6) {
   if (!Array.isArray(photoUrls)) return [];
   const cleaned = photoUrls.map((u) => String(u).trim()).filter(Boolean);
   const unique = [...new Set(cleaned)];
   return unique.slice(0, max);
 }
 
-function normalizePhotos(photos, max = 5) {
+function normalizePhotos(photos, max = 6) {
   if (!Array.isArray(photos)) return [];
 
   const cleaned = photos
@@ -163,7 +163,7 @@ router.get(
             take: 1,
             orderBy: [{ createdAt: "asc" }, { id: "asc" }],
           },
-          _count: { select: { reviews: true } },
+          _count: { select: { reviews: true, photos: true } },
         },
       });
 
@@ -179,9 +179,10 @@ router.get(
 
       const itemsWithRating = itemsOrdered.map((loc) => {
         const reviewsCount = loc._count?.reviews ?? 0;
+        const photosCount = loc._count?.photos ?? 0;
         const avgRating = ratingMap.get(loc.id) ?? null;
         const { _count, ...rest } = loc;
-        return { ...rest, reviewsCount, avgRating };
+        return { ...rest, reviewsCount, avgRating, photosCount };
       });
 
       return res.json({
@@ -205,7 +206,7 @@ router.get(
           take: 1,
           orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         },
-        _count: { select: { reviews: true } },
+        _count: { select: { reviews: true, photos: true } },
       },
       orderBy: { [orderField]: sortOrder },
       skip,
@@ -231,9 +232,10 @@ router.get(
 
     const itemsWithRating = items.map((loc) => {
       const reviewsCount = loc._count?.reviews ?? 0;
+      const photosCount = loc._count?.photos ?? 0;
       const avgRating = ratingMap.get(loc.id) ?? null;
       const { _count, ...rest } = loc;
-      return { ...rest, reviewsCount, avgRating };
+      return { ...rest, reviewsCount, avgRating, photosCount };
     });
 
     res.json({
@@ -314,10 +316,10 @@ router.post(
       });
     }
 
-    const normalizedPhotos = Array.isArray(photos) ? normalizePhotos(photos, 5) : [];
+    const normalizedPhotos = Array.isArray(photos) ? normalizePhotos(photos, 6) : [];
 
     if (!normalizedPhotos.length) {
-      const urls = normalizePhotoUrls(photoUrls, 5);
+      const urls = normalizePhotoUrls(photoUrls, 6);
       if (urls.length) {
         throw new AppError(
           400,

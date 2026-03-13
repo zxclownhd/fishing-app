@@ -115,10 +115,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .join("|");
 
     const origPhotos = (loc.photos || [])
-      .map((p) => p.url)
+      .map(photoIdentityKey)
       .filter(Boolean)
-      .map((s) => s.trim())
-      .sort()
       .join("|");
 
     const curFish = (fishSelected || [])
@@ -130,9 +128,8 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       .sort()
       .join("|");
     const curPhotos = (photos || [])
-      .map((p) => String(p.url || "").trim())
+      .map(photoIdentityKey)
       .filter(Boolean)
-      .sort()
       .join("|");
 
     return (
@@ -236,7 +233,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         setEditError(t("locationForm.errors.minPhotos"));
         return;
       }
-      if (photos.length > 5) {
+      if (photos.length > 6) {
         setEditError(t("locationForm.errors.maxPhotos"));
         return;
       }
@@ -542,9 +539,10 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         <PhotoUploader
           photos={photos}
           onChange={setPhotos}
-          max={5}
+          max={6}
           onRemove={handleRemove}
           draftFolder={draftFolder}
+          previewHintStyle={fieldLabel}
         />
       </div>
 
@@ -621,4 +619,12 @@ function autoResizeTextarea(node) {
 
 function uniqueValues(items) {
   return Array.from(new Set((items || []).filter(Boolean)));
+}
+
+function photoIdentityKey(photo) {
+  if (!photo) return "";
+  if (photo.id) return `id:${String(photo.id).trim()}`;
+  if (photo.publicId) return `public:${String(photo.publicId).trim()}`;
+  if (photo.url) return `url:${String(photo.url).trim()}`;
+  return "";
 }

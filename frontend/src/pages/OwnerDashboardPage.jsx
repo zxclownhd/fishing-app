@@ -210,14 +210,6 @@ export default function OwnerDashboardPage() {
           </div>
           <div className="owner-page__top-actions">
             <button
-              onClick={() => setActiveTab("LIST")}
-              disabled={loading}
-              className="btn btn-secondary owner-page__header-action"
-            >
-              {t("owner.tabs.list")}
-            </button>
-
-            <button
               onClick={openCreateModal}
               disabled={loading}
               className="btn btn-primary owner-page__header-action"

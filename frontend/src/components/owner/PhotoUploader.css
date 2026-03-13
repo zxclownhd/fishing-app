@@ -8,15 +8,32 @@
   border-radius: 12px;
   padding: 12px;
   background: #fafafa;
+  display: block;
+}
+
+.photo-uploader__dropzone-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.photo-uploader__dropzone-text {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .photo-uploader__toolbar {
   display: flex;
-  gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.photo-uploader__add-btn {
+  min-height: auto;
+  padding: 0.6em 1.2em;
 }
 
 .photo-uploader__drop-hint {
@@ -118,20 +135,26 @@
 }
 
 .photo-uploader__reorder-btn {
-  min-width: 28px;
-  height: 26px;
-  border: 1px solid #d4d4d4;
+  box-sizing: border-box;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
   border-style: solid;
   border-width: 1px;
   border-radius: var(--radius-sm);
-  background: #fff;
-  color: #4b5563;
-  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 12px;
   font-family: inherit;
   font-weight: 600;
   line-height: 1;
-  cursor: default;
-  text-align: center;
+  cursor: pointer;
   transition: box-shadow 0.2s ease;
 }
 
@@ -140,6 +163,7 @@
   color: #9ca3af;
   border-color: #e2e8f0;
   background: #f8fafc;
+  cursor: not-allowed;
 }
 
 .photo-uploader__filename {
@@ -161,13 +185,8 @@
 .photo-uploader__remove-btn {
   font-size: 12px;
   padding: 4px 8px;
-  border-style: solid;
-  border-width: 1px;
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-weight: 600;
+  min-height: auto;
   line-height: 1;
-  transition: box-shadow 0.2s ease;
 }
 
 .photo-uploader__reorder-btn:focus-visible,
@@ -181,6 +200,15 @@
 }
 
 @media (max-width: 640px) {
+  .photo-uploader__dropzone-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .photo-uploader__toolbar {
+    justify-content: flex-start;
+  }
+
   .photo-uploader__preview-list {
     grid-template-columns: 1fr;
   }

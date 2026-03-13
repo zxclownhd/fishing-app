@@ -127,7 +127,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         setCreateError(t("locationForm.errors.minPhotos"));
         return;
       }
-      if (normalizedPhotos.length > 5) {
+      if (normalizedPhotos.length > 6) {
         setCreateError(t("locationForm.errors.maxPhotos"));
         return;
       }
@@ -371,8 +371,9 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
         <PhotoUploader
           photos={photos}
           onChange={setPhotos}
-          max={5}
+          max={6}
           draftFolder={draftFolder}
+          previewHintStyle={fieldLabel}
         />
       </div>
 

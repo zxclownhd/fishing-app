@@ -47,6 +47,7 @@
   width: 100%;
   aspect-ratio: var(--location-card-media-ratio);
   flex-shrink: 0;
+  position: relative;
   border-radius: var(--radius-md);
   overflow: hidden;
   border: 1px solid var(--color-border);
@@ -54,6 +55,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.location-card__photo-count-pill {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .location-card__img {
