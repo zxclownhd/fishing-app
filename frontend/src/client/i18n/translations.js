@@ -275,6 +275,9 @@
       remove: "Remove",
       pageSlash: "Page {page} / {totalPages}",
     },
+    profilePage: {
+      title: "Profile",
+    },
     card: {
       noReviews: "No reviews yet",
       photoAlt: "Location",
@@ -735,6 +738,9 @@
       details: "Деталі",
       remove: "Прибрати",
       pageSlash: "Сторінка {page} / {totalPages}",
+    },
+    profilePage: {
+      title: "Профіль",
     },
     card: {
       noReviews: "Поки що немає відгуків",

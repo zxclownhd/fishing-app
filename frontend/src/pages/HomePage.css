@@ -10,6 +10,24 @@
   gap: 6px;
 }
 
+.home-page__hero-surface {
+  justify-self: start;
+  display: grid;
+  gap: 6px;
+  width: fit-content;
+  max-width: min(100%, 740px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-page__hero-surface .page-title,
+.home-page__hero-surface .home-page__subtitle {
+  margin: 0;
+}
+
 .home-page__subtitle {
   margin: 0;
   max-width: 100%;
@@ -55,6 +73,11 @@
   padding-bottom: 0 !important;
 }
 
+.home-page__filters .input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
 .home-page__action-cell {
   grid-column: span 2;
   display: flex;
@@ -68,7 +91,8 @@
 }
 
 .home-page__active-filters-title {
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .home-page__chips {
@@ -103,19 +127,48 @@
   gap: 4px;
 }
 
+.home-page__results-surface {
+  justify-self: start;
+  display: grid;
+  width: fit-content;
+  max-width: min(100%, 740px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-page__results-surface .section-title,
+.home-page__results-surface .text-muted {
+  margin: 0;
+}
+
 .home-page__results-sort {
   min-width: 240px;
   max-width: 320px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .home-page__results-sort > div {
   display: grid;
+  width: 100%;
   gap: 6px;
 }
 
 .home-page__results-sort > div > div:first-child {
-  font-size: var(--font-small);
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   opacity: 0.9;
 }
 

@@ -2,6 +2,21 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-bg);
+}
+
+.app-layout::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--app-bg-overlay), var(--app-bg-overlay)), var(--app-bg-image-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .app-nav {
@@ -17,6 +32,13 @@
   top: 0;
   z-index: 1000;
   box-shadow: var(--shadow-nav);
+}
+
+.app-nav,
+.app-content,
+.app-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .app-nav__links,
@@ -83,9 +105,9 @@
   border: 0;
   background: transparent;
   color: var(--color-nav-toggle-text);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   border-radius: 999px;
   padding: 6px 10px;
   cursor: pointer;
@@ -95,15 +117,21 @@
 .app-nav__theme-button {
   border: 0;
   background: transparent;
-  color: var(--color-nav-toggle-text);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+  color: #111111;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   border-radius: 999px;
   min-width: 30px;
   padding: 6px 10px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-nav__theme-button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .app-nav__language-button:hover {
@@ -113,7 +141,15 @@
 
 .app-nav__theme-button:hover {
   background: var(--color-nav-toggle-hover-bg);
-  color: var(--color-nav-toggle-hover-text);
+  color: #111111;
+}
+
+[data-theme="dark"] .app-nav__theme-button {
+  color: var(--color-nav-toggle-text);
+}
+
+[data-theme="dark"] .app-nav__theme-button:hover {
+  color: var(--color-nav-toggle-text);
 }
 
 .app-nav__language-button:focus-visible {
@@ -159,9 +195,9 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 11px;
-  line-height: 1.2;
-  font-weight: 500;
+  font-size: var(--type-badge-size);
+  line-height: var(--type-badge-line);
+  font-weight: var(--type-badge-weight);
   color: var(--color-text-secondary);
   background-color: var(--color-nav-role-bg);
   border: 1px solid var(--color-nav-role-border);
@@ -220,5 +256,31 @@
   background-color: var(--color-nav-bg);
   border-top-color: var(--color-nav-border);
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  .app-nav {
+    row-gap: 8px;
+  }
+
+  .app-nav__links,
+  .app-nav__actions {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    justify-content: space-evenly;
+    gap: 0;
+  }
+
+  .app-nav__links {
+    order: 1;
+    flex-wrap: nowrap;
+  }
+
+  .app-nav__actions {
+    order: 2;
+    flex-wrap: nowrap;
+  }
 }
 

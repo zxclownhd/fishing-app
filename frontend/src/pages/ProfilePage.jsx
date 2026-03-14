@@ -189,77 +189,85 @@ export default function ProfilePage() {
   const hasFeedback = Boolean(errorText || infoText);
 
   return (
-    <div className="profile-page">
-      <div className="profile-page__top">
-        <div className="profile-page__back-row">
-          <Link to="/" className="btn btn-secondary profile-page__back-btn">
-            {t("profile.back")}
-          </Link>
+    <div className="page profile-page">
+      <div className="container profile-page__container">
+        <div className="profile-page__top">
+          <div className="profile-page__back-row">
+            <Link to="/" className="btn btn-secondary profile-page__back-btn">
+              {t("profile.back")}
+            </Link>
+          </div>
+          <div className="profile-page__top-avatar">
+            <div className="profile-avatar">{avatarLetter || "?"}</div>
+          </div>
         </div>
-        <div className="profile-page__top-avatar">
-          <div className="profile-avatar">{avatarLetter || "?"}</div>
-        </div>
-      </div>
 
-      {hasFeedback ? (
-        <div className="profile-feedback-slot">
-          {errorText ? (
-            <div className="profile-alert profile-alert--error">
-              <span className="profile-alert__text">{errorText}</span>
-            </div>
-          ) : (
-            <div className="profile-alert profile-alert--info">
-              <span className="profile-alert__text">{infoText}</span>
-            </div>
-          )}
-        </div>
-      ) : null}
-      {loading ? (
-        <div className="profile-loading">{t("common.loading")}</div>
-      ) : null}
+        <header className="profile-page__header">
+          <div className="profile-page__header-surface">
+            <h1 className="page-title profile-page__title">{t("profilePage.title")}</h1>
+          </div>
 
-      {!loading && profile ? (
-        <div className={`profile-content ${hasFeedback ? "profile-content--with-feedback" : ""}`}>
-          <div className="profile-layout">
-            <aside className="profile-card profile-summary-card">
-              <h3 className="profile-summary-name">{summaryName}</h3>
-              <div className="profile-summary-email">{summaryEmail}</div>
-              <div className="chip profile-summary-role">
-                {t(`roles.${summaryRole}`, summaryRole)}
-              </div>
-
-              <div className="profile-divider" />
-              <div className="profile-section profile-section--editable">
-                <div className="profile-section__title">{t("profile.displayName")}</div>
-                <input
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="profile-input"
-                />
-                <div className="text-muted profile-section__helper">
-                  {t("profile.minLen3")}
+          {hasFeedback ? (
+            <div className="profile-feedback-slot">
+              {errorText ? (
+                <div className="profile-alert profile-alert--error">
+                  <span className="profile-alert__text">{errorText}</span>
                 </div>
-                <div className="profile-actions">
-                  <button
-                    onClick={saveProfile}
-                    disabled={!canSaveName || loading}
-                    className="profile-btn profile-btn--primary"
-                  >
-                    {t("profile.save")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDisplayName(profile.displayName || "")}
-                    disabled={loading}
-                    className="profile-btn profile-btn--secondary"
-                  >
-                    {t("profile.resetName")}
-                  </button>
+              ) : (
+                <div className="profile-alert profile-alert--info">
+                  <span className="profile-alert__text">{infoText}</span>
                 </div>
-              </div>
-            </aside>
+              )}
+            </div>
+          ) : null}
+        </header>
 
-            <div className="profile-card profile-action-card">
+        {loading ? (
+          <div className="profile-loading">{t("common.loading")}</div>
+        ) : null}
+
+        {!loading && profile ? (
+          <div className={`profile-content ${hasFeedback ? "profile-content--with-feedback" : ""}`}>
+            <div className="profile-layout">
+              <aside className="profile-card profile-summary-card">
+                <h3 className="profile-summary-name">{summaryName}</h3>
+                <div className="profile-summary-email">{summaryEmail}</div>
+                <div className="chip profile-summary-role">
+                  {t(`roles.${summaryRole}`, summaryRole)}
+                </div>
+
+                <div className="profile-divider" />
+                <div className="profile-section profile-section--editable">
+                  <div className="profile-section__title">{t("profile.displayName")}</div>
+                  <input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    className="profile-input"
+                  />
+                  <div className="text-muted profile-section__helper">
+                    {t("profile.minLen3")}
+                  </div>
+                  <div className="profile-actions">
+                    <button
+                      onClick={saveProfile}
+                      disabled={!canSaveName || loading}
+                      className="profile-btn profile-btn--primary"
+                    >
+                      {t("profile.save")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDisplayName(profile.displayName || "")}
+                      disabled={loading}
+                      className="profile-btn profile-btn--secondary"
+                    >
+                      {t("profile.resetName")}
+                    </button>
+                  </div>
+                </div>
+              </aside>
+
+              <div className="profile-card profile-action-card">
                 <h3 className="profile-card__title">{t("profile.changePasswordTitle")}</h3>
 
                 <div className="profile-security-body">
@@ -310,10 +318,11 @@ export default function ProfilePage() {
                     </button>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }

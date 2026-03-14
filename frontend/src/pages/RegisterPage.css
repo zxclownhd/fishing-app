@@ -38,6 +38,19 @@
   max-width: 560px;
 }
 
+.register-page__brand-surface {
+  justify-self: start;
+  display: grid;
+  gap: var(--space-3);
+  width: fit-content;
+  max-width: min(100%, 560px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
 .register-page__brand-title {
   margin: 0;
   font-size: clamp(34px, 6vw, 62px);
@@ -92,7 +105,8 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .register-page__terms-link {
@@ -141,7 +155,8 @@
 .register-page__footer-text {
   margin-top: var(--space-4);
   color: var(--color-text-secondary);
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 @media (max-width: 900px) {
@@ -157,6 +172,10 @@
     margin: 0 auto;
   }
 
+  .register-page__brand-surface {
+    justify-self: center;
+  }
+
   .register-page__card {
     width: 100%;
   }
@@ -170,7 +189,8 @@
   }
 
   .register-page__brand-subtitle {
-    font-size: var(--font-body);
+    font-size: var(--type-body-size);
+    line-height: var(--type-body-line);
   }
 }
 

@@ -34,6 +34,19 @@
   flex-wrap: wrap;
 }
 
+.admin-page__header-surface {
+  justify-self: start;
+  display: grid;
+  gap: 6px;
+  width: fit-content;
+  max-width: min(100%, 740px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
 .admin-page__title {
   font-size: clamp(30px, 3.2vw, var(--font-page-title));
 }
@@ -130,10 +143,12 @@
 }
 
 .admin-page__group-label {
-  font-size: 12px;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   opacity: 0.75;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
+  text-transform: var(--type-label-caps-transform);
+  letter-spacing: var(--type-label-caps-letter);
 }
 
 .admin-page__group-chips {
@@ -148,12 +163,13 @@
 }
 
 .admin-page__group-chip--more {
-  font-weight: 700;
+  font-weight: var(--type-card-title-weight);
 }
 
 .admin-page__empty-dash {
   opacity: 0.7;
-  font-size: 13px;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .admin-page__details-box {
@@ -164,7 +180,8 @@
 }
 
 .admin-page__details-label {
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
   color: var(--color-text-secondary);
   margin-bottom: 6px;
 }
@@ -189,7 +206,9 @@
   min-height: 34px;
   padding-left: 13px;
   padding-right: 13px;
-  font-size: 13px;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
 }
 
 .admin-page__results .location-card__actions .admin-page__action-btn {
@@ -199,8 +218,8 @@
   max-height: 34px;
   padding-left: 12px;
   padding-right: 12px;
-  font-size: 12px;
-  line-height: 1;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
 }
 
 .admin-page__results .admin-page__group-label {
@@ -212,7 +231,8 @@
 .admin-page__results .admin-page__group-chip {
   min-height: 20px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
 }
 
 .admin-page__results .admin-page__group-label::first-letter {
@@ -299,10 +319,10 @@
 }
 
 .admin-page__field-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
   color: var(--color-text-secondary);
-  line-height: 1.3;
+  line-height: var(--type-label-line);
 }
 
 .admin-page__field-value {
@@ -317,9 +337,9 @@
 }
 
 .admin-page__field-value--title {
-  font-size: var(--font-card-title);
-  font-weight: 700;
-  line-height: 1.3;
+  font-size: var(--type-card-title-size);
+  font-weight: var(--type-card-title-weight);
+  line-height: var(--type-card-title-line);
 }
 
 .admin-page__field-value--text {
@@ -446,10 +466,10 @@
 }
 
 .admin-page__coords-item-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
   color: var(--color-text-secondary);
-  line-height: 1.3;
+  line-height: var(--type-label-line);
 }
 
 .admin-page__coords-item-value {

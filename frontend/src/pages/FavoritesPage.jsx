@@ -93,11 +93,13 @@ export default function FavoritesPage() {
         </div>
 
         <header className="favorites-page__header">
-          <h1 className="page-title favorites-page__title">
-            {t("favoritesPage.title")}
-          </h1>
-          <div className="text-muted favorites-page__meta">
-            {t("favoritesPage.summary.totalLabel")} {total}
+          <div className="favorites-page__header-surface">
+            <h1 className="page-title favorites-page__title">
+              {t("favoritesPage.title")}
+            </h1>
+            <div className="text-muted favorites-page__meta">
+              {t("favoritesPage.summary.totalLabel")} {total}
+            </div>
           </div>
         </header>
 
