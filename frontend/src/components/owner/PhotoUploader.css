@@ -37,18 +37,21 @@
 }
 
 .photo-uploader__drop-hint {
-  font-size: 13px;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
   opacity: 0.8;
 }
 
 .photo-uploader__limit-hint {
-  font-size: 13px;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
   opacity: 0.75;
 }
 
 .photo-uploader__error {
   color: var(--color-error);
-  font-size: 13px;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .photo-uploader__preview-list {
@@ -93,8 +96,9 @@
   position: absolute;
   top: 6px;
   left: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-badge-size);
+  font-weight: var(--type-badge-weight);
+  line-height: var(--type-badge-line);
   padding: 3px 6px;
   border-radius: 999px;
   background: var(--color-success-overlay);
@@ -105,8 +109,9 @@
   position: absolute;
   left: 6px;
   bottom: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--type-badge-size);
+  font-weight: var(--type-badge-weight);
+  line-height: var(--type-badge-line);
   padding: 3px 6px;
   border-radius: 8px;
   color: var(--color-on-primary);
@@ -150,10 +155,10 @@
   border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: 12px;
+  font-size: var(--type-label-size);
   font-family: inherit;
-  font-weight: 600;
-  line-height: 1;
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   cursor: pointer;
   transition: box-shadow 0.2s ease;
 }
@@ -167,7 +172,8 @@
 }
 
 .photo-uploader__filename {
-  font-size: 12px;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
   color: var(--color-text-muted-strong);
   opacity: 0.85;
   overflow: hidden;
@@ -183,10 +189,11 @@
 }
 
 .photo-uploader__remove-btn {
-  font-size: 12px;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
   padding: 4px 8px;
   min-height: auto;
-  line-height: 1;
+  line-height: var(--type-label-line);
 }
 
 .photo-uploader__reorder-btn:focus-visible,

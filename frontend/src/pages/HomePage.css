@@ -73,6 +73,11 @@
   padding-bottom: 0 !important;
 }
 
+.home-page__filters .input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
 .home-page__action-cell {
   grid-column: span 2;
   display: flex;
@@ -86,7 +91,8 @@
 }
 
 .home-page__active-filters-title {
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .home-page__chips {
@@ -160,8 +166,9 @@
 }
 
 .home-page__results-sort > div > div:first-child {
-  font-size: var(--font-small);
-  font-weight: 600;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   opacity: 0.9;
 }
 

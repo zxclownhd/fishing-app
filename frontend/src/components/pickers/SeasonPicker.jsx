@@ -38,6 +38,7 @@ export default function SeasonPicker({ value, onChange }) {
   return (
     <div style={{ position: "relative", display: "grid", gap: 6 }}>
       <input
+        className="input"
         placeholder={t("seasonPicker.placeholder")}
         value={open ? query : summary}
         onChange={(e) => {
@@ -79,7 +80,7 @@ export default function SeasonPicker({ value, onChange }) {
 const input = {
   padding: 10,
   borderRadius: 8,
-  border: "1px solid var(--color-border-soft)",
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
   background: "var(--color-surface)",
   color: "var(--color-text)",
   width: "100%",
@@ -88,7 +89,7 @@ const dropdown = {
   position: "absolute",
   zIndex: 10,
   background: "var(--color-surface)",
-  border: "1px solid var(--color-border-soft)",
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
   width: "100%",
   borderRadius: 8,
   overflow: "hidden",

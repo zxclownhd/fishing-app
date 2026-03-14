@@ -56,7 +56,8 @@
 }
 
 .favorites-page__meta {
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .favorites-page__error {

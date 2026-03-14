@@ -14,6 +14,10 @@ import {
   validateLocationTextFields,
   hasLocationFieldErrors,
 } from "./locationFormValidation";
+import {
+  locationFormFieldCounterStyle,
+  locationFormFieldLabelStyle,
+} from "./locationFormTypography";
 
 const emptyFieldErrors = {
   title: "",
@@ -392,6 +396,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.title")}</div>
         <input
+          className="input"
           value={editTitle}
           maxLength={LOCATION_LIMITS.title}
           onChange={(e) => handleTitleChange(e.target.value)}
@@ -412,6 +417,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.description")}</div>
         <textarea
+          className="textarea"
           ref={descriptionRef}
           value={editDescription}
           maxLength={LOCATION_LIMITS.description}
@@ -434,6 +440,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.contacts")}</div>
         <textarea
+          className="textarea"
           ref={contactsRef}
           value={editContactInfo}
           maxLength={LOCATION_LIMITS.contactInfo}
@@ -458,6 +465,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
         <RegionPicker
           value={editRegionSelected}
           onChange={handleRegionChange}
+          dropdownZIndex={1301}
         />
         <FieldError msg={fieldErrors.region} />
       </div>
@@ -465,6 +473,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.waterType")}</div>
         <select
+          className="select"
           value={editWaterType}
           onChange={(e) => setEditWaterType(e.target.value)}
           style={input}
@@ -575,7 +584,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
           max={6}
           onRemove={handleRemove}
           draftFolder={draftFolder}
-          previewHintStyle={fieldLabel}
+          previewHintStyle={locationFormFieldLabelStyle}
         />
         <FieldError msg={fieldErrors.photos} />
       </div>
@@ -600,7 +609,7 @@ export default function EditLocationForm({ loc, onSave, onCancel }) {
       </div>
 
       {!saving ? (
-        <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+        <div className="type-label" style={{ opacity: 0.75, marginTop: 6 }}>
           {isDirty
             ? t("locationForm.pendingAfterSaveNotice")
             : t("locationForm.noChanges")}
@@ -617,7 +626,11 @@ function FieldError({ msg }) {
   return <div className="error-text register-page__field-error">{msg}</div>;
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid var(--color-border-soft)" };
+const input = {
+  padding: 10,
+  borderRadius: 8,
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
+};
 const displayField = {
   ...input,
   color: "var(--color-text)",
@@ -630,15 +643,9 @@ const textareaInput = {
   resize: "none",
   overflow: "hidden",
   minHeight: 88,
-  lineHeight: 1.45,
+  lineHeight: "var(--type-body-line)",
 };
 const fieldBlock = { display: "grid", gap: 6 };
-const fieldLabel = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: "var(--color-text-secondary)",
-  lineHeight: 1.3,
-};
 const fieldMetaRow = {
   marginTop: -6,
   display: "flex",
@@ -647,7 +654,8 @@ const fieldMetaRow = {
   gap: 8,
   minHeight: 20,
 };
-const fieldCounterText = { fontSize: 12, opacity: 0.7 };
+const fieldLabel = locationFormFieldLabelStyle;
+const fieldCounterText = locationFormFieldCounterStyle;
 
 function autoResizeTextarea(node) {
   if (!node) return;

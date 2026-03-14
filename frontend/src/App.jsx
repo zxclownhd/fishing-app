@@ -14,6 +14,36 @@ import FavoritesPage from "./pages/FavoritesPage";
 
 import { clearAuth, getStoredUser } from "./auth/auth";
 
+function SunIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M20 14.3A8.6 8.6 0 1 1 9.7 4a7 7 0 1 0 10.3 10.3Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function App() {
   const nav = useNavigate();
   const [user, setUser] = useState(getStoredUser());
@@ -149,7 +179,7 @@ export default function App() {
               aria-pressed={theme === "light"}
               title={t("nav.themeLight", "Light theme")}
             >
-              L
+              <SunIcon />
             </button>
             <button
               type="button"
@@ -160,7 +190,7 @@ export default function App() {
               aria-pressed={theme === "dark"}
               title={t("nav.themeDark", "Dark theme")}
             >
-              D
+              <MoonIcon />
             </button>
           </div>
 

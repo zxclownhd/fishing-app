@@ -29,7 +29,12 @@ const REGION_OPTIONS = [
   "CRIMEA",
 ];
 
-export default function RegionPicker({ value, onChange, placeholder }) {
+export default function RegionPicker({
+  value,
+  onChange,
+  placeholder,
+  dropdownZIndex = 10,
+}) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -65,6 +70,7 @@ export default function RegionPicker({ value, onChange, placeholder }) {
   return (
     <div style={{ position: "relative" }}>
       <input
+        className="input"
         placeholder={ph}
         value={open ? query : selectedLabel}
         onChange={(e) => {
@@ -94,7 +100,7 @@ export default function RegionPicker({ value, onChange, placeholder }) {
       />
 
       {open && filtered.length > 0 ? (
-        <div style={dropdown}>
+        <div style={{ ...dropdown, zIndex: dropdownZIndex }}>
           {filtered.map((code) => (
             <div
               key={code}
@@ -113,16 +119,15 @@ export default function RegionPicker({ value, onChange, placeholder }) {
 const input = {
   padding: 10,
   borderRadius: 8,
-  border: "1px solid var(--color-border-soft)",
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
   background: "var(--color-surface)",
   color: "var(--color-text)",
   width: "100%",
 };
 const dropdown = {
   position: "absolute",
-  zIndex: 10,
   background: "var(--color-surface)",
-  border: "1px solid var(--color-border-soft)",
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
   width: "100%",
   marginTop: 4,
   borderRadius: 8,

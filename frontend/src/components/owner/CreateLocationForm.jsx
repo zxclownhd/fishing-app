@@ -15,6 +15,10 @@ import {
   validateLocationTextFields,
   hasLocationFieldErrors,
 } from "./locationFormValidation";
+import {
+  locationFormFieldCounterStyle,
+  locationFormFieldLabelStyle,
+} from "./locationFormTypography";
 
 const emptyFieldErrors = {
   title: "",
@@ -227,6 +231,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.title")}</div>
         <input
+          className="input"
           placeholder={t("locationForm.titlePlaceholder")}
           value={title}
           maxLength={LOCATION_LIMITS.title}
@@ -247,6 +252,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.description")}</div>
         <textarea
+          className="textarea"
           ref={descriptionRef}
           placeholder={t("locationForm.descriptionPlaceholder")}
           value={description}
@@ -269,6 +275,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.contacts")}</div>
         <textarea
+          className="textarea"
           ref={contactsRef}
           placeholder={t("locationForm.contactsPlaceholderFull")}
           value={contactInfo}
@@ -290,13 +297,18 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.region")}</div>
-        <RegionPicker value={regionSelected} onChange={handleRegionChange} />
+        <RegionPicker
+          value={regionSelected}
+          onChange={handleRegionChange}
+          dropdownZIndex={1301}
+        />
         <FieldError msg={fieldErrors.region} />
       </div>
 
       <div style={fieldBlock}>
         <div style={fieldLabel}>{t("locationForm.labels.waterType")}</div>
         <select
+          className="select"
           value={waterType}
           onChange={(e) => setWaterType(e.target.value)}
           style={input}
@@ -406,7 +418,7 @@ export default function CreateLocationForm({ onCreate, onCancel }) {
           onChange={handlePhotosChange}
           max={6}
           draftFolder={draftFolder}
-          previewHintStyle={fieldLabel}
+          previewHintStyle={locationFormFieldLabelStyle}
         />
         <FieldError msg={fieldErrors.photos} />
       </div>
@@ -440,13 +452,17 @@ function FieldError({ msg }) {
   return <div className="error-text register-page__field-error">{msg}</div>;
 }
 
-const input = { padding: 10, borderRadius: 8, border: "1px solid var(--color-border-soft)" };
+const input = {
+  padding: 10,
+  borderRadius: 8,
+  border: "1px solid var(--owner-modal-input-border, var(--color-border-soft))",
+};
 const textareaInput = {
   ...input,
   resize: "none",
   overflow: "hidden",
   minHeight: 88,
-  lineHeight: 1.45,
+  lineHeight: "var(--type-body-line)",
 };
 const displayField = {
   ...input,
@@ -456,12 +472,6 @@ const displayField = {
   userSelect: "text",
 };
 const fieldBlock = { display: "grid", gap: 6 };
-const fieldLabel = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: "var(--color-text-secondary)",
-  lineHeight: 1.3,
-};
 const fieldMetaRow = {
   marginTop: -6,
   display: "flex",
@@ -470,7 +480,8 @@ const fieldMetaRow = {
   gap: 8,
   minHeight: 20,
 };
-const fieldCounterText = { fontSize: 12, opacity: 0.7 };
+const fieldLabel = locationFormFieldLabelStyle;
+const fieldCounterText = locationFormFieldCounterStyle;
 
 function autoResizeTextarea(node) {
   if (!node) return;

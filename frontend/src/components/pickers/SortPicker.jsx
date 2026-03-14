@@ -7,7 +7,9 @@ export default function SortPicker({ value, onChange }) {
 
   return (
     <div style={{ display: "grid", gap: 6 }}>
-      <div style={{ fontWeight: 600, opacity: 0.85 }}>{t("sort.title")}</div>
+      <div className="type-label" style={{ opacity: 0.85 }}>
+        {t("sort.title")}
+      </div>
 
       <select
         value={value}
@@ -18,6 +20,8 @@ export default function SortPicker({ value, onChange }) {
           border: "1px solid var(--color-border-soft)",
           background: "var(--color-surface)",
           color: "var(--color-text)",
+          fontSize: "var(--type-body-size)",
+          lineHeight: "var(--type-body-line)",
         }}
       >
         {SORT_OPTIONS.map((opt) => (

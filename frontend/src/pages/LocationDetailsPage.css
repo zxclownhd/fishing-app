@@ -181,13 +181,14 @@
 
 .location-details-page__meta-label,
 .location-details-page__fact-label {
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .location-details-page__meta-value,
 .location-details-page__fact-value {
-  font-size: 15px;
-  line-height: 1.3;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line);
 }
 
 .location-details-page__highlights {
@@ -292,8 +293,9 @@
 
 .location-details-page__mini-title {
   margin: 0;
-  font-size: var(--font-small);
-  font-weight: 700;
+  font-size: var(--type-label-size);
+  font-weight: var(--type-label-weight);
+  line-height: var(--type-label-line);
   color: var(--color-text-secondary);
 }
 
@@ -301,7 +303,7 @@
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  line-height: 1.45;
+  line-height: var(--type-body-line);
 }
 
 .location-details-page__content-grid {
@@ -373,8 +375,8 @@
 
 .location-details-page__subsection-title {
   margin: 0 0 8px;
-  font-size: var(--font-body);
-  line-height: 1.3;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line);
 }
 
 .location-details-page__chips {
@@ -388,7 +390,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 13px;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
   padding: 5px 10px;
 }
 
@@ -426,7 +429,8 @@
 
 .location-details-page__field-counter {
   justify-self: end;
-  font-size: var(--font-small);
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
 }
 
 .location-details-page__rating-controls {
@@ -503,8 +507,8 @@
 }
 
 .location-details-page__reviews-meta {
-  font-size: var(--font-small);
-  line-height: 1.2;
+  font-size: var(--type-secondary-size);
+  line-height: var(--type-secondary-line);
   margin-block: 4px;
 }
 
@@ -558,11 +562,12 @@
 .location-details-page__review-comment {
   margin: 0;
   white-space: pre-wrap;
-  line-height: 1.45;
+  line-height: var(--type-body-line);
 }
 
 .location-details-page__review-time {
-  font-size: 12px;
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line);
 }
 
 .location-details-page__section,
