@@ -26,10 +26,6 @@ export default function App() {
 
   const { locale, setLocale, t } = useI18n();
 
-  const userLabel = user?.displayName?.trim()
-    ? user.displayName.trim()
-    : user?.email || "";
-
   const roleLabel = user?.role ? t(`roles.${user.role}`, user.role) : "";
 
   useEffect(() => {
@@ -170,7 +166,6 @@ export default function App() {
 
           {user ? (
             <>
-              <span className="app-nav__user-name">{userLabel}</span>
               <span className="app-nav__role-badge">{roleLabel}</span>
               <button onClick={logout} className="app-nav__logout">
                 {t("nav.logout")}

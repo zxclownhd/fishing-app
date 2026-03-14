@@ -40,7 +40,7 @@
   --color-image-overlay: rgba(0, 0, 0, 0.62);
   --color-active-ring: rgba(15, 23, 42, 0.18);
 
-  --color-nav-bg: #e2e8f0;
+  --color-nav-bg: var(--color-surface);
   --color-nav-border: #dbe4ee;
   --color-nav-link: #334155;
   --color-nav-link-hover-bg: #f1f5f9;
@@ -61,6 +61,8 @@
   --color-nav-auth-hover-bg: #eef2f7;
   --color-nav-auth-active-border: #94a3b8;
   --color-nav-user-text: #1f2937;
+  --app-bg-image-url: url("https://res.cloudinary.com/dur9baj6u/image/upload/v1773479277/bg_img_light_tp7mfn.webp");
+  --app-bg-overlay: rgba(248, 250, 252, 0.3);
 
   --color-error-border-soft: color-mix(in srgb, var(--color-error) 28%, var(--color-border));
   --color-error-bg-soft: color-mix(in srgb, var(--color-error) 9%, var(--color-surface));
@@ -159,6 +161,8 @@
   --color-nav-auth-active-border: #94a3b8;
   --color-nav-user-text: #e5e7eb;
   --shadow-nav: 0 1px 3px rgba(2, 6, 23, 0.45);
+  --app-bg-image-url: url("https://res.cloudinary.com/dur9baj6u/image/upload/v1773479277/bg_img_dark_ofx3wh.webp");
+  --app-bg-overlay: rgba(2, 6, 23, 0.42);
 
   color-scheme: dark;
 }
@@ -201,7 +205,7 @@ a:hover {
 
 .page {
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
   color: var(--color-text);
 }
 

@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <header className="admin-page__header">
-          <div>
+          <div className="admin-page__header-surface">
             <h1 className="page-title admin-page__title">{t("admin.title")}</h1>
             <div className="text-muted admin-page__summary">
               {t("admin.summary.totalLabel")} {total}

@@ -129,8 +129,10 @@ export default function RegisterPage() {
     <div className="page register-page">
       <div className="container register-page__container">
         <section className="register-page__brand">
-          <h1 className="register-page__brand-title">fishing-app</h1>
-          <p className="register-page__brand-subtitle">{t("auth.registerBrandSubtitle")}</p>
+          <div className="register-page__brand-surface">
+            <h1 className="register-page__brand-title">fishing-app</h1>
+            <p className="register-page__brand-subtitle">{t("auth.registerBrandSubtitle")}</p>
+          </div>
         </section>
 
         <section className="card register-page__card">

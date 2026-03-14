@@ -2,6 +2,21 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--color-bg);
+}
+
+.app-layout::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--app-bg-overlay), var(--app-bg-overlay)), var(--app-bg-image-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .app-nav {
@@ -17,6 +32,13 @@
   top: 0;
   z-index: 1000;
   box-shadow: var(--shadow-nav);
+}
+
+.app-nav,
+.app-content,
+.app-footer {
+  position: relative;
+  z-index: 1;
 }
 
 .app-nav__links,

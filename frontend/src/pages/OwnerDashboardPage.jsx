@@ -220,7 +220,7 @@ export default function OwnerDashboardPage() {
         </div>
 
         <header className="owner-page__header">
-          <div>
+          <div className="owner-page__header-surface">
             <h1 className="page-title owner-page__title">{t("owner.title")}</h1>
             <div className="text-muted owner-page__summary">
               {t("owner.summary.totalLabel")} {total}

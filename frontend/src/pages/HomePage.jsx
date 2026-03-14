@@ -153,10 +153,12 @@ export default function HomePage() {
     <div className="page home-page">
       <div className="container home-page__container">
         <header className="home-page__hero">
-          <h1 className="page-title">{t("home.title")}</h1>
-          <p className="text-muted home-page__subtitle">
-            {t("home.subtitle")}
-          </p>
+          <div className="home-page__hero-surface">
+            <h1 className="page-title">{t("home.title")}</h1>
+            <p className="text-muted home-page__subtitle">
+              {t("home.subtitle")}
+            </p>
+          </div>
         </header>
 
         <section className="card home-page__filters">
@@ -224,10 +226,12 @@ export default function HomePage() {
 
         <section className="home-page__results-section">
           <div className="home-page__results-header">
-            <div className="home-page__results-header-left">
-              <h2 className="section-title">{t("home.resultsTitle")}</h2>
-              <div className="text-muted">
-                {t("home.foundLabel")} {total}
+            <div className="home-page__results-surface">
+              <div className="home-page__results-header-left">
+                <h2 className="section-title">{t("home.resultsTitle")}</h2>
+                <div className="text-muted">
+                  {t("home.foundLabel")} {total}
+                </div>
               </div>
             </div>
 
