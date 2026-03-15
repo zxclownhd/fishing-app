@@ -117,7 +117,7 @@
 .app-nav__theme-button {
   border: 0;
   background: transparent;
-  color: #111111;
+  color: var(--color-nav-toggle-text);
   font-size: var(--type-label-size);
   font-weight: var(--type-label-weight);
   line-height: var(--type-label-line);
@@ -141,14 +141,14 @@
 
 .app-nav__theme-button:hover {
   background: var(--color-nav-toggle-hover-bg);
-  color: #111111;
+  color: var(--color-nav-toggle-hover-text);
 }
 
-[data-theme="dark"] .app-nav__theme-button {
+[data-theme="dark"] .app-nav__theme-button:not(.app-nav__theme-button--active) {
   color: var(--color-nav-toggle-text);
 }
 
-[data-theme="dark"] .app-nav__theme-button:hover {
+[data-theme="dark"] .app-nav__theme-button:not(.app-nav__theme-button--active):hover {
   color: var(--color-nav-toggle-text);
 }
 
@@ -181,6 +181,10 @@
 
 .app-nav__theme-button--active:hover {
   background: var(--color-primary-hover);
+  color: var(--color-on-primary);
+}
+
+[data-theme="dark"] .app-nav__theme-button.app-nav__theme-button--active {
   color: var(--color-on-primary);
 }
 
