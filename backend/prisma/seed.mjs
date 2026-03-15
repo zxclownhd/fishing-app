@@ -192,9 +192,10 @@ async function main() {
   // 3) LOCATIONS (seed content)
   const locData = [
     {
-      title: "Southern Vinnytsia Canal",
-      description: "Gentle canal run behind the industrial park; early mornings hold big carp.",
-      contactInfo: "Phone: +380432000111",
+      title: "Вінницький канал",
+      description:
+        "Рівна ділянка з укріпленим берегом; на світанку тут часто спрацьовує тиха проводка.",
+      contactInfo: "Телефон: +380432000111",
       region: "VINNYTSIA",
       waterType: "RIVER",
       lat: 49.2331,
@@ -205,7 +206,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/vinnytsia_canal/1200/800",
+          url: "https://picsum.photos/id/870/1200/800",
           publicId: "seed_vinnytsia_canal",
         },
       ],
@@ -213,20 +214,23 @@ async function main() {
         {
           user: "user1",
           rating: 5,
-          comment: "Morning casts along the canal gave steady tench and a couple of big carp.",
+          comment:
+            "Тиха подача спрацювала чудово, зранку клювання було рівним і без провалів.",
         },
         {
           user: "user2",
           rating: 4,
-          comment: "Calm bank and easy parking, though the late summer weeds need a sweep.",
+          comment:
+            "Спокійне місце з добрим підходом, але після обіду берег швидко заповнюється.",
         },
       ],
       favorites: ["user1", "user3", "user4"],
     },
     {
-      title: "Styr River Bend",
-      description: "Wide bend with gravel shoals; evening insect hatch gets the pike moving.",
-      contactInfo: "Telegram: @styr_volyn",
+      title: "Вигин Стиру",
+      description:
+        "Спокійна ділянка на помітному повороті; у теплу пору тут добре працює мілководдя.",
+      contactInfo: "Телеграм: @styr_volyn",
       region: "VOLYN",
       waterType: "RIVER",
       lat: 50.7472,
@@ -237,28 +241,35 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/styr_bend/1200/800",
+          url: "https://picsum.photos/id/1001/1200/800",
           publicId: "seed_styr_bend",
+        },
+        {
+          url: "https://picsum.photos/id/1011/1200/800",
+          publicId: "seed_styr_river_bend_alt",
         },
       ],
       reviews: [
         {
           user: "user3",
           rating: 5,
-          comment: "The bend holds big pike in spring and the bank is quiet after work.",
+          comment:
+            "Щука і окунь вийшли рано, а біля краю течії було багато руху.",
         },
         {
           user: "user2",
           rating: 4,
-          comment: "Water clarity is impressive but the access road is still a little soft.",
+          comment:
+            "Непоганий вхід у воду, але краще приходити до появи натовпу.",
         },
       ],
       favorites: ["user2", "user5", "owner2"],
     },
     {
-      title: "Dnipro Central Spit",
-      description: "Concrete spit near the bridge; nights are great for zander and catfish.",
-      contactInfo: "Phone: +380562111222",
+      title: "Дніпровська коса",
+      description:
+        "Широка коса біля центру міста; уздовж брівки добре працюють важкі приманки й джиг.",
+      contactInfo: "Телефон: +380562111222",
       region: "DNIPROPETROVSK",
       waterType: "RIVER",
       lat: 48.4647,
@@ -269,28 +280,35 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/dnipro_spit/1200/800",
+          url: "https://picsum.photos/id/1015/1200/800",
           publicId: "seed_dnipro_spit",
+        },
+        {
+          url: "https://picsum.photos/id/1041/1200/800",
+          publicId: "seed_dnipro_central_spit_alt",
         },
       ],
       reviews: [
         {
           user: "user1",
           rating: 4,
-          comment: "Zander came in the evening after the city heat calmed down.",
+          comment:
+            "На важкому джизі судак відгукувався стабільно, хоча вітер заважав.",
         },
         {
           user: "user4",
           rating: 5,
-          comment: "Solid catfish bite from the headland, owner let us keep a few photos.",
+          comment:
+            "Увечері біля брівки було дуже жваво, кілька виходів дали гарний результат.",
         },
       ],
       favorites: ["user1", "user4", "owner3"],
     },
     {
-      title: "Kalmius Gravel Shore",
-      description: "Wide gravel bars below the highway; quiet except for the farmers.",
-      contactInfo: "Instagram: @kalmius_fish",
+      title: "Берег Кальміусу",
+      description:
+        "Пологий гравійний берег біля міста; краще брати легке спорядження та високі чоботи.",
+      contactInfo: "Інстаграм: @kalmius_fish",
       region: "DONETSK",
       waterType: "RIVER",
       lat: 48.0159,
@@ -309,20 +327,23 @@ async function main() {
         {
           user: "user2",
           rating: 3,
-          comment: "Bite slowed by the weekend crowds but the shore is well maintained.",
+          comment:
+            "Рибалка рівна і спокійна, але вітром інколи сильно здуває снасть.",
         },
         {
           user: "user5",
           rating: 4,
-          comment: "Roach and perch took bread paste all afternoon, firm gravel bottom.",
+          comment:
+            "Місце не для натовпу, зате під вечір можна спокійно половити біля берегу.",
         },
       ],
       favorites: ["user2", "user5", "owner4"],
     },
     {
-      title: "Teteriv Floodplain",
-      description: "Wide floodplain with reed pockets; best after the spring drawdown.",
-      contactInfo: "Telegram: @teteriv_guard",
+      title: "Розлив Тетерева",
+      description:
+        "Тиха заводь з підтопленою зеленню; улітку риба тримається ближче до тіні.",
+      contactInfo: "Телеграм: @teteriv_guard",
       region: "ZHYTOMYR",
       waterType: "RIVER",
       lat: 50.2547,
@@ -333,7 +354,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/teteriv_flood/1200/800",
+          url: "https://picsum.photos/id/213/1200/800",
           publicId: "seed_teteriv_flood",
         },
       ],
@@ -341,20 +362,23 @@ async function main() {
         {
           user: "user3",
           rating: 4,
-          comment: "Bream ran deep in the afternoon so I slid down a lump weight.",
+          comment:
+            "На межі тіні клювання було стабільним, особливо по дрібнішій білій рибі.",
         },
         {
           user: "user5",
           rating: 5,
-          comment: "Perch hopped on and off the drop-shot, and the locals shared a hot drink.",
+          comment:
+            "Місце не гучне, не схоже на попсу, а спокій відчувається вже з першого закиду.",
         },
       ],
       favorites: ["user3", "user5"],
     },
     {
-      title: "Tisza Mountain Reach",
-      description: "Clear mountain tributary with low banks; grayling like nymphs.",
-      contactInfo: "Email: tisza@fishmail.ua",
+      title: "Плесо Тиси",
+      description:
+        "Швидка гірська течія з кам'янистим дном; перед заходом сонця риба підходить ближче.",
+      contactInfo: "Ел. пошта: tisza@fishmail.ua",
       region: "ZAKARPATTIA",
       waterType: "RIVER",
       lat: 48.6208,
@@ -365,7 +389,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/tisza_reach/1200/800",
+          url: "https://picsum.photos/id/244/1200/800",
           publicId: "seed_tisza_reach",
         },
       ],
@@ -373,20 +397,23 @@ async function main() {
         {
           user: "user4",
           rating: 5,
-          comment: "Grayling were present even in late autumn, and the mountain spray is refreshing.",
+          comment:
+            "Навіть за швидкої течії місце читається добре, а голавль тримається ближче до каміння.",
         },
         {
           user: "user1",
           rating: 5,
-          comment: "Chub pulls kept the rod bent while the view of the ridges stayed clear.",
+          comment:
+            "Дуже гарний гірський відрізок з характером, і ще не перетворився на масову точку.",
         },
       ],
       favorites: ["user1", "user4"],
     },
     {
-      title: "Khortytsia South Rapids",
-      description: "Rapid-laced stretch near the island; need sturdy boots on the rocks.",
-      contactInfo: "Phone: +380612222333",
+      title: "Південь Хортиці",
+      description:
+        "Широкий вихід до води нижче острова; на заході сонця тут часто активізується судак.",
+      contactInfo: "Телефон: +380612222333",
       region: "ZAPORIZHZHIA",
       waterType: "RIVER",
       lat: 47.8388,
@@ -397,7 +424,7 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/khortytsia_south/1200/800",
+          url: "https://picsum.photos/id/270/1200/800",
           publicId: "seed_khortytsia_south",
         },
       ],
@@ -405,20 +432,22 @@ async function main() {
         {
           user: "user2",
           rating: 5,
-          comment: "Zander took a slow-sinking lure right next to the current seam.",
+          comment: "Саме тут вечірній судак показав себе найкраще цього тижня.",
         },
         {
           user: "user3",
           rating: 4,
-          comment: "Deep holes hold big catfish but watch the midday wind.",
+          comment:
+            "З нижнього виходу ловити зручно, але краще не затягувати до темряви.",
         },
       ],
       favorites: ["user2", "user3", "user5"],
     },
     {
-      title: "Bystrytsia Gorge Access",
-      description: "Steep trail down to the gorge; trout and grayling hold the cool runs.",
-      contactInfo: "Instagram: @bystritsia_lodge",
+      title: "Яр Бистриці",
+      description:
+        "Холодна вода та швидка течія; після дощу підхід слизький, зате риба стає активнішою.",
+      contactInfo: "Інстаграм: @bystritsia_lodge",
       region: "IVANO_FRANKIVSK",
       waterType: "RIVER",
       lat: 48.9215,
@@ -429,7 +458,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/bystritsia_gorge/1200/800",
+          url: "https://picsum.photos/id/275/1200/800",
           publicId: "seed_bystritsia_gorge",
         },
       ],
@@ -437,20 +466,22 @@ async function main() {
         {
           user: "user5",
           rating: 5,
-          comment: "Rainbow trout show up in the higher riffles, no crowds on weekdays.",
+          comment:
+            "Форель трималася біля каміння, а вода була напрочуд прозора.",
         },
         {
           user: "owner3",
           rating: 4,
-          comment: "Taimen was a dream target, one took the dry fly but slipped away.",
+          comment: "Місце не для всіх: якщо йти до дна, треба добрі черевики.",
         },
       ],
       favorites: ["user5", "owner3", "user1"],
     },
     {
-      title: "Obolon Floodplain Platform",
-      description: "Large platform with reed-sheltered pockets; city skyline in the background.",
-      contactInfo: "Phone: +380442222444",
+      title: "Оболонський пірс",
+      description:
+        "Міська локація з набережною і спокійною течією; на заході сонця активність помітно зростає.",
+      contactInfo: "Телефон: +380442222444",
       region: "KYIV",
       waterType: "RIVER",
       lat: 50.4501,
@@ -461,7 +492,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/obolon_platform/1200/800",
+          url: "https://picsum.photos/id/10/1200/800",
           publicId: "seed_obolon_platform",
         },
       ],
@@ -469,20 +500,23 @@ async function main() {
         {
           user: "admin",
           rating: 5,
-          comment: "Obolon stretch stays clean and the crew keeps the floating platform tidy.",
+          comment:
+            "Платформа не надто тиха, але ввечері течія приносить приємну активність.",
         },
         {
           user: "user3",
           rating: 4,
-          comment: "Perch were plentiful once the Dnieper current dipped in the evening.",
+          comment:
+            "Perch were plentiful once the Dnieper current dipped in the evening.",
         },
       ],
       favorites: ["user1", "admin", "user3"],
     },
     {
-      title: "Inhul Urban Terrace",
-      description: "Wide terrace along the Inhul with brick steps; catfish like the deeper holes.",
-      contactInfo: "Telegram: @inhul_fishing",
+      title: "Тераса Інгулу",
+      description:
+        "Зручний вхід із тераси над водою; для вечірньої рибалки варто приходити трохи раніше.",
+      contactInfo: "Телеграм: @inhul_fishing",
       region: "KIROVOHRAD",
       waterType: "RIVER",
       lat: 48.5079,
@@ -493,7 +527,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/inhul_terrace/1200/800",
+          url: "https://picsum.photos/id/870/1200/800",
           publicId: "seed_inhul_terrace",
         },
       ],
@@ -506,15 +540,17 @@ async function main() {
         {
           user: "user4",
           rating: 3,
-          comment: "Catfish watchers need to arrive early, the current picks up after lunch.",
+          comment:
+            "Catfish watchers need to arrive early, the current picks up after lunch.",
         },
       ],
       favorites: ["user2", "user4", "owner1"],
     },
     {
-      title: "Siverskyi Donets Meadow",
-      description: "Grassy meadow slopes down to the Donets, great for evening pike.",
-      contactInfo: "Phone: +380577333444",
+      title: "Луг на Донці",
+      description:
+        "Відкрита ділянка з високою травою біля води, зранку добре працює легка подача.",
+      contactInfo: "Телефон: +380577333444",
       region: "LUHANSK",
       waterType: "RIVER",
       lat: 48.574,
@@ -538,15 +574,17 @@ async function main() {
         {
           user: "user5",
           rating: 3,
-          comment: "Wind gusts stirred the surface but also kept the carp near.",
+          comment:
+            "Wind gusts stirred the surface but also kept the carp near.",
         },
       ],
       favorites: ["user3", "user5", "owner2"],
     },
     {
-      title: "Lviv Highland Dam",
-      description: "Tranquil dam with forested banks; best near sunset for carp and bream.",
-      contactInfo: "Email: services@lvivcatch.org",
+      title: "Львівська дамба",
+      description:
+        "Тиха вода з відкритим краєвидом; увечері дрібна риба збирається ближче до берега.",
+      contactInfo: "Ел. пошта: services@lvivcatch.org",
       region: "LVIV",
       waterType: "LAKE",
       lat: 49.8397,
@@ -565,20 +603,23 @@ async function main() {
         {
           user: "user4",
           rating: 5,
-          comment: "Silver bream schools responded to light pellets, nice view of the hills.",
+          comment:
+            "Silver bream schools responded to light pellets, nice view of the hills.",
         },
         {
           user: "user1",
           rating: 4,
-          comment: "Carp bite was steady in the evening though the access gate locks early.",
+          comment:
+            "Carp bite was steady in the evening though the access gate locks early.",
         },
       ],
       favorites: ["user4", "user1", "user2"],
     },
     {
-      title: "Southern Bug Bend",
-      description: "Wide river bend with reed lines; barbel and catfish patrol the deeper slots.",
-      contactInfo: "Instagram: @bugstart",
+      title: "Вигин Бугу",
+      description:
+        "Широка річкова дуга з м'яким берегом; у спеку риба відходить трохи глибше від краю.",
+      contactInfo: "Інстаграм: @bugstart",
       region: "MYKOLAIV",
       waterType: "RIVER",
       lat: 46.975,
@@ -608,9 +649,10 @@ async function main() {
       favorites: ["user2", "owner1", "user5"],
     },
     {
-      title: "Odesa Sandbar Pier",
-      description: "Sea pier with slipway, tide pushes in European eel and small mullet.",
-      contactInfo: "Phone: +380482333555",
+      title: "Пірс на косі",
+      description:
+        "Відкрите місце біля моря; після припливу краще працює дальній край пірса.",
+      contactInfo: "Телефон: +380482333555",
       region: "ODESA",
       waterType: "SEA",
       lat: 46.4825,
@@ -621,8 +663,12 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/odesa_pier/1200/800",
+          url: "https://picsum.photos/id/1001/1200/800",
           publicId: "seed_odesa_pier",
+        },
+        {
+          url: "https://picsum.photos/id/1011/1200/800",
+          publicId: "seed_odesa_sandbar_pier_alt",
         },
       ],
       reviews: [
@@ -640,9 +686,10 @@ async function main() {
       favorites: ["user3", "user4", "user1"],
     },
     {
-      title: "Vorskla Forest Reach",
-      description: "Forest trail ends at a wide Vorskla reach; the shade keeps the bite steady.",
-      contactInfo: "Telegram: @vorskla_tracks",
+      title: "Стежка Ворскли",
+      description:
+        "Лісовий відрізок берега на спокійній течії; після дощу підхід стає м'якшим.",
+      contactInfo: "Телеграм: @vorskla_tracks",
       region: "POLTAVA",
       waterType: "RIVER",
       lat: 49.5883,
@@ -653,7 +700,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/vorskla_reach/1200/800",
+          url: "https://picsum.photos/id/1015/1200/800",
           publicId: "seed_vorskla_reach",
         },
       ],
@@ -673,7 +720,8 @@ async function main() {
     },
     {
       title: "Horyn River Flats",
-      description: "Calm flats lined with sandbars; the river slows for easy casts.",
+      description:
+        "Calm flats lined with sandbars; the river slows for easy casts.",
       contactInfo: "Phone: +380362111333",
       region: "RIVNE",
       waterType: "RIVER",
@@ -685,7 +733,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/horyn_flats/1200/800",
+          url: "https://picsum.photos/id/1041/1200/800",
           publicId: "seed_horyn_flats",
         },
       ],
@@ -693,19 +741,22 @@ async function main() {
         {
           user: "user1",
           rating: 4,
-          comment: "Chub busting on the fly line kept me busy in the calm sections.",
+          comment:
+            "Chub busting on the fly line kept me busy in the calm sections.",
         },
         {
           user: "user3",
           rating: 4,
-          comment: "Rudd and gudgeon simply took maggots, an easy evening so far.",
+          comment:
+            "Rudd and gudgeon simply took maggots, an easy evening so far.",
         },
       ],
       favorites: ["user1", "user3", "owner3"],
     },
     {
       title: "Psel Lakeside Grove",
-      description: "Shallow lake with a grove of pines; warm waters welcome carp and roach.",
+      description:
+        "Shallow lake with a grove of pines; warm waters welcome carp and roach.",
       contactInfo: "Email: lake@psel.ua",
       region: "SUMY",
       waterType: "LAKE",
@@ -725,7 +776,8 @@ async function main() {
         {
           user: "user4",
           rating: 5,
-          comment: "Carp heated up as the sun dropped, and the grove kept the breeze off.",
+          comment:
+            "Carp heated up as the sun dropped, and the grove kept the breeze off.",
         },
         {
           user: "user5",
@@ -737,7 +789,8 @@ async function main() {
     },
     {
       title: "Seret Gorge Outfall",
-      description: "Steep outfall below the gorge, great for float rigs and trout.",
+      description:
+        "Steep outfall below the gorge, great for float rigs and trout.",
       contactInfo: "Phone: +380352444666",
       region: "TERNOPIL",
       waterType: "RIVER",
@@ -749,7 +802,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/seret_outfall/1200/800",
+          url: "https://picsum.photos/id/213/1200/800",
           publicId: "seed_seret_outfall",
         },
       ],
@@ -757,7 +810,8 @@ async function main() {
         {
           user: "user3",
           rating: 5,
-          comment: "Seret drop-off held steady perch and the gorge echo keeps the place quiet.",
+          comment:
+            "Seret drop-off held steady perch and the gorge echo keeps the place quiet.",
         },
         {
           user: "user1",
@@ -769,7 +823,8 @@ async function main() {
     },
     {
       title: "Lopan Timber Locks",
-      description: "Lock chambers and timber piles, topwater works early on the Lopan.",
+      description:
+        "Lock chambers and timber piles, topwater works early on the Lopan.",
       contactInfo: "Telegram: @lopan_lock",
       region: "KHARKIV",
       waterType: "RIVER",
@@ -781,7 +836,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/lopan_locks/1200/800",
+          url: "https://picsum.photos/id/244/1200/800",
           publicId: "seed_lopan_locks",
         },
       ],
@@ -789,19 +844,22 @@ async function main() {
         {
           user: "user2",
           rating: 5,
-          comment: "Two quick pike before lunch, this lock is surprisingly productive.",
+          comment:
+            "Two quick pike before lunch, this lock is surprisingly productive.",
         },
         {
           user: "user4",
           rating: 4,
-          comment: "Carp and roach both came to paprika glugs when the current slowed.",
+          comment:
+            "Carp and roach both came to paprika glugs when the current slowed.",
         },
       ],
       favorites: ["user2", "user4", "owner2"],
     },
     {
       title: "Dnieper Delta Wharf",
-      description: "Sandy wharf with reed avenues, the lower delta loves carp and catfish.",
+      description:
+        "Sandy wharf with reed avenues, the lower delta loves carp and catfish.",
       contactInfo: "Instagram: @delta_tide",
       region: "KHERSON",
       waterType: "RIVER",
@@ -813,7 +871,7 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/delta_wharf/1200/800",
+          url: "https://picsum.photos/id/270/1200/800",
           publicId: "seed_delta_wharf",
         },
       ],
@@ -826,14 +884,16 @@ async function main() {
         {
           user: "user5",
           rating: 5,
-          comment: "Bream came in fast, and the ferry noise kept the rares away.",
+          comment:
+            "Bream came in fast, and the ferry noise kept the rares away.",
         },
       ],
       favorites: ["user1", "user5", "owner3"],
     },
     {
       title: "Bug Urban Park Outlet",
-      description: "Park trail drops to a wide Bug channel; carp cruise past the concrete.",
+      description:
+        "Park trail drops to a wide Bug channel; carp cruise past the concrete.",
       contactInfo: "Phone: +380382233445",
       region: "KHMELNYTSKYI",
       waterType: "RIVER",
@@ -853,7 +913,8 @@ async function main() {
         {
           user: "user3",
           rating: 4,
-          comment: "Common barbel slowed but fought hard, the park crew chops the weeds.",
+          comment:
+            "Common barbel slowed but fought hard, the park crew chops the weeds.",
         },
         {
           user: "user4",
@@ -865,7 +926,8 @@ async function main() {
     },
     {
       title: "Ros River Shoreline",
-      description: "Wide shoreline with grassy banks; zander like the deeper channels.",
+      description:
+        "Wide shoreline with grassy banks; zander like the deeper channels.",
       contactInfo: "Email: ros@riverwatch.ua",
       region: "CHERKASY",
       waterType: "RIVER",
@@ -877,15 +939,20 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/ros_shore/1200/800",
+          url: "https://picsum.photos/id/275/1200/800",
           publicId: "seed_ros_shore",
+        },
+        {
+          url: "https://picsum.photos/id/10/1200/800",
+          publicId: "seed_ros_river_shoreline_alt",
         },
       ],
       reviews: [
         {
           user: "user2",
           rating: 4,
-          comment: "Zander kept the casting lively, best after the midday lull.",
+          comment:
+            "Zander kept the casting lively, best after the midday lull.",
         },
         {
           user: "user5",
@@ -897,7 +964,8 @@ async function main() {
     },
     {
       title: "Prut Valley Meadow",
-      description: "Prut corridor under the hills, cool water for trout and chub.",
+      description:
+        "Prut corridor under the hills, cool water for trout and chub.",
       contactInfo: "Instagram: @prut_trail",
       region: "CHERNIVTSI",
       waterType: "RIVER",
@@ -909,7 +977,7 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/prut_meadow/1200/800",
+          url: "https://picsum.photos/id/870/1200/800",
           publicId: "seed_prut_meadow",
         },
       ],
@@ -917,7 +985,8 @@ async function main() {
         {
           user: "user1",
           rating: 5,
-          comment: "Trout responded to wet flies while the valley held a chilly breeze.",
+          comment:
+            "Trout responded to wet flies while the valley held a chilly breeze.",
         },
         {
           user: "user3",
@@ -929,7 +998,8 @@ async function main() {
     },
     {
       title: "Desna Reed Line",
-      description: "Long reed line on the Desna; burbot and rudd both show up after dusk.",
+      description:
+        "Long reed line on the Desna; burbot and rudd both show up after dusk.",
       contactInfo: "Phone: +380462111888",
       region: "CHERNIHIV",
       waterType: "RIVER",
@@ -949,19 +1019,22 @@ async function main() {
         {
           user: "user4",
           rating: 5,
-          comment: "Burbot before dawn is quiet, but the reeds keep the bank safe.",
+          comment:
+            "Burbot before dawn is quiet, but the reeds keep the bank safe.",
         },
         {
           user: "user2",
           rating: 3,
-          comment: "Windy but the rudd bite was consistent if you held the boat.",
+          comment:
+            "Windy but the rudd bite was consistent if you held the boat.",
         },
       ],
       favorites: ["user4", "user2", "owner2"],
     },
     {
       title: "Kerch Strait Jetty",
-      description: "Jetty with breakwaters; eels and dace chase small baits fields.",
+      description:
+        "Jetty with breakwaters; eels and dace chase small baits fields.",
       contactInfo: "Telegram: @kerch_shore",
       region: "CRIMEA",
       waterType: "SEA",
@@ -973,7 +1046,7 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN", "WINTER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/kerch_jetty/1200/800",
+          url: "https://picsum.photos/id/1001/1200/800",
           publicId: "seed_kerch_jetty",
         },
       ],
@@ -986,14 +1059,16 @@ async function main() {
         {
           user: "user1",
           rating: 5,
-          comment: "Bleak and dace tussled with small soft plastics, crowded but manageable.",
+          comment:
+            "Bleak and dace tussled with small soft plastics, crowded but manageable.",
         },
       ],
       favorites: ["user5", "user1", "owner2"],
     },
     {
       title: "Obolon Hidden Arm",
-      description: "Quiet arm off the main Dnieper channel; currently under review for safety upgrades.",
+      description:
+        "Quiet arm off the main Dnieper channel; currently under review for safety upgrades.",
       contactInfo: "Phone: +380442555666",
       region: "KYIV",
       waterType: "RIVER",
@@ -1005,14 +1080,15 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/obolon_hidden/1200/800",
+          url: "https://picsum.photos/id/1011/1200/800",
           publicId: "seed_obolon_hidden",
         },
       ],
     },
     {
       title: "Odessa Quay Ruins",
-      description: "Old quay with unstable concrete, needs clearance before public use.",
+      description:
+        "Old quay with unstable concrete, needs clearance before public use.",
       contactInfo: "Email: admin@odesaquake.com",
       region: "ODESA",
       waterType: "SEA",
@@ -1024,14 +1100,15 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/odesa_quay/1200/800",
+          url: "https://picsum.photos/id/1015/1200/800",
           publicId: "seed_odesa_quay",
         },
       ],
     },
     {
       title: "Volyn Forest Spring",
-      description: "Spring-fed pool inside a forest stand; hidden for now pending stewardship.",
+      description:
+        "Spring-fed pool inside a forest stand; hidden for now pending stewardship.",
       contactInfo: "Telegram: @volyn_springs",
       region: "VOLYN",
       waterType: "POND",
@@ -1043,14 +1120,15 @@ async function main() {
       seasons: ["SPRING", "SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/volyn_spring/1200/800",
+          url: "https://picsum.photos/id/1041/1200/800",
           publicId: "seed_volyn_spring",
         },
       ],
     },
     {
       title: "Rivne Migrant Lake",
-      description: "Shallow lake with migrating birds; pending clearance for night camping.",
+      description:
+        "Shallow lake with migrating birds; pending clearance for night camping.",
       contactInfo: "Phone: +380362888990",
       region: "RIVNE",
       waterType: "LAKE",
@@ -1062,14 +1140,15 @@ async function main() {
       seasons: ["SUMMER", "AUTUMN"],
       photos: [
         {
-          url: "https://picsum.photos/seed/rivne_migrant/1200/800",
+          url: "https://picsum.photos/id/213/1200/800",
           publicId: "seed_rivne_migrant",
         },
       ],
     },
     {
       title: "Crimea Secluded Cove",
-      description: "Private cove near the southern cliffs; represented as hidden for now.",
+      description:
+        "Private cove near the southern cliffs; represented as hidden for now.",
       contactInfo: "Instagram: @crimea_cove",
       region: "CRIMEA",
       waterType: "SEA",
@@ -1081,7 +1160,7 @@ async function main() {
       seasons: ["SUMMER"],
       photos: [
         {
-          url: "https://picsum.photos/seed/crimea_cove/1200/800",
+          url: "https://picsum.photos/id/244/1200/800",
           publicId: "seed_crimea_cove",
         },
       ],
@@ -1201,6 +1280,18 @@ async function main() {
 
 export async function runSeed() {
   await main();
+}
+
+export async function wipeDatabase() {
+  await prisma.photo.deleteMany();
+  await prisma.favorite.deleteMany();
+  await prisma.review.deleteMany();
+  await prisma.locationFish.deleteMany();
+  await prisma.locationSeason.deleteMany();
+  await prisma.location.deleteMany();
+  await prisma.fish.deleteMany();
+  await prisma.season.deleteMany();
+  await prisma.user.deleteMany();
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

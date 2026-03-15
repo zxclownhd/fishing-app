@@ -23,6 +23,27 @@ router.post(
   })
 );
 
+router.post("/clear", async (req, res) => {
+  const key = req.header("x-seed-key");
+  if (!process.env.SEED_KEY || key !== process.env.SEED_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  // одна підтверджувалка, щоб не вайпнути випадково
+  if (req.header("x-confirm") !== "CLEAR") {
+    return res.status(400).json({ error: "Missing x-confirm: CLEAR" });
+  }
+
+  try {
+    const mod = await import("../../prisma/seed.mjs");
+    await mod.wipeDatabase();
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: "Clear failed" });
+  }
+});
+
 // All /admin routes require JWT + ADMIN role
 router.use(authenticateToken, requireRole("ADMIN"));
 
